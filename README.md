@@ -1,0 +1,391 @@
+# Eisenhower Priority App
+
+A powerful mobile task prioritization app based on the **Eisenhower Matrix** with advanced 10-point metric scoring. Organize your tasks by importance and urgency, and make data-driven decisions about what to focus on.
+
+## Features
+
+### 📊 Eisenhower Matrix
+- Automatically categorize tasks into 4 quadrants:
+  - **Q1 (Do Now)**: Important & Urgent (Red)
+  - **Q2 (Schedule)**: Important & Not Urgent (Orange)
+  - **Q3 (Delegate)**: Not Important & Urgent (Blue)
+  - **Q4 (Delete)**: Not Important & Not Urgent (Gray)
+
+### 📈 Advanced Scoring System
+- **10-point metric scale** for each task:
+  - **Importance**: How critical is this task?
+  - **Urgency**: How time-sensitive is it?
+  - **Impact**: What's the potential outcome?
+  - **Effort**: How much work is required?
+  - **Risk**: What's the consequence of not doing it?
+
+- **Configurable weights** to customize priority calculation
+- **Dynamic thresholds** to adjust quadrant boundaries
+- **Priority score** (0-100) automatically calculated for each task
+
+### 🎯 Task Management
+- Create, edit, and delete tasks
+- Add descriptions, due dates, and tags
+- Mark tasks as done or archive them
+- Search and filter by quadrant or status
+- Sort by priority, due date, or creation date
+
+### 📊 Statistics & Analytics
+- Task completion rate tracking
+- Quadrant distribution overview
+- Average metrics across all tasks
+- Top 10 priority tasks ranking
+- Overdue task alerts
+
+### ⚙️ Customization
+- Adjust scoring weights for different priorities
+- Configure importance/urgency thresholds
+- Choose between light, dark, or system theme
+- Export/import tasks as JSON
+
+### 🎨 User Experience
+- Clean, intuitive mobile-first design
+- Dark mode support
+- Haptic feedback on interactions
+- Real-time priority score updates
+- Responsive layout for all screen sizes
+
+## Tech Stack
+
+- **Framework**: React Native with Expo
+- **Language**: TypeScript
+- **State Management**: React Context + AsyncStorage
+- **Database**: SQLite (expo-sqlite)
+- **Styling**: Tailwind CSS (NativeWind)
+- **Testing**: Vitest
+- **Icons**: Expo Vector Icons
+
+## Project Structure
+
+```
+eisenhower-priority-app/
+├── app/                          # Expo Router screens
+│   ├── (tabs)/
+│   │   ├── index.tsx            # Home screen (task list)
+│   │   ├── matrix.tsx           # Eisenhower Matrix view
+│   │   ├── statistics.tsx       # Analytics dashboard
+│   │   ├── settings.tsx         # App settings
+│   │   └── _layout.tsx          # Tab navigation
+│   ├── task-detail.tsx          # Task creation/editing
+│   ├── _layout.tsx              # Root layout with providers
+│   └── oauth/                   # Auth callbacks
+├── components/                   # Reusable UI components
+│   ├── screen-container.tsx     # SafeArea wrapper
+│   ├── task-card.tsx            # Task display card
+│   ├── metric-slider.tsx        # 1-10 metric input
+│   ├── priority-display.tsx     # Priority score display
+│   ├── matrix-quadrant.tsx      # Quadrant component
+│   └── ui/
+│       └── icon-symbol.tsx      # Icon mapping
+├── lib/
+│   ├── domain/
+│   │   ├── types.ts             # TypeScript domain models
+│   │   ├── scoring.ts           # Priority calculation logic
+│   │   └── scoring.test.ts      # Scoring unit tests
+│   ├── database/
+│   │   └── db.ts                # SQLite service
+│   ├── context/
+│   │   └── task-context.tsx     # Task state management
+│   ├── utils.ts                 # Utility functions
+│   └── trpc.ts                  # API client
+├── hooks/
+│   ├── use-colors.ts            # Theme colors hook
+│   ├── use-color-scheme.ts      # Dark/light mode detection
+│   └── use-auth.ts              # Authentication hook
+├── assets/
+│   ├── images/
+│   │   ├── icon.png             # App icon
+│   │   ├── splash-icon.png      # Splash screen
+│   │   └── favicon.png          # Web favicon
+│   └── fonts/                   # Custom fonts (if any)
+├── theme.config.js              # Tailwind color tokens
+├── tailwind.config.js           # Tailwind configuration
+├── app.config.ts                # Expo configuration
+├── package.json                 # Dependencies
+└── README.md                    # This file
+```
+
+## Getting Started
+
+### Prerequisites
+- Node.js 18+ and pnpm
+- iOS Simulator or Android Emulator (or Expo Go on physical device)
+
+### Installation
+
+```bash
+# Install dependencies
+pnpm install
+
+# Start development server
+pnpm dev
+
+# For iOS
+pnpm ios
+
+# For Android
+pnpm android
+
+# For Web
+pnpm web
+```
+
+### Running Tests
+
+```bash
+# Run all tests
+pnpm test
+
+# Run specific test file
+pnpm test lib/domain/scoring.test.ts
+
+# Watch mode
+pnpm test --watch
+```
+
+## Database Schema
+
+### Tasks Table
+```sql
+CREATE TABLE tasks (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  description TEXT,
+  createdAt INTEGER NOT NULL,
+  updatedAt INTEGER NOT NULL,
+  dueDate INTEGER,
+  tags TEXT,                    -- JSON array
+  status TEXT DEFAULT 'active', -- 'active' | 'done' | 'archived'
+  
+  -- Metrics (1-10 scale)
+  importanceScore INTEGER DEFAULT 5,
+  urgencyScore INTEGER DEFAULT 5,
+  impactScore INTEGER DEFAULT 5,
+  effortScore INTEGER DEFAULT 5,
+  riskScore INTEGER DEFAULT 5,
+  
+  -- Calculated fields
+  priorityScore REAL,
+  quadrant TEXT,                -- 'Q1' | 'Q2' | 'Q3' | 'Q4'
+  nextActionHint TEXT           -- 'Do Now' | 'Schedule' | 'Delegate' | 'Delete'
+);
+```
+
+### Settings Table
+```sql
+CREATE TABLE settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL,
+  updatedAt INTEGER NOT NULL
+);
+
+-- Stored settings:
+-- weights: { wImportance, wUrgency, wImpact, wRisk, wEffort }
+-- thresholds: { importanceThreshold, urgencyThreshold }
+-- theme: 'light' | 'dark' | 'system'
+```
+
+## Scoring Algorithm
+
+Priority score is calculated using a weighted sum of metrics:
+
+```
+priorityScore = (
+  wImportance * importanceScore +
+  wUrgency * urgencyScore +
+  wImpact * impactScore +
+  wRisk * riskScore +
+  wEffort * (10 - effortScore)  // Inverted: lower effort = higher priority
+) * 10
+
+// Quadrant determination:
+important = importanceScore >= importanceThreshold
+urgent = urgencyScore >= urgencyThreshold
+
+Q1 = important && urgent   → "Do Now"
+Q2 = important && !urgent  → "Schedule"
+Q3 = !important && urgent  → "Delegate"
+Q4 = !important && !urgent → "Delete"
+```
+
+### Default Weights
+- **Importance**: 30% (0.30)
+- **Urgency**: 25% (0.25)
+- **Impact**: 25% (0.25)
+- **Risk**: 15% (0.15)
+- **Effort**: 5% (0.05)
+
+### Default Thresholds
+- **Importance Threshold**: 6/10
+- **Urgency Threshold**: 6/10
+
+## API Reference
+
+### Task Context
+
+```typescript
+// Create a new task
+createTask(
+  title: string,
+  metrics: Metrics,
+  options?: { description?, dueDate?, tags? }
+): Promise<Task>
+
+// Update existing task
+updateTask(
+  id: string,
+  updates: Partial<Task>
+): Promise<void>
+
+// Delete task
+deleteTask(id: string): Promise<void>
+
+// Mark task as done
+markTaskDone(id: string): Promise<void>
+
+// Archive task
+archiveTask(id: string): Promise<void>
+
+// Search tasks
+searchTasks(query: string): Task[]
+
+// Export tasks
+exportTasks(): Promise<string>  // Returns JSON
+
+// Import tasks
+importTasks(jsonData: string): Promise<void>
+
+// Update settings
+updateSettings(settings: Partial<Settings>): Promise<void>
+
+// Clear all data
+clearAllData(): Promise<void>
+```
+
+## Customization Guide
+
+### Adjusting Scoring Weights
+
+To change how metrics affect priority:
+
+1. Go to **Settings** tab
+2. Scroll to **Scoring Weights**
+3. Adjust each weight (must total 1.0)
+4. Tap **Save Settings**
+
+Example: If you want effort to matter more:
+- Importance: 0.25 (was 0.30)
+- Urgency: 0.25 (unchanged)
+- Impact: 0.25 (unchanged)
+- Risk: 0.15 (unchanged)
+- Effort: 0.10 (was 0.05)
+
+### Adjusting Thresholds
+
+To change when tasks are considered "important" or "urgent":
+
+1. Go to **Settings** tab
+2. Scroll to **Thresholds**
+3. Adjust importance/urgency thresholds (1-10)
+4. Tap **Save Settings**
+
+Example: If you want stricter importance:
+- Importance Threshold: 7 (was 6) → only scores 7+ are "important"
+- Urgency Threshold: 6 (unchanged)
+
+## Data Management
+
+### Export Tasks
+
+1. Go to **Settings** tab
+2. Scroll to **Data Management**
+3. Tap **📥 Export Tasks (JSON)**
+4. Share or save the exported data
+
+### Import Tasks
+
+Currently, import is available via the API. To import:
+
+```typescript
+const { importTasks } = useTaskContext();
+const jsonData = '...'; // Your JSON data
+await importTasks(jsonData);
+```
+
+### Clear All Data
+
+⚠️ **Warning**: This action cannot be undone!
+
+1. Go to **Settings** tab
+2. Scroll to **Data Management**
+3. Tap **🗑 Clear All Data**
+4. Confirm the action
+
+## Troubleshooting
+
+### Tasks not appearing
+- Check if tasks are archived (filter by status)
+- Verify database is initialized (check app logs)
+- Try clearing app cache and restarting
+
+### Priority score seems wrong
+- Verify metric values (1-10 scale)
+- Check scoring weights in Settings
+- Ensure thresholds are set correctly
+- Review the scoring algorithm above
+
+### App crashes on startup
+- Clear app data and cache
+- Reinstall the app
+- Check console logs for errors
+
+### Dark mode not working
+- Go to Settings and select "Dark" theme explicitly
+- Or select "System" to follow device settings
+
+## Performance Tips
+
+- Archive old completed tasks to keep the list fast
+- Use tags to organize tasks by project
+- Export data regularly as backup
+- Clear archived tasks periodically
+
+## Future Enhancements
+
+- [ ] Drag-and-drop on Matrix screen
+- [ ] Swipe actions (mark done, archive, delete)
+- [ ] Recurring tasks
+- [ ] Task reminders and notifications
+- [ ] Cloud sync (Firebase/Supabase)
+- [ ] Collaboration features
+- [ ] Time tracking
+- [ ] Goal setting and tracking
+- [ ] Weekly/monthly review templates
+- [ ] Export to calendar
+
+## Contributing
+
+This is a personal project. Feel free to fork and customize for your needs!
+
+## License
+
+MIT
+
+## Support
+
+For issues or questions:
+1. Check the troubleshooting section
+2. Review the database schema and API reference
+3. Check app logs in the console
+4. Verify your data export for backup
+
+---
+
+**Version**: 1.0.0  
+**Last Updated**: February 2026  
+**Built with**: React Native, Expo, TypeScript, Tailwind CSS
