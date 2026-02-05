@@ -43,6 +43,14 @@ A powerful mobile task prioritization app based on the **Eisenhower Matrix** wit
 - Choose between light, dark, or system theme
 - Export/import tasks as JSON
 
+### 🔔 Push Notifications
+- Automatic reminders for Q1 (Do Now) and Q2 (Schedule) tasks
+- Customizable reminder time (15 min, 30 min, 1h, 2h, 1 day before due date)
+- Selective notifications by quadrant
+- Tap notifications to jump directly to task
+- Test notification feature to verify settings
+- Automatic notification cleanup when tasks are completed
+
 ### 🎨 User Experience
 - Clean, intuitive mobile-first design
 - Dark mode support
@@ -80,6 +88,7 @@ eisenhower-priority-app/
 │   ├── metric-slider.tsx        # 1-10 metric input
 │   ├── priority-display.tsx     # Priority score display
 │   ├── matrix-quadrant.tsx      # Quadrant component
+│   ├── notification-settings.tsx # Notification preferences UI
 │   └── ui/
 │       └── icon-symbol.tsx      # Icon mapping
 ├── lib/
@@ -89,6 +98,8 @@ eisenhower-priority-app/
 │   │   └── scoring.test.ts      # Scoring unit tests
 │   ├── database/
 │   │   └── db.ts                # SQLite service
+│   ├── services/
+│   │   └── notification-service.ts # Push notification management
 │   ├── context/
 │   │   └── task-context.tsx     # Task state management
 │   ├── utils.ts                 # Utility functions
@@ -267,6 +278,65 @@ updateSettings(settings: Partial<Settings>): Promise<void>
 clearAllData(): Promise<void>
 ```
 
+## Push Notifications
+
+The app includes a comprehensive push notification system to keep you on track with your tasks.
+
+### How Notifications Work
+
+**Automatic Scheduling**: When you create a task with a due date, a notification is automatically scheduled based on your settings. The notification will trigger at a specified time before the task is due.
+
+**Quadrant-Based Filtering**: You can choose which quadrants should trigger notifications:
+- **Q1 (Do Now)**: Urgent & Important tasks — enabled by default
+- **Q2 (Schedule)**: Important but not urgent tasks — enabled by default
+- **Q3 (Delegate)**: Urgent but not important tasks — disabled by default
+- **Q4 (Delete)**: Neither urgent nor important — never notified
+
+**Reminder Timing**: Choose when you want to be reminded before the due date:
+- 15 minutes before
+- 30 minutes before
+- 1 hour before
+- 2 hours before
+- 1 day before
+
+### Configuring Notifications
+
+1. Go to **Settings** → **🔔 Notifications**
+2. Toggle **Enable Notifications** to turn notifications on/off
+3. Select which quadrants should send notifications
+4. Choose your preferred reminder time
+5. Tap **📬 Send Test Notification** to verify settings
+
+### Notification Behavior
+
+**When Notifications Appear**: Notifications are sent at the scheduled time before your task is due. If the scheduled time has already passed, no notification is sent.
+
+**Tapping a Notification**: When you tap a notification, the app opens directly to that task's detail screen so you can take action immediately.
+
+**Automatic Cleanup**: When you mark a task as done or archive it, its notification is automatically canceled.
+
+**Rescheduling**: If you edit a task's due date or metrics, the notification is automatically rescheduled with the new information.
+
+### Permissions
+
+The app requests notification permissions when it first launches. You can grant or deny permissions at that time. To change notification permissions later:
+- **iOS**: Settings → Eisenhower Priority → Notifications
+- **Android**: Settings → Apps → Eisenhower Priority → Notifications
+
+### Troubleshooting Notifications
+
+**Not receiving notifications?**
+- Verify notifications are enabled in app Settings
+- Check device notification permissions
+- Ensure the task has a due date
+- Verify the quadrant is enabled for notifications
+- Try sending a test notification from Settings
+
+**Notifications too frequent?**
+- Increase the reminder time (e.g., from 1h to 1 day)
+- Disable notifications for Q3 (Delegate) tasks
+- Archive completed tasks to reduce active task count
+
 ## Customization Guide
 
 ### Adjusting Scoring Weights
@@ -360,7 +430,7 @@ await importTasks(jsonData);
 - [ ] Drag-and-drop on Matrix screen
 - [ ] Swipe actions (mark done, archive, delete)
 - [ ] Recurring tasks
-- [ ] Task reminders and notifications
+- [ ] Daily reminder notifications (fixed time each day)
 - [ ] Cloud sync (Firebase/Supabase)
 - [ ] Collaboration features
 - [ ] Time tracking

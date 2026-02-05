@@ -88,3 +88,16 @@
 - [x] Add build and run instructions
 - [x] Add backup/restore instructions
 - [ ] Create initial checkpoint
+
+## Push Notifications (NEW)
+- [x] Install expo-notifications package
+- [x] Create notification service with scheduling logic
+- [x] Implement permission handling (iOS/Android)
+- [x] Add notification scheduling for Q1 and Q2 tasks
+- [x] Add notification scheduling based on due date
+- [x] Handle notification taps to navigate to task
+- [x] Add notification settings UI (enable/disable, time preferences)
+- [x] Store notification preferences in database
+- [x] Cancel notifications when task is marked done
+- [x] Add test notifications to settings screen
+- [x] Document notification system in README
