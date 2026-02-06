@@ -459,3 +459,23 @@ For issues or questions:
 **Version**: 1.0.0  
 **Last Updated**: February 2026  
 **Built with**: React Native, Expo, TypeScript, Tailwind CSS
+
+
+## Daily Review Reminders
+
+In addition to task-specific reminders, the app supports daily review reminders to help you stay on top of your workload.
+
+**How Daily Reminders Work**: At your chosen time each day, you receive a notification showing a summary of your active tasks. The notification includes the total number of tasks, how many are in Q1 (urgent), and how many are in Q2 (important).
+
+**Configuring Daily Reminders**: Go to **Settings** → **🔔 Notifications** → **📋 Daily Review Reminder** to enable and configure:
+- **Enable/Disable**: Toggle daily reminders on or off
+- **Time**: Choose what time each day you want the reminder (e.g., 9:00 AM)
+- **Days**: Select which days of the week you want reminders (e.g., weekdays only, or all days)
+
+**Quick Day Selection**: Use the preset buttons to quickly select:
+- **Weekdays**: Monday through Friday (typical for work-focused reviews)
+- **Weekend**: Saturday and Sunday (for personal task reviews)
+- **All Days**: Every day of the week (for comprehensive daily tracking)
+
+**Example Notification**: "📋 Daily Task Review: You have 8 active task(s): 2 urgent, 3 important"
+

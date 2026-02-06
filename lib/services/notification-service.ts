@@ -1,4 +1,5 @@
 import * as Notifications from "expo-notifications";
+import { SchedulableTriggerInputTypes } from "expo-notifications";
 import { Platform } from "react-native";
 import type { Task } from "@/lib/domain/types";
 
@@ -19,7 +20,9 @@ export interface NotificationSettings {
   q2Enabled: boolean; // Schedule - important but not urgent
   q3Enabled: boolean; // Delegate - urgent but not important
   reminderTime: number; // Minutes before due date (e.g., 60 = 1 hour)
-  dailyReminderTime?: string; // HH:MM format for daily reminders
+  dailyReminderEnabled: boolean; // Enable daily task review reminders
+  dailyReminderTime: string; // HH:MM format for daily reminders (e.g., "09:00")
+  dailyReminderDays: number[]; // Day of week (0=Sunday, 1=Monday, ..., 6=Saturday)
   highPriorityOnly?: boolean; // Only notify for priority score >= 70
 }
 
@@ -29,7 +32,9 @@ const DEFAULT_SETTINGS: NotificationSettings = {
   q2Enabled: true,
   q3Enabled: false,
   reminderTime: 60, // 1 hour before
-  dailyReminderTime: "09:00",
+  dailyReminderEnabled: true,
+  dailyReminderTime: "09:00", // 9:00 AM
+  dailyReminderDays: [1, 2, 3, 4, 5], // Monday to Friday
 };
 
 /**
@@ -50,65 +55,52 @@ export class NotificationService {
   }
 
   /**
-   * Check if notifications are enabled
+   * Get default notification settings
    */
-  static async getPermissionStatus(): Promise<boolean> {
-    try {
-      const { status } = await Notifications.getPermissionsAsync();
-      return status === "granted";
-    } catch (error) {
-      console.error("Failed to check notification permissions:", error);
-      return false;
-    }
+  static getDefaultSettings(): NotificationSettings {
+    return { ...DEFAULT_SETTINGS };
   }
 
   /**
-   * Schedule a notification for a task
+   * Schedule a notification for a specific task
    */
   static async scheduleTaskNotification(
     task: Task,
     settings: NotificationSettings
   ): Promise<string | null> {
+    if (!settings.enabled || !task.dueDate) return null;
+
+    const quadrant = task.eisenhower.quadrant;
+    const isNotifiable =
+      (quadrant === "Q1" && settings.q1Enabled) ||
+      (quadrant === "Q2" && settings.q2Enabled) ||
+      (quadrant === "Q3" && settings.q3Enabled);
+
+    if (!isNotifiable) return null;
+
     try {
-      if (!settings.enabled) return null;
-
-      // Check if this quadrant should get notifications
-      if (task.eisenhower.quadrant === "Q1" && !settings.q1Enabled) return null;
-      if (task.eisenhower.quadrant === "Q2" && !settings.q2Enabled) return null;
-      if (task.eisenhower.quadrant === "Q3" && !settings.q3Enabled) return null;
-      if (task.eisenhower.quadrant === "Q4") return null; // Never notify for Q4
-
-      // Only schedule if task has a due date
-      if (!task.dueDate) return null;
-
-      // Calculate notification time
       const dueDate = new Date(task.dueDate);
-      const notificationTime = new Date(
-        dueDate.getTime() - settings.reminderTime * 60 * 1000
-      );
+      const triggerDate = new Date(dueDate.getTime() - settings.reminderTime * 60 * 1000);
 
-      // Don't schedule if notification time is in the past
-      if (notificationTime < new Date()) return null;
+      if (triggerDate <= new Date()) return null;
 
-      // Schedule the notification
-      const notificationId = await Notifications.scheduleNotificationAsync({
+      const identifier = await Notifications.scheduleNotificationAsync({
         content: {
           title: `📌 ${task.title}`,
-          body: `Due in ${settings.reminderTime} minutes`,
-          data: {
-            taskId: task.id,
-            quadrant: task.eisenhower.quadrant,
-            priorityScore: task.priorityScore,
-          },
+          body: `Priority: ${task.priorityScore}/100 (${quadrant})`,
+          data: { taskId: task.id },
+          sound: "default",
           badge: 1,
-          sound: true,
         },
-        trigger: notificationTime as any,
+        trigger: {
+          type: SchedulableTriggerInputTypes.TIME_INTERVAL,
+          seconds: Math.floor((triggerDate.getTime() - Date.now()) / 1000),
+        },
       });
 
-      return notificationId;
+      return identifier;
     } catch (error) {
-      console.error("Failed to schedule notification:", error);
+      console.error("Failed to schedule task notification:", error);
       return null;
     }
   }
@@ -117,51 +109,114 @@ export class NotificationService {
    * Schedule daily reminder notification
    */
   static async scheduleDailyReminder(
-    time: string, // HH:MM format
-    settings: NotificationSettings
-  ): Promise<string | null> {
+    settings: NotificationSettings,
+    taskCount: number,
+    q1Count: number,
+    q2Count: number
+  ): Promise<string[]> {
+    if (!settings.enabled || !settings.dailyReminderEnabled) return [];
+
+    const identifiers: string[] = [];
+
     try {
-      if (!settings.enabled) return null;
+      const [hours, minutes] = settings.dailyReminderTime.split(":").map(Number);
 
-      const [hours, minutes] = time.split(":").map(Number);
-
-      const notificationId = await Notifications.scheduleNotificationAsync({
-        content: {
-          title: "✅ Daily Review",
-          body: "Time to review your tasks and priorities",
-          data: {
-            type: "daily_reminder",
+      for (const dayOfWeek of settings.dailyReminderDays) {
+        const identifier = await Notifications.scheduleNotificationAsync({
+          content: {
+            title: "📋 Daily Task Review",
+            body: `You have ${taskCount} active task(s): ${q1Count} urgent, ${q2Count} important`,
+            data: { type: "daily_review" },
+            sound: "default",
+            badge: 1,
           },
-          badge: 1,
-          sound: true,
-        },
-        trigger: {
-          type: "daily",
-          hour: hours,
-          minute: minutes,
-        } as any,
-      });
+          trigger: {
+            type: SchedulableTriggerInputTypes.WEEKLY,
+            weekday: dayOfWeek === 0 ? 7 : dayOfWeek, // Convert Sunday from 0 to 7 for Expo
+            hour: hours,
+            minute: minutes,
+          } as any,
+        });
 
-      return notificationId;
+        identifiers.push(identifier);
+      }
+
+      return identifiers;
     } catch (error) {
       console.error("Failed to schedule daily reminder:", error);
-      return null;
+      return [];
     }
   }
 
   /**
-   * Cancel a scheduled notification
+   * Reschedule all notifications for tasks
    */
-  static async cancelNotification(notificationId: string): Promise<void> {
+  static async rescheduleAllNotifications(
+    tasks: Task[],
+    settings: NotificationSettings
+  ): Promise<void> {
     try {
-      await Notifications.cancelScheduledNotificationAsync(notificationId);
+      // Cancel all existing task notifications
+      const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+      const taskNotifications = scheduled.filter((n) => (n.content.data as any)?.taskId);
+
+      for (const notif of taskNotifications) {
+        await Notifications.cancelScheduledNotificationAsync(notif.identifier);
+      }
+
+      // Reschedule all tasks
+      for (const task of tasks) {
+        await this.scheduleTaskNotification(task, settings);
+      }
+
+      // Reschedule daily reminders
+      await this.rescheduleDailyReminders(tasks, settings);
+    } catch (error) {
+      console.error("Failed to reschedule notifications:", error);
+    }
+  }
+
+  /**
+   * Reschedule daily reminders
+   */
+  static async rescheduleDailyReminders(
+    tasks: Task[],
+    settings: NotificationSettings
+  ): Promise<void> {
+    try {
+      // Cancel existing daily reminders
+      const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+      const dailyReminders = scheduled.filter((n) => (n.content.data as any)?.type === "daily_review");
+
+      for (const notif of dailyReminders) {
+        await Notifications.cancelScheduledNotificationAsync(notif.identifier);
+      }
+
+      // Reschedule daily reminders
+      if (settings.dailyReminderEnabled) {
+        const q1Count = tasks.filter((t) => t.eisenhower.quadrant === "Q1").length;
+        const q2Count = tasks.filter((t) => t.eisenhower.quadrant === "Q2").length;
+
+        await this.scheduleDailyReminder(settings, tasks.length, q1Count, q2Count);
+      }
+    } catch (error) {
+      console.error("Failed to reschedule daily reminders:", error);
+    }
+  }
+
+  /**
+   * Cancel a specific notification
+   */
+  static async cancelNotification(identifier: string): Promise<void> {
+    try {
+      await Notifications.cancelScheduledNotificationAsync(identifier);
     } catch (error) {
       console.error("Failed to cancel notification:", error);
     }
   }
 
   /**
-   * Cancel all scheduled notifications
+   * Cancel all notifications
    */
   static async cancelAllNotifications(): Promise<void> {
     try {
@@ -174,9 +229,7 @@ export class NotificationService {
   /**
    * Get all scheduled notifications
    */
-  static async getScheduledNotifications(): Promise<
-    Notifications.NotificationRequest[]
-  > {
+  static async getScheduledNotifications(): Promise<Notifications.NotificationRequest[]> {
     try {
       return await Notifications.getAllScheduledNotificationsAsync();
     } catch (error) {
@@ -186,25 +239,21 @@ export class NotificationService {
   }
 
   /**
-   * Send a test notification immediately
+   * Send a test notification
    */
-  static async sendTestNotification(
-    title: string = "Test Notification",
-    body: string = "This is a test notification"
-  ): Promise<void> {
+  static async sendTestNotification(title: string, body: string): Promise<void> {
     try {
-      const triggerDate = new Date();
-      triggerDate.setSeconds(triggerDate.getSeconds() + 1);
-
       await Notifications.scheduleNotificationAsync({
         content: {
           title,
           body,
-          data: { type: "test" },
+          sound: "default",
           badge: 1,
-          sound: true,
         },
-        trigger: triggerDate as any,
+        trigger: {
+          type: SchedulableTriggerInputTypes.TIME_INTERVAL,
+          seconds: 2,
+        },
       });
     } catch (error) {
       console.error("Failed to send test notification:", error);
@@ -212,69 +261,16 @@ export class NotificationService {
   }
 
   /**
-   * Handle notification response (when user taps notification)
+   * Set up notification response listener
    */
-  static onNotificationResponse(
-    callback: (taskId: string) => void
-  ): () => void {
-    const subscription = Notifications.addNotificationResponseReceivedListener(
-      (response) => {
-        const taskId = response.notification.request.content.data?.taskId as string | undefined;
-        if (taskId) {
-          callback(taskId);
-        }
+  static onNotificationResponse(callback: (taskId: string) => void): () => void {
+    const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
+      const taskId = (response.notification.request.content.data as any)?.taskId;
+      if (taskId) {
+        callback(taskId);
       }
-    );
+    });
 
     return () => subscription.remove();
-  }
-
-  /**
-   * Handle notification received while app is in foreground
-   */
-  static onNotificationReceived(
-    callback: (notification: Notifications.Notification) => void
-  ): () => void {
-    const subscription = Notifications.addNotificationReceivedListener(
-      (notification) => {
-        callback(notification);
-      }
-    );
-
-    return () => subscription.remove();
-  }
-
-  /**
-   * Reschedule all task notifications
-   */
-  static async rescheduleAllNotifications(
-    tasks: Task[],
-    settings: NotificationSettings
-  ): Promise<void> {
-    try {
-      // Cancel all existing notifications
-      await this.cancelAllNotifications();
-
-      // Schedule new notifications for all active tasks
-      for (const task of tasks) {
-        if (task.status === "active") {
-          await this.scheduleTaskNotification(task, settings);
-        }
-      }
-
-      // Schedule daily reminder if enabled
-      if (settings.dailyReminderTime && settings.enabled) {
-        await this.scheduleDailyReminder(settings.dailyReminderTime, settings);
-      }
-    } catch (error) {
-      console.error("Failed to reschedule notifications:", error);
-    }
-  }
-
-  /**
-   * Get default notification settings
-   */
-  static getDefaultSettings(): NotificationSettings {
-    return { ...DEFAULT_SETTINGS };
   }
 }

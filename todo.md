@@ -101,3 +101,15 @@
 - [x] Cancel notifications when task is marked done
 - [x] Add test notifications to settings screen
 - [x] Document notification system in README
+
+## Daily Reminders (NEW)
+- [x] Extend NotificationSettings type with daily reminder fields
+- [x] Add daily reminder scheduling logic to NotificationService
+- [x] Create DailyReminderScheduler for recurring notifications
+- [x] Add time picker component for daily reminder time
+- [x] Add day-of-week selector component
+- [x] Update notification settings UI with daily reminder section
+- [x] Implement task summary generation for daily notifications
+- [x] Integrate daily reminders with TaskContext lifecycle
+- [x] Test daily reminder scheduling and firing
+- [x] Update README with daily reminder documentation
