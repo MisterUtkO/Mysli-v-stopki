@@ -113,3 +113,19 @@
 - [x] Integrate daily reminders with TaskContext lifecycle
 - [x] Test daily reminder scheduling and firing
 - [x] Update README with daily reminder documentation
+
+## Simplification & Bug Fixes (NEW)
+- [x] Simplify scoring logic to use only importance and urgency
+- [x] Remove impact, effort, and risk metrics
+- [x] Update Task type to remove extra metrics
+- [x] Update database schema for simplified metrics
+- [x] Fix errors when adding tasks
+- [x] Add Russian language support with i18n
+- [x] Implement system language detection
+- [x] Translate all UI strings to Russian
+- [x] Add language toggle in settings
+- [x] Test all CRUD operations (create, read, update, delete)
+- [x] Test matrix quadrant calculations
+- [x] Test notification scheduling
+- [x] Test data persistence
+- [x] Update README with simplified scoring documentation

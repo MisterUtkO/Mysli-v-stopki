@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 /**
- * Domain models for the Eisenhower Priority app
+ * Domain models for the Eisenhower Priority app (Simplified)
  */
 
 // ============================================================================
@@ -11,9 +11,6 @@ import { z } from "zod";
 export const MetricsSchema = z.object({
   importanceScore: z.number().min(1).max(10),
   urgencyScore: z.number().min(1).max(10),
-  impactScore: z.number().min(1).max(10),
-  effortScore: z.number().min(1).max(10),
-  riskScore: z.number().min(1).max(10),
 });
 
 export type Metrics = z.infer<typeof MetricsSchema>;
@@ -42,7 +39,7 @@ export const TaskSchema = z.object({
   // Eisenhower matrix
   eisenhower: EisenhowerSchema,
   
-  // Metrics
+  // Metrics (simplified: only importance and urgency)
   metrics: MetricsSchema,
   
   // Derived fields
@@ -57,11 +54,8 @@ export type Task = z.infer<typeof TaskSchema>;
 // ============================================================================
 
 export const ScoringWeightsSchema = z.object({
-  wImportance: z.number().min(0).max(1).default(0.30),
-  wUrgency: z.number().min(0).max(1).default(0.25),
-  wImpact: z.number().min(0).max(1).default(0.25),
-  wRisk: z.number().min(0).max(1).default(0.15),
-  wEffort: z.number().min(0).max(1).default(0.05),
+  wImportance: z.number().min(0).max(1).default(0.5),
+  wUrgency: z.number().min(0).max(1).default(0.5),
 });
 
 export type ScoringWeights = z.infer<typeof ScoringWeightsSchema>;
@@ -76,6 +70,7 @@ export type Thresholds = z.infer<typeof ThresholdsSchema>;
 export const SettingsSchema = z.object({
   id: z.literal("default"),
   theme: z.enum(["light", "dark", "system"]).default("system"),
+  language: z.enum(["en", "ru"]).default("en"),
   weights: ScoringWeightsSchema,
   thresholds: ThresholdsSchema,
 });

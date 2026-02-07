@@ -45,29 +45,7 @@ export default function StatisticsScreen() {
         ).toFixed(1)
       : "0";
 
-  const avgImpact =
-    tasks.length > 0
-      ? (
-          tasks.reduce((sum, t) => sum + t.metrics.impactScore, 0) /
-          tasks.length
-        ).toFixed(1)
-      : "0";
 
-  const avgEffort =
-    tasks.length > 0
-      ? (
-          tasks.reduce((sum, t) => sum + t.metrics.effortScore, 0) /
-          tasks.length
-        ).toFixed(1)
-      : "0";
-
-  const avgRisk =
-    tasks.length > 0
-      ? (
-          tasks.reduce((sum, t) => sum + t.metrics.riskScore, 0) /
-          tasks.length
-        ).toFixed(1)
-      : "0";
 
   return (
     <ScreenContainer className="p-4 pb-0">
@@ -161,18 +139,7 @@ export default function StatisticsScreen() {
               <Text className="text-sm text-muted">Urgency</Text>
               <Text className="text-sm font-semibold text-foreground">{avgUrgency}/10</Text>
             </View>
-            <View className="flex-row justify-between">
-              <Text className="text-sm text-muted">Impact</Text>
-              <Text className="text-sm font-semibold text-foreground">{avgImpact}/10</Text>
-            </View>
-            <View className="flex-row justify-between">
-              <Text className="text-sm text-muted">Effort</Text>
-              <Text className="text-sm font-semibold text-foreground">{avgEffort}/10</Text>
-            </View>
-            <View className="flex-row justify-between">
-              <Text className="text-sm text-muted">Risk</Text>
-              <Text className="text-sm font-semibold text-foreground">{avgRisk}/10</Text>
-            </View>
+
           </View>
         </View>
 

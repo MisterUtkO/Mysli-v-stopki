@@ -2,13 +2,10 @@ import { describe, it, expect } from "vitest";
 import { calculateScoring, validateWeights } from "./scoring";
 import type { Metrics, ScoringWeights, Thresholds } from "./types";
 
-describe("Scoring Service", () => {
+describe("Scoring Service (Simplified)", () => {
   const defaultWeights: ScoringWeights = {
-    wImportance: 0.30,
-    wUrgency: 0.25,
-    wImpact: 0.25,
-    wRisk: 0.15,
-    wEffort: 0.05,
+    wImportance: 0.5,
+    wUrgency: 0.5,
   };
 
   const defaultThresholds: Thresholds = {
@@ -21,9 +18,6 @@ describe("Scoring Service", () => {
       const metrics: Metrics = {
         importanceScore: 9,
         urgencyScore: 9,
-        impactScore: 8,
-        effortScore: 5,
-        riskScore: 7,
       };
 
       const result = calculateScoring(metrics, defaultWeights, defaultThresholds);
@@ -39,9 +33,6 @@ describe("Scoring Service", () => {
       const metrics: Metrics = {
         importanceScore: 8,
         urgencyScore: 3,
-        impactScore: 9,
-        effortScore: 4,
-        riskScore: 6,
       };
 
       const result = calculateScoring(metrics, defaultWeights, defaultThresholds);
@@ -56,9 +47,6 @@ describe("Scoring Service", () => {
       const metrics: Metrics = {
         importanceScore: 4,
         urgencyScore: 8,
-        impactScore: 3,
-        effortScore: 2,
-        riskScore: 3,
       };
 
       const result = calculateScoring(metrics, defaultWeights, defaultThresholds);
@@ -73,9 +61,6 @@ describe("Scoring Service", () => {
       const metrics: Metrics = {
         importanceScore: 2,
         urgencyScore: 2,
-        impactScore: 1,
-        effortScore: 8,
-        riskScore: 1,
       };
 
       const result = calculateScoring(metrics, defaultWeights, defaultThresholds);
@@ -90,9 +75,6 @@ describe("Scoring Service", () => {
       const metrics: Metrics = {
         importanceScore: 7,
         urgencyScore: 5,
-        impactScore: 6,
-        effortScore: 3,
-        riskScore: 5,
       };
 
       const customThresholds: Thresholds = {
@@ -111,9 +93,6 @@ describe("Scoring Service", () => {
       const metrics: Metrics = {
         importanceScore: 5,
         urgencyScore: 5,
-        impactScore: 5,
-        effortScore: 5,
-        riskScore: 5,
       };
 
       const result = calculateScoring(metrics, defaultWeights, defaultThresholds);
@@ -122,64 +101,46 @@ describe("Scoring Service", () => {
       expect(result.priorityScore).toBeLessThanOrEqual(100);
     });
 
-    it("should decrease priority with higher effort", () => {
-      const baseMetrics: Metrics = {
-        importanceScore: 8,
-        urgencyScore: 7,
-        impactScore: 8,
-        effortScore: 3,
-        riskScore: 6,
+    it("should increase priority with higher importance", () => {
+      const lowImportanceMetrics: Metrics = {
+        importanceScore: 3,
+        urgencyScore: 5,
       };
 
-      const highEffortMetrics: Metrics = {
-        ...baseMetrics,
-        effortScore: 10,
+      const highImportanceMetrics: Metrics = {
+        importanceScore: 9,
+        urgencyScore: 5,
       };
 
-      const baseResult = calculateScoring(baseMetrics, defaultWeights, defaultThresholds);
-      const highEffortResult = calculateScoring(
-        highEffortMetrics,
-        defaultWeights,
-        defaultThresholds
-      );
+      const lowResult = calculateScoring(lowImportanceMetrics, defaultWeights, defaultThresholds);
+      const highResult = calculateScoring(highImportanceMetrics, defaultWeights, defaultThresholds);
 
-      expect(highEffortResult.priorityScore).toBeLessThan(baseResult.priorityScore);
+      expect(highResult.priorityScore).toBeGreaterThan(lowResult.priorityScore);
     });
 
-    it("should increase priority with higher impact and risk", () => {
-      const baseMetrics: Metrics = {
-        importanceScore: 7,
-        urgencyScore: 6,
-        impactScore: 5,
-        effortScore: 3,
-        riskScore: 5,
+    it("should increase priority with higher urgency", () => {
+      const lowUrgencyMetrics: Metrics = {
+        importanceScore: 5,
+        urgencyScore: 3,
       };
 
-      const highImpactMetrics: Metrics = {
-        ...baseMetrics,
-        impactScore: 10,
-        riskScore: 10,
+      const highUrgencyMetrics: Metrics = {
+        importanceScore: 5,
+        urgencyScore: 9,
       };
 
-      const baseResult = calculateScoring(baseMetrics, defaultWeights, defaultThresholds);
-      const highImpactResult = calculateScoring(
-        highImpactMetrics,
-        defaultWeights,
-        defaultThresholds
-      );
+      const lowResult = calculateScoring(lowUrgencyMetrics, defaultWeights, defaultThresholds);
+      const highResult = calculateScoring(highUrgencyMetrics, defaultWeights, defaultThresholds);
 
-      expect(highImpactResult.priorityScore).toBeGreaterThan(baseResult.priorityScore);
+      expect(highResult.priorityScore).toBeGreaterThan(lowResult.priorityScore);
     });
   });
 
   describe("validateWeights", () => {
     it("should validate correct weights", () => {
       const weights: ScoringWeights = {
-        wImportance: 0.30,
-        wUrgency: 0.25,
-        wImpact: 0.25,
-        wRisk: 0.15,
-        wEffort: 0.05,
+        wImportance: 0.5,
+        wUrgency: 0.5,
       };
 
       expect(validateWeights(weights)).toBe(true);
@@ -187,11 +148,8 @@ describe("Scoring Service", () => {
 
     it("should reject weights that don't sum to 1.0", () => {
       const weights: ScoringWeights = {
-        wImportance: 0.50,
-        wUrgency: 0.25,
-        wImpact: 0.25,
-        wRisk: 0.15,
-        wEffort: 0.05,
+        wImportance: 0.6,
+        wUrgency: 0.3,
       };
 
       expect(validateWeights(weights)).toBe(false);
@@ -199,11 +157,8 @@ describe("Scoring Service", () => {
 
     it("should allow small floating point errors", () => {
       const weights: ScoringWeights = {
-        wImportance: 0.30,
-        wUrgency: 0.25,
-        wImpact: 0.25,
-        wRisk: 0.15,
-        wEffort: 0.050000001,
+        wImportance: 0.5,
+        wUrgency: 0.5000000001,
       };
 
       expect(validateWeights(weights)).toBe(true);

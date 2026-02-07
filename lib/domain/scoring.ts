@@ -1,8 +1,9 @@
 import type { Metrics, ScoringWeights, Thresholds, ScoringOutput } from "./types";
 
 /**
- * Scoring Service
+ * Scoring Service (Simplified)
  * Calculates Eisenhower quadrant, priority score, and next action hint
+ * Based only on importance and urgency metrics
  */
 
 /**
@@ -44,51 +45,27 @@ function getNextActionHint(
 }
 
 /**
- * Calculates priority score using weighted formula
- * Formula: priorityScore = scale(wI*I + wU*U + wImp*Impact + wR*Risk - wE*Effort)
- * Where scale normalizes to 0-100 range
+ * Calculates priority score using weighted formula (simplified)
+ * Formula: priorityScore = scale(wImportance * importance + wUrgency * urgency)
+ * Normalized to 0-100 range
  */
 function calculatePriorityScore(
   metrics: Metrics,
   weights: ScoringWeights
 ): number {
-  const {
-    importanceScore: I,
-    urgencyScore: U,
-    impactScore: Impact,
-    riskScore: Risk,
-    effortScore: Effort,
-  } = metrics;
-
-  const { wImportance, wUrgency, wImpact, wRisk, wEffort } = weights;
+  const { importanceScore, urgencyScore } = metrics;
+  const { wImportance, wUrgency } = weights;
 
   // Raw weighted sum
-  const rawScore =
-    wImportance * I +
-    wUrgency * U +
-    wImpact * Impact +
-    wRisk * Risk -
-    wEffort * Effort;
+  const rawScore = wImportance * importanceScore + wUrgency * urgencyScore;
+
+  // Calculate max and min possible values
+  // Max: 0.5 * 10 + 0.5 * 10 = 10
+  // Min: 0.5 * 1 + 0.5 * 1 = 1
+  const maxPossible = wImportance * 10 + wUrgency * 10;
+  const minPossible = wImportance * 1 + wUrgency * 1;
 
   // Normalize to 0-100 range
-  // Max possible: 0.30*10 + 0.25*10 + 0.25*10 + 0.15*10 - 0.05*1
-  // = 3 + 2.5 + 2.5 + 1.5 - 0.05 = 9.45
-  // Min possible: 0.30*1 + 0.25*1 + 0.25*1 + 0.15*1 - 0.05*10
-  // = 0.3 + 0.25 + 0.25 + 0.15 - 0.5 = 0.45
-
-  const maxPossible =
-    wImportance * 10 +
-    wUrgency * 10 +
-    wImpact * 10 +
-    wRisk * 10 -
-    wEffort * 1;
-  const minPossible =
-    wImportance * 1 +
-    wUrgency * 1 +
-    wImpact * 1 +
-    wRisk * 1 -
-    wEffort * 10;
-
   const range = maxPossible - minPossible;
   const normalized = (rawScore - minPossible) / range;
   const scaled = Math.max(0, Math.min(100, normalized * 100));
@@ -131,12 +108,7 @@ export function calculateScoring(
  * Validates that weights sum to approximately 1.0
  */
 export function validateWeights(weights: ScoringWeights): boolean {
-  const sum =
-    weights.wImportance +
-    weights.wUrgency +
-    weights.wImpact +
-    weights.wRisk +
-    weights.wEffort;
+  const sum = weights.wImportance + weights.wUrgency;
 
   // Allow small floating point error
   return Math.abs(sum - 1.0) < 0.01;

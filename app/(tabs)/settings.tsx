@@ -177,9 +177,6 @@ export default function SettingsScreen() {
               {[
                 { key: "wImportance" as const, label: "Importance Weight" },
                 { key: "wUrgency" as const, label: "Urgency Weight" },
-                { key: "wImpact" as const, label: "Impact Weight" },
-                { key: "wRisk" as const, label: "Risk Weight" },
-                { key: "wEffort" as const, label: "Effort Weight" },
               ].map(({ key, label }) => (
                 <View key={key}>
                   <View className="flex-row items-center justify-between mb-2">

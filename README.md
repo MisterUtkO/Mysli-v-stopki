@@ -1,6 +1,6 @@
 # Eisenhower Priority App
 
-A powerful mobile task prioritization app based on the **Eisenhower Matrix** with advanced 10-point metric scoring. Organize your tasks by importance and urgency, and make data-driven decisions about what to focus on.
+A powerful mobile task prioritization app based on the **Eisenhower Matrix** with simplified 2-metric scoring. Organize your tasks by importance and urgency, and make data-driven decisions about what to focus on. Supports both English and Russian with automatic system language detection.
 
 ## Features
 
@@ -11,17 +11,14 @@ A powerful mobile task prioritization app based on the **Eisenhower Matrix** wit
   - **Q3 (Delegate)**: Not Important & Urgent (Blue)
   - **Q4 (Delete)**: Not Important & Not Urgent (Gray)
 
-### 📈 Advanced Scoring System
-- **10-point metric scale** for each task:
-  - **Importance**: How critical is this task?
-  - **Urgency**: How time-sensitive is it?
-  - **Impact**: What's the potential outcome?
-  - **Effort**: How much work is required?
-  - **Risk**: What's the consequence of not doing it?
+### 📈 Simplified Scoring System
+- **2-point metric scale** for each task:
+  - **Importance** (1-10): How critical is this task?
+  - **Urgency** (1-10): How time-sensitive is it?
 
-- **Configurable weights** to customize priority calculation
-- **Dynamic thresholds** to adjust quadrant boundaries
-- **Priority score** (0-100) automatically calculated for each task
+- **Configurable weights** to customize priority calculation (default: 50/50)
+- **Dynamic thresholds** to adjust quadrant boundaries (default: 6/10)
+- **Priority score** (0-100) automatically calculated for each task based on importance and urgency
 
 ### 🎯 Task Management
 - Create, edit, and delete tasks
@@ -51,12 +48,19 @@ A powerful mobile task prioritization app based on the **Eisenhower Matrix** wit
 - Test notification feature to verify settings
 - Automatic notification cleanup when tasks are completed
 
+### 🌍 Localization
+- **Automatic system language detection** (English or Russian)
+- Full UI translation to Russian
+- Language preference saved locally
+- Manual language switching in settings
+
 ### 🎨 User Experience
 - Clean, intuitive mobile-first design
 - Dark mode support
 - Haptic feedback on interactions
 - Real-time priority score updates
 - Responsive layout for all screen sizes
+- Support for both English and Russian interfaces
 
 ## Tech Stack
 
@@ -196,23 +200,21 @@ CREATE TABLE settings (
 );
 
 -- Stored settings:
--- weights: { wImportance, wUrgency, wImpact, wRisk, wEffort }
+-- weights: { wImportance, wUrgency }
 -- thresholds: { importanceThreshold, urgencyThreshold }
 -- theme: 'light' | 'dark' | 'system'
+-- language: 'en' | 'ru'
 ```
 
 ## Scoring Algorithm
 
-Priority score is calculated using a weighted sum of metrics:
+Priority score is calculated using a weighted sum of two simplified metrics:
 
 ```
 priorityScore = (
   wImportance * importanceScore +
-  wUrgency * urgencyScore +
-  wImpact * impactScore +
-  wRisk * riskScore +
-  wEffort * (10 - effortScore)  // Inverted: lower effort = higher priority
-) * 10
+  wUrgency * urgencyScore
+) / (wImportance + wUrgency) * 100
 
 // Quadrant determination:
 important = importanceScore >= importanceThreshold
@@ -225,15 +227,12 @@ Q4 = !important && !urgent → "Delete"
 ```
 
 ### Default Weights
-- **Importance**: 30% (0.30)
-- **Urgency**: 25% (0.25)
-- **Impact**: 25% (0.25)
-- **Risk**: 15% (0.15)
-- **Effort**: 5% (0.05)
+- **Importance**: 50% (0.5)
+- **Urgency**: 50% (0.5)
 
 ### Default Thresholds
-- **Importance Threshold**: 6/10
-- **Urgency Threshold**: 6/10
+- **Importance Threshold**: 6/10 (task is considered important if score ≥ 6)
+- **Urgency Threshold**: 6/10 (task is considered urgent if score ≥ 6)
 
 ## API Reference
 

@@ -33,18 +33,12 @@ export default function TaskDetailScreen() {
   const [metrics, setMetrics] = useState<Metrics>({
     importanceScore: 5,
     urgencyScore: 5,
-    impactScore: 5,
-    effortScore: 5,
-    riskScore: 5,
   });
 
   const [scoring, setScoring] = useState(
     calculateScoring(metrics, settings?.weights || {
-      wImportance: 0.30,
-      wUrgency: 0.25,
-      wImpact: 0.25,
-      wRisk: 0.15,
-      wEffort: 0.05,
+      wImportance: 0.5,
+      wUrgency: 0.5,
     }, settings?.thresholds || {
       importanceThreshold: 6,
       urgencyThreshold: 6,
@@ -72,11 +66,8 @@ export default function TaskDetailScreen() {
         setScoring(calculateScoring(
           existingTask.metrics,
           settings?.weights || {
-            wImportance: 0.30,
-            wUrgency: 0.25,
-            wImpact: 0.25,
-            wRisk: 0.15,
-            wEffort: 0.05,
+            wImportance: 0.5,
+            wUrgency: 0.5,
           },
           settings?.thresholds || {
             importanceThreshold: 6,
@@ -245,27 +236,6 @@ export default function TaskDetailScreen() {
               value={metrics.urgencyScore}
               onChange={(value) => handleMetricChange("urgencyScore", value)}
               description="How urgent is this task?"
-            />
-
-            <MetricSlider
-              label="Impact"
-              value={metrics.impactScore}
-              onChange={(value) => handleMetricChange("impactScore", value)}
-              description="What's the potential impact?"
-            />
-
-            <MetricSlider
-              label="Effort"
-              value={metrics.effortScore}
-              onChange={(value) => handleMetricChange("effortScore", value)}
-              description="How much effort is required?"
-            />
-
-            <MetricSlider
-              label="Risk"
-              value={metrics.riskScore}
-              onChange={(value) => handleMetricChange("riskScore", value)}
-              description="What's the risk if not done?"
             />
           </View>
 

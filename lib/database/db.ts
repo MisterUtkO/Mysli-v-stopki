@@ -154,9 +154,6 @@ export async function createTask(
       task.eisenhower.quadrant,
       task.metrics.importanceScore,
       task.metrics.urgencyScore,
-      task.metrics.impactScore,
-      task.metrics.effortScore,
-      task.metrics.riskScore,
       task.priorityScore,
       task.nextActionHint,
     ]
@@ -272,9 +269,6 @@ export async function updateTask(
       updatedTask.eisenhower.quadrant,
       updatedTask.metrics.importanceScore,
       updatedTask.metrics.urgencyScore,
-      updatedTask.metrics.impactScore,
-      updatedTask.metrics.effortScore,
-      updatedTask.metrics.riskScore,
       updatedTask.priorityScore,
       updatedTask.nextActionHint,
       updatedTask.updatedAt,
@@ -351,12 +345,10 @@ export async function getSettings(): Promise<Settings> {
   return {
     id: "default",
     theme: row.theme,
+    language: row.language || "en",
     weights: {
       wImportance: row.wImportance,
       wUrgency: row.wUrgency,
-      wImpact: row.wImpact,
-      wRisk: row.wRisk,
-      wEffort: row.wEffort,
     },
     thresholds: {
       importanceThreshold: row.importanceThreshold,
@@ -377,15 +369,13 @@ export async function updateSettings(
   const updated: Settings = { ...current, ...updates };
 
   await db.runAsync(
-    `UPDATE settings SET theme = ?, wImportance = ?, wUrgency = ?, wImpact = ?, wRisk = ?, wEffort = ?, importanceThreshold = ?, urgencyThreshold = ?
+    `UPDATE settings SET theme = ?, language = ?, wImportance = ?, wUrgency = ?, importanceThreshold = ?, urgencyThreshold = ?
      WHERE id = 'default'`,
     [
       updated.theme,
+      updated.language,
       updated.weights.wImportance,
       updated.weights.wUrgency,
-      updated.weights.wImpact,
-      updated.weights.wRisk,
-      updated.weights.wEffort,
       updated.thresholds.importanceThreshold,
       updated.thresholds.urgencyThreshold,
     ]
@@ -468,9 +458,6 @@ export async function importTasks(jsonData: string): Promise<number> {
           task.eisenhower.quadrant,
           task.metrics.importanceScore,
           task.metrics.urgencyScore,
-          task.metrics.impactScore,
-          task.metrics.effortScore,
-          task.metrics.riskScore,
           task.priorityScore,
           task.nextActionHint,
         ]
@@ -509,9 +496,6 @@ function rowToTask(row: any): Task {
     metrics: {
       importanceScore: row.importanceScore,
       urgencyScore: row.urgencyScore,
-      impactScore: row.impactScore,
-      effortScore: row.effortScore,
-      riskScore: row.riskScore,
     },
     priorityScore: row.priorityScore,
     nextActionHint: row.nextActionHint,
