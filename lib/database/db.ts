@@ -3,9 +3,18 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { Task, Settings } from "@/lib/domain/types";
 
 // Import SQLite only for native platforms
+// Use dynamic require wrapped in try-catch to prevent web bundler from resolving
 let SQLite: any = null;
-if (Platform.OS !== "web") {
-  SQLite = require("expo-sqlite");
+function loadSQLite() {
+  if (Platform.OS !== "web" && !SQLite) {
+    try {
+      // @ts-ignore - dynamic require for native only
+      SQLite = require("expo-sqlite");
+    } catch (e) {
+      console.log("SQLite not available on this platform");
+    }
+  }
+  return SQLite;
 }
 
 // Simple ID generator to avoid crypto.getRandomValues() issues
@@ -27,8 +36,9 @@ async function getDB() {
     return null; // Web uses AsyncStorage directly
   }
 
-  if (!db && SQLite) {
-    db = await SQLite.openDatabaseAsync(DB_NAME);
+  const sqlite = loadSQLite();
+  if (!db && sqlite) {
+    db = await sqlite.openDatabaseAsync(DB_NAME);
     // Enable WAL mode for better performance
     await db.execAsync("PRAGMA journal_mode = WAL;");
   }
