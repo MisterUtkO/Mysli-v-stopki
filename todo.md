@@ -162,3 +162,9 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Photo attachment preview (minimalist thumbnail)
 - [x] Streamline task creation — minimum touches required
 - [x] Optional details (importance, urgency, emoji, files) — not mandatory for creation
+
+## Phase 9: Fix Filters & Full Localization
+- [x] Fix status filter tabs — render as compact single-line toggle pills, not tall columns
+- [x] Complete Russian localization — all UI elements in Russian when language is set to Russian
+- [x] Complete English localization — all UI elements in English when language is set to English
+- [x] Tab bar labels translated (Tasks/Settings → Задачи/Настройки)

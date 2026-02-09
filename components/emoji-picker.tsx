@@ -1,5 +1,6 @@
 import { View, Text, Pressable, ScrollView, Modal } from "react-native";
 import { TASK_EMOJIS } from "@/lib/domain/types";
+import { useI18n } from "@/lib/context/i18n-context";
 
 interface EmojiPickerProps {
   visible: boolean;
@@ -14,6 +15,9 @@ export function EmojiPicker({
   onClose,
   selectedEmoji,
 }: EmojiPickerProps) {
+  const { language } = useI18n();
+  const isRu = language === "ru";
+
   return (
     <Modal
       visible={visible}
@@ -24,7 +28,7 @@ export function EmojiPicker({
       <View className="flex-1 bg-black/50 justify-center items-center p-4">
         <View className="bg-surface rounded-lg p-4 w-full max-w-sm">
           <Text className="text-lg font-bold text-foreground mb-4">
-            Выберите эмодзи
+            {isRu ? "Выберите эмодзи" : "Choose emoji"}
           </Text>
 
           <ScrollView
@@ -56,7 +60,7 @@ export function EmojiPicker({
             className="bg-surface border border-border rounded-lg p-3"
           >
             <Text className="text-center text-foreground font-semibold">
-              Закрыть
+              {isRu ? "Закрыть" : "Close"}
             </Text>
           </Pressable>
         </View>
