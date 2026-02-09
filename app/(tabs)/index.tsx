@@ -149,18 +149,13 @@ export default function HomeScreen() {
         />
 
         {/* Compact status filters - single row of small pills */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          className="mb-2"
-          contentContainerStyle={{ gap: 6, paddingVertical: 2 }}
-        >
+        <View style={{ flexDirection: "row", gap: 6, marginBottom: 8, flexWrap: "wrap" }}>
           <Pressable
             onPress={() => setSelectedStatus(null)}
             style={({ pressed }) => [
               {
-                paddingHorizontal: 10,
-                paddingVertical: 4,
+                paddingHorizontal: 12,
+                paddingVertical: 6,
                 borderRadius: 14,
                 backgroundColor: selectedStatus === null ? "#0a7ea4" : "transparent",
                 borderWidth: 1,
@@ -171,7 +166,7 @@ export default function HomeScreen() {
           >
             <Text
               style={{
-                fontSize: 12,
+                fontSize: 13,
                 fontWeight: "600",
                 color: selectedStatus === null ? "#FFFFFF" : "#9CA3AF",
               }}
@@ -188,8 +183,8 @@ export default function HomeScreen() {
                 }
                 style={({ pressed }) => [
                   {
-                    paddingHorizontal: 10,
-                    paddingVertical: 4,
+                    paddingHorizontal: 12,
+                    paddingVertical: 6,
                     borderRadius: 14,
                     backgroundColor:
                       selectedStatus === status
@@ -206,7 +201,7 @@ export default function HomeScreen() {
               >
                 <Text
                   style={{
-                    fontSize: 12,
+                    fontSize: 13,
                     fontWeight: "600",
                     color:
                       selectedStatus === status ? "#FFFFFF" : "#9CA3AF",
@@ -217,7 +212,7 @@ export default function HomeScreen() {
               </Pressable>
             )
           )}
-        </ScrollView>
+        </View>
 
         {/* Task list */}
         {filteredTasks.length === 0 ? (
