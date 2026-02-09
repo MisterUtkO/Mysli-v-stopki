@@ -1,136 +1,489 @@
 import { useRef } from "react";
-import { View, Text, Pressable, Animated } from "react-native";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import {
+  View,
+  Text,
+  Pressable,
+  Image,
+  Animated,
+  PanResponder,
+  Platform,
+  LayoutAnimation,
+  UIManager,
+} from "react-native";
+import { useRouter } from "expo-router";
 import type { Task, TaskStatus } from "@/lib/domain/types";
 
-const QUADRANT_COLORS: Record<string, string> = {
-  Q1: "bg-red-500",
-  Q2: "bg-orange-400",
-  Q3: "bg-blue-400",
-  Q4: "bg-green-500",
+// Enable LayoutAnimation on Android
+if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+const STATUS_ICONS: Record<string, string> = {
+  not_started: "○",
+  in_progress: "◐",
+  completed: "●",
 };
 
-const STATUS_COLORS: Record<string, string> = {
-  not_started: "border-l-4 border-gray-400",
-  in_progress: "border-l-4 border-blue-500",
-  completed: "border-l-4 border-green-500",
-};
+const SWIPE_THRESHOLD = 80;
+
+/**
+ * Returns a gradient color based on the combined priority score (importance + urgency).
+ * Score range: 2 (min: 1+1) to 14 (max: 7+7)
+ * 
+ * Psychological color gradient:
+ * 14 (max) → Deep red — extreme urgency, danger
+ * 12-13    → Bright red — very high priority
+ * 10-11    → Red-orange — high priority, attention
+ * 8-9      → Orange-amber — moderate-high, caution
+ * 6-7      → Yellow-green — moderate, balanced
+ * 4-5      → Green — low priority, calm
+ * 2-3      → Cool blue-gray — minimal priority, relaxed
+ */
+export function getPriorityGradientColor(importance: number, urgency: number): string {
+  const score = importance + urgency; // 2-14
+  
+  if (score >= 14) return "#C62828"; // Deep crimson red
+  if (score >= 13) return "#D32F2F"; // Dark red
+  if (score >= 12) return "#E53935"; // Red
+  if (score >= 11) return "#EF4444"; // Bright red
+  if (score >= 10) return "#F97316"; // Orange
+  if (score >= 9)  return "#FB923C"; // Light orange
+  if (score >= 8)  return "#F59E0B"; // Amber
+  if (score >= 7)  return "#FBBF24"; // Yellow-amber
+  if (score >= 6)  return "#A3E635"; // Yellow-green
+  if (score >= 5)  return "#84CC16"; // Lime green
+  if (score >= 4)  return "#22C55E"; // Green
+  if (score >= 3)  return "#4ADE80"; // Light green
+  return "#64B5F6"; // Cool blue — minimal priority
+}
+
+/** Returns a slightly transparent version for card background tint */
+function getPriorityBgTint(importance: number, urgency: number): string {
+  const score = importance + urgency;
+  
+  if (score >= 12) return "rgba(239, 68, 68, 0.08)";
+  if (score >= 10) return "rgba(249, 115, 22, 0.07)";
+  if (score >= 8)  return "rgba(245, 158, 11, 0.06)";
+  if (score >= 6)  return "rgba(132, 204, 22, 0.05)";
+  if (score >= 4)  return "rgba(34, 197, 94, 0.04)";
+  return "rgba(100, 181, 246, 0.04)";
+}
 
 interface SwipeableTaskCardProps {
   task: Task;
-  emoji?: string;
-  onPress: () => void;
-  onStatusChange: (newStatus: TaskStatus) => void;
-  onDelete: () => void;
+  isExpanded: boolean;
+  isRu: boolean;
+  onToggleExpand: (taskId: string) => void;
+  onStatusChange: (taskId: string, currentStatus: TaskStatus) => void;
+  onDelete: (taskId: string, taskTitle: string) => void;
 }
 
 export function SwipeableTaskCard({
   task,
-  emoji,
-  onPress,
+  isExpanded,
+  isRu,
+  onToggleExpand,
   onStatusChange,
   onDelete,
 }: SwipeableTaskCardProps) {
+  const router = useRouter();
   const translateX = useRef(new Animated.Value(0)).current;
+  const isSwipingRef = useRef(false);
 
-  const panGesture = Gesture.Pan()
-    .onUpdate((event) => {
-      if (event.translationX < 0) {
-        translateX.setValue(Math.max(event.translationX, -120));
-      }
-    })
-    .onEnd((event) => {
-      if (event.translationX < -60) {
-        // Swipe left - show delete
-        Animated.timing(translateX, {
-          toValue: -120,
-          duration: 200,
-          useNativeDriver: true,
-        }).start();
-      } else {
-        // Reset
-        Animated.timing(translateX, {
+  const getStatusLabel = (status: TaskStatus): string => {
+    switch (status) {
+      case "not_started": return isRu ? "Не начато" : "Not started";
+      case "in_progress": return isRu ? "В процессе" : "In progress";
+      case "completed": return isRu ? "Выполнено" : "Completed";
+    }
+  };
+
+  const getStatusColor = (status: TaskStatus): string => {
+    switch (status) {
+      case "not_started": return "#9CA3AF";
+      case "in_progress": return "#3B82F6";
+      case "completed": return "#22C55E";
+    }
+  };
+
+  const getNotifFreqLabel = (freq?: string): string => {
+    if (!freq || freq === "global") return isRu ? "По умолч." : "Default";
+    switch (freq) {
+      case "never": return isRu ? "Никогда" : "Never";
+      case "10min": return isRu ? "10 мин" : "10 min";
+      case "30min": return isRu ? "30 мин" : "30 min";
+      case "hourly": return isRu ? "Час" : "Hourly";
+      case "daily": return isRu ? "День" : "Daily";
+      case "weekly": return isRu ? "Неделя" : "Weekly";
+      default: return freq;
+    }
+  };
+
+  const getNextStatusLabel = (status: TaskStatus): string => {
+    switch (status) {
+      case "not_started": return isRu ? "В процессе →" : "In progress →";
+      case "in_progress": return isRu ? "Выполнено →" : "Complete →";
+      case "completed": return isRu ? "Не начато →" : "Not started →";
+    }
+  };
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        return Math.abs(gestureState.dx) > 10 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.5;
+      },
+      onPanResponderGrant: () => {
+        isSwipingRef.current = true;
+      },
+      onPanResponderMove: (_, gestureState) => {
+        const clampedDx = Math.max(-120, Math.min(120, gestureState.dx));
+        translateX.setValue(clampedDx);
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        isSwipingRef.current = false;
+        
+        if (gestureState.dx < -SWIPE_THRESHOLD) {
+          // Swipe left → Delete
+          Animated.timing(translateX, {
+            toValue: -120,
+            duration: 150,
+            useNativeDriver: true,
+          }).start(() => {
+            onDelete(task.id, task.title);
+            Animated.spring(translateX, {
+              toValue: 0,
+              useNativeDriver: true,
+              tension: 40,
+              friction: 8,
+            }).start();
+          });
+        } else if (gestureState.dx > SWIPE_THRESHOLD) {
+          // Swipe right → Change status
+          Animated.timing(translateX, {
+            toValue: 120,
+            duration: 150,
+            useNativeDriver: true,
+          }).start(() => {
+            onStatusChange(task.id, task.status);
+            Animated.spring(translateX, {
+              toValue: 0,
+              useNativeDriver: true,
+              tension: 40,
+              friction: 8,
+            }).start();
+          });
+        } else {
+          Animated.spring(translateX, {
+            toValue: 0,
+            useNativeDriver: true,
+            tension: 40,
+            friction: 8,
+          }).start();
+        }
+      },
+      onPanResponderTerminate: () => {
+        isSwipingRef.current = false;
+        Animated.spring(translateX, {
           toValue: 0,
-          duration: 200,
           useNativeDriver: true,
+          tension: 40,
+          friction: 8,
         }).start();
-      }
-    });
+      },
+    })
+  ).current;
 
-  const handleDelete = () => {
-    Animated.timing(translateX, {
-      toValue: 0,
-      duration: 200,
-      useNativeDriver: true,
-    }).start(() => {
-      onDelete();
-    });
-  };
+  const priorityColor = getPriorityGradientColor(task.importance, task.urgency);
+  const bgTint = getPriorityBgTint(task.importance, task.urgency);
+  const hasAttachments = task.attachments && task.attachments.length > 0;
 
-  const handleToggleComplete = () => {
-    const newStatus: TaskStatus =
-      task.status === "completed" ? "not_started" : "completed";
-    onStatusChange(newStatus);
-    Animated.timing(translateX, {
-      toValue: 0,
-      duration: 200,
-      useNativeDriver: true,
-    }).start();
-  };
+  const leftActionOpacity = translateX.interpolate({
+    inputRange: [0, SWIPE_THRESHOLD],
+    outputRange: [0, 1],
+    extrapolate: "clamp",
+  });
+
+  const rightActionOpacity = translateX.interpolate({
+    inputRange: [-SWIPE_THRESHOLD, 0],
+    outputRange: [1, 0],
+    extrapolate: "clamp",
+  });
 
   return (
-    <GestureDetector gesture={panGesture}>
-      <View className="mb-3 relative overflow-hidden rounded-lg">
-        {/* Background action buttons */}
-        <View className="absolute right-0 top-0 bottom-0 flex-row bg-red-500 rounded-lg overflow-hidden">
-          <Pressable
-            onPress={handleDelete}
-            className="flex-1 justify-center items-center bg-red-600"
-          >
-            <Text className="text-white text-lg font-bold">✕ Удалить</Text>
-          </Pressable>
-        </View>
-
-        {/* Main card */}
+    <View style={{ marginBottom: 8, borderRadius: 14, overflow: "hidden" }}>
+      {/* Background swipe actions */}
+      <View
+        style={{
+          position: "absolute",
+          top: 0,
+          bottom: 0,
+          left: 0,
+          right: 0,
+          flexDirection: "row",
+          borderRadius: 14,
+          overflow: "hidden",
+        }}
+      >
+        {/* Right swipe background (status change) */}
         <Animated.View
-          style={{ transform: [{ translateX }] }}
-          className={`bg-surface border border-border rounded-lg p-4 ${STATUS_COLORS[task.status]}`}
+          style={{
+            flex: 1,
+            backgroundColor: "#22C55E",
+            justifyContent: "center",
+            paddingLeft: 16,
+            opacity: leftActionOpacity,
+            borderRadius: 14,
+          }}
         >
-          <Pressable onPress={onPress} className="flex-1">
-            <View className="flex-row justify-between items-start mb-2">
-              <View className="flex-1">
-                <View className="flex-row items-center gap-2 mb-1">
-                  {emoji && <Text className="text-2xl">{emoji}</Text>}
-                  <Text className="text-lg font-bold text-foreground flex-1">
+          <Text style={{ color: "#FFFFFF", fontWeight: "700", fontSize: 13 }}>
+            {getNextStatusLabel(task.status)}
+          </Text>
+        </Animated.View>
+
+        {/* Left swipe background (delete) */}
+        <Animated.View
+          style={{
+            flex: 1,
+            backgroundColor: "#EF4444",
+            justifyContent: "center",
+            alignItems: "flex-end",
+            paddingRight: 16,
+            opacity: rightActionOpacity,
+            borderRadius: 14,
+          }}
+        >
+          <Text style={{ color: "#FFFFFF", fontWeight: "700", fontSize: 13 }}>
+            {isRu ? "Удалить 🗑" : "Delete 🗑"}
+          </Text>
+        </Animated.View>
+      </View>
+
+      {/* Swipeable card */}
+      <Animated.View
+        style={{ transform: [{ translateX }] }}
+        {...panResponder.panHandlers}
+      >
+        <Pressable
+          onPress={() => {
+            if (!isSwipingRef.current) {
+              onToggleExpand(task.id);
+            }
+          }}
+          style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1, borderRadius: 14 }]}
+        >
+          <View
+            style={{
+              borderLeftWidth: 4,
+              borderLeftColor: priorityColor,
+              borderRadius: 14,
+              overflow: "hidden",
+              backgroundColor: bgTint,
+            }}
+            className="bg-surface border border-border rounded-2xl"
+          >
+            {/* COLLAPSED VIEW */}
+            <View style={{ paddingHorizontal: 12, paddingVertical: 10 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                <View style={{ flexDirection: "row", alignItems: "center", flex: 1, marginRight: 8 }}>
+                  <Pressable
+                    onPress={() => onStatusChange(task.id, task.status)}
+                    style={({ pressed }) => [{ marginRight: 8, opacity: pressed ? 0.5 : 1 }]}
+                  >
+                    <Text style={{ fontSize: 16, color: getStatusColor(task.status) }}>
+                      {STATUS_ICONS[task.status]}
+                    </Text>
+                  </Pressable>
+
+                  {task.emoji && (
+                    <Text style={{ fontSize: 18, marginRight: 6 }}>{task.emoji}</Text>
+                  )}
+
+                  <Text
+                    style={{
+                      fontSize: 15,
+                      lineHeight: 20,
+                      fontWeight: "600",
+                      flex: 1,
+                      textDecorationLine: task.status === "completed" ? "line-through" : "none",
+                      opacity: task.status === "completed" ? 0.5 : 1,
+                    }}
+                    className="text-foreground"
+                    numberOfLines={1}
+                  >
                     {task.title}
                   </Text>
                 </View>
-                <Text className="text-sm text-muted">{task.description}</Text>
-              </View>
-              <View className={`${QUADRANT_COLORS[task.quadrant]} px-2 py-1 rounded`}>
-                <Text className="text-white text-xs font-bold">{task.quadrant}</Text>
+
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                  <View
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: 4,
+                      backgroundColor: priorityColor,
+                      marginRight: 2,
+                    }}
+                  />
+                  <Text style={{ fontSize: 10, color: "#9CA3AF" }}>
+                    ⚡{task.importance} 🔥{task.urgency}
+                  </Text>
+                  <View
+                    style={{
+                      backgroundColor: priorityColor,
+                      paddingHorizontal: 6,
+                      paddingVertical: 2,
+                      borderRadius: 6,
+                      marginLeft: 2,
+                    }}
+                  >
+                    <Text style={{ color: "#FFFFFF", fontSize: 10, fontWeight: "700" }}>
+                      {task.quadrant}
+                    </Text>
+                  </View>
+                </View>
               </View>
             </View>
 
-            <View className="flex-row justify-between items-center mt-3">
-              <Pressable
-                onPress={handleToggleComplete}
-                className={`px-3 py-1 rounded ${
-                  task.status === "completed" ? "bg-green-500" : "bg-gray-300"
-                }`}
+            {/* EXPANDED VIEW */}
+            {isExpanded && (
+              <View
+                style={{
+                  paddingHorizontal: 12,
+                  paddingBottom: 12,
+                  borderTopWidth: 1,
+                  borderTopColor: "rgba(128,128,128,0.15)",
+                }}
               >
-                <Text className="text-xs font-semibold text-white">
-                  {task.status === "completed" ? "✓" : "○"}
-                </Text>
-              </Pressable>
+                {task.description && task.description !== task.title && (
+                  <Text
+                    className="text-muted"
+                    style={{ fontSize: 13, lineHeight: 18, marginTop: 8 }}
+                    numberOfLines={4}
+                  >
+                    {task.description}
+                  </Text>
+                )}
 
-              {task.dueDate && (
-                <Text className="text-xs text-muted">{task.dueDate}</Text>
-              )}
-            </View>
-          </Pressable>
-        </Animated.View>
-      </View>
-    </GestureDetector>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginTop: 8 }}>
+                  <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: "#FF6B6B", marginRight: 4 }} />
+                    <Text style={{ fontSize: 12, color: "#FF6B6B" }}>
+                      {isRu ? "Важность" : "Imp"}: {task.importance}/7
+                    </Text>
+                  </View>
+                  <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: "#FFA94D", marginRight: 4 }} />
+                    <Text style={{ fontSize: 12, color: "#FFA94D" }}>
+                      {isRu ? "Срочность" : "Urg"}: {task.urgency}/7
+                    </Text>
+                  </View>
+                  {task.dueDate && (
+                    <Text style={{ fontSize: 12, color: "#9CA3AF" }}>
+                      📅 {task.dueDate}{task.dueTime ? ` ${task.dueTime}` : ""}
+                    </Text>
+                  )}
+                </View>
+
+                {/* Priority bar */}
+                <View style={{ marginTop: 8 }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                    <Text style={{ fontSize: 10, color: "#9CA3AF", width: 60 }}>
+                      {isRu ? "Приоритет" : "Priority"}
+                    </Text>
+                    <View style={{ flex: 1, height: 6, backgroundColor: "rgba(128,128,128,0.15)", borderRadius: 3, overflow: "hidden" }}>
+                      <View
+                        style={{
+                          width: `${((task.importance + task.urgency) / 14) * 100}%`,
+                          height: 6,
+                          backgroundColor: priorityColor,
+                          borderRadius: 3,
+                        }}
+                      />
+                    </View>
+                    <Text style={{ fontSize: 10, color: priorityColor, fontWeight: "700", width: 30, textAlign: "right" }}>
+                      {task.importance + task.urgency}/14
+                    </Text>
+                  </View>
+                </View>
+
+                {task.notificationFrequency && task.notificationFrequency !== "global" && (
+                  <View style={{ flexDirection: "row", alignItems: "center", marginTop: 6 }}>
+                    <Text style={{ fontSize: 11, color: "#0a7ea4" }}>
+                      🔔 {getNotifFreqLabel(task.notificationFrequency)}
+                    </Text>
+                  </View>
+                )}
+
+                {hasAttachments && (
+                  <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
+                    {task.attachments!.map((att, idx) => (
+                      <View
+                        key={idx}
+                        style={{
+                          width: 48,
+                          height: 48,
+                          borderRadius: 8,
+                          backgroundColor: "rgba(128,128,128,0.15)",
+                          overflow: "hidden",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        {att.type === "image" ? (
+                          <Image
+                            source={{ uri: att.uri }}
+                            style={{ width: 48, height: 48 }}
+                            resizeMode="cover"
+                          />
+                        ) : (
+                          <Text style={{ fontSize: 20 }}>📎</Text>
+                        )}
+                      </View>
+                    ))}
+                  </View>
+                )}
+
+                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 10 }}>
+                  <Pressable
+                    onPress={() => onStatusChange(task.id, task.status)}
+                    style={({ pressed }) => [
+                      {
+                        flexDirection: "row",
+                        alignItems: "center",
+                        backgroundColor: getStatusColor(task.status) + "20",
+                        paddingHorizontal: 10,
+                        paddingVertical: 4,
+                        borderRadius: 10,
+                        opacity: pressed ? 0.7 : 1,
+                      },
+                    ]}
+                  >
+                    <Text style={{ color: getStatusColor(task.status), fontSize: 12, fontWeight: "600" }}>
+                      {STATUS_ICONS[task.status]} {getStatusLabel(task.status)}
+                    </Text>
+                  </Pressable>
+
+                  <Pressable
+                    onPress={() => router.push(`/task-detail/${task.id}`)}
+                    style={({ pressed }) => [
+                      {
+                        paddingHorizontal: 12,
+                        paddingVertical: 6,
+                        borderRadius: 8,
+                        opacity: pressed ? 0.5 : 1,
+                      },
+                    ]}
+                  >
+                    <Text style={{ fontSize: 20, fontWeight: "700", color: "#9CA3AF", letterSpacing: 2 }}>
+                      ⋮
+                    </Text>
+                  </Pressable>
+                </View>
+              </View>
+            )}
+          </View>
+        </Pressable>
+      </Animated.View>
+    </View>
   );
 }

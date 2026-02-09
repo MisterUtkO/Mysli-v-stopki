@@ -168,3 +168,10 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Complete Russian localization — all UI elements in Russian when language is set to Russian
 - [x] Complete English localization — all UI elements in English when language is set to English
 - [x] Tab bar labels translated (Tasks/Settings → Задачи/Настройки)
+
+## Phase 10: Swipe Actions & Gradient Colors
+- [x] Swipe left on task card to reveal delete action
+- [x] Swipe right on task card to cycle task status (not_started → in_progress → completed)
+- [x] Gradient color system for task cards based on importance+urgency score
+- [x] Bright red for highest priority (Q1, score 7+7), lighter/cooler colors for lower priority
+- [x] Psychological color gradient: red → orange → yellow → green → blue/gray

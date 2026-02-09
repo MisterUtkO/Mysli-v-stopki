@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -9,25 +9,18 @@ import {
   Platform,
   LayoutAnimation,
   UIManager,
-  Image,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { useTaskContext } from "@/lib/context/task-context";
 import { useI18n } from "@/lib/context/i18n-context";
+import { SwipeableTaskCard } from "@/components/swipeable-task-card";
 import type { Task, TaskStatus } from "@/lib/domain/types";
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
-
-const QUADRANT_BG: Record<string, string> = {
-  Q1: "#FF6B6B",
-  Q2: "#FFA94D",
-  Q3: "#74C0FC",
-  Q4: "#51CF66",
-};
 
 const STATUS_ICONS: Record<string, string> = {
   not_started: "○",
@@ -75,12 +68,12 @@ export default function HomeScreen() {
 
   const handleDelete = (taskId: string, taskTitle: string) => {
     Alert.alert(
-      t.home.deleteConfirm || "Удалить задачу?",
+      isRu ? "Удалить задачу?" : "Delete task?",
       taskTitle,
       [
-        { text: t.common.cancel || "Отмена", style: "cancel" },
+        { text: isRu ? "Отмена" : "Cancel", style: "cancel" },
         {
-          text: t.home.delete || "Удалить",
+          text: isRu ? "Удалить" : "Delete",
           style: "destructive",
           onPress: () => deleteTask(taskId),
         },
@@ -95,36 +88,17 @@ export default function HomeScreen() {
 
   const getStatusLabel = (status: TaskStatus): string => {
     switch (status) {
-      case "not_started":
-        return isRu ? "Не начато" : "Not started";
-      case "in_progress":
-        return isRu ? "В процессе" : "In progress";
-      case "completed":
-        return isRu ? "Выполнено" : "Completed";
+      case "not_started": return isRu ? "Не начато" : "Not started";
+      case "in_progress": return isRu ? "В процессе" : "In progress";
+      case "completed": return isRu ? "Выполнено" : "Completed";
     }
   };
 
   const getStatusColor = (status: TaskStatus): string => {
     switch (status) {
-      case "not_started":
-        return "#9CA3AF";
-      case "in_progress":
-        return "#3B82F6";
-      case "completed":
-        return "#22C55E";
-    }
-  };
-
-  const getNotifFreqLabel = (freq?: string): string => {
-    if (!freq || freq === "global") return isRu ? "По умолч." : "Default";
-    switch (freq) {
-      case "never": return isRu ? "Никогда" : "Never";
-      case "10min": return isRu ? "10 мин" : "10 min";
-      case "30min": return isRu ? "30 мин" : "30 min";
-      case "hourly": return isRu ? "Час" : "Hourly";
-      case "daily": return isRu ? "День" : "Daily";
-      case "weekly": return isRu ? "Неделя" : "Weekly";
-      default: return freq;
+      case "not_started": return "#9CA3AF";
+      case "in_progress": return "#3B82F6";
+      case "completed": return "#22C55E";
     }
   };
 
@@ -132,7 +106,7 @@ export default function HomeScreen() {
     <ScreenContainer className="p-4">
       <View className="flex-1">
         {/* Header */}
-        <View className="flex-row justify-between items-center mb-3">
+        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
           <Text className="text-2xl font-bold text-foreground">
             {t.home.title}
           </Text>
@@ -148,7 +122,7 @@ export default function HomeScreen() {
           style={{ fontSize: 15 }}
         />
 
-        {/* Compact status filters - single row of small pills */}
+        {/* Compact status filters */}
         <View style={{ flexDirection: "row", gap: 6, marginBottom: 8, flexWrap: "wrap" }}>
           <Pressable
             onPress={() => setSelectedStatus(null)}
@@ -214,6 +188,13 @@ export default function HomeScreen() {
           )}
         </View>
 
+        {/* Swipe hint */}
+        {filteredTasks.length > 0 && (
+          <Text style={{ fontSize: 10, color: "#9CA3AF", textAlign: "center", marginBottom: 4 }}>
+            {isRu ? "← удалить | изменить статус →" : "← delete | change status →"}
+          </Text>
+        )}
+
         {/* Task list */}
         {filteredTasks.length === 0 ? (
           <View className="flex-1 items-center justify-center">
@@ -227,248 +208,17 @@ export default function HomeScreen() {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: 80 }}
           >
-            {filteredTasks.map((task) => {
-              const isExpanded = expandedTaskId === task.id;
-              const hasAttachments = task.attachments && task.attachments.length > 0;
-
-              return (
-                <View key={task.id} className="mb-2">
-                  <Pressable
-                    onPress={() => toggleExpand(task.id)}
-                    onLongPress={() => handleDelete(task.id, task.title)}
-                    style={({ pressed }) => [
-                      {
-                        opacity: pressed ? 0.9 : 1,
-                        borderRadius: 14,
-                      },
-                    ]}
-                  >
-                    <View
-                      style={{
-                        borderLeftWidth: 4,
-                        borderLeftColor: QUADRANT_BG[task.quadrant],
-                        borderRadius: 14,
-                        overflow: "hidden",
-                      }}
-                      className="bg-surface border border-border rounded-2xl"
-                    >
-                      {/* COLLAPSED VIEW: emoji + title + quadrant badge + status */}
-                      <View style={{ paddingHorizontal: 12, paddingVertical: 10 }}>
-                        <View className="flex-row items-center justify-between">
-                          <View className="flex-row items-center flex-1 mr-2">
-                            {/* Status dot */}
-                            <Pressable
-                              onPress={() => handleStatusChange(task.id, task.status)}
-                              style={({ pressed }) => [
-                                {
-                                  marginRight: 8,
-                                  opacity: pressed ? 0.5 : 1,
-                                },
-                              ]}
-                            >
-                              <Text
-                                style={{
-                                  fontSize: 16,
-                                  color: getStatusColor(task.status),
-                                }}
-                              >
-                                {STATUS_ICONS[task.status]}
-                              </Text>
-                            </Pressable>
-
-                            {/* Emoji */}
-                            {task.emoji && (
-                              <Text style={{ fontSize: 18, marginRight: 6 }}>
-                                {task.emoji}
-                              </Text>
-                            )}
-
-                            {/* Title */}
-                            <Text
-                              className="text-foreground font-semibold flex-1"
-                              style={{
-                                fontSize: 15,
-                                lineHeight: 20,
-                                textDecorationLine:
-                                  task.status === "completed"
-                                    ? "line-through"
-                                    : "none",
-                                opacity: task.status === "completed" ? 0.5 : 1,
-                              }}
-                              numberOfLines={1}
-                            >
-                              {task.title}
-                            </Text>
-                          </View>
-
-                          {/* Right side: metrics + quadrant badge */}
-                          <View className="flex-row items-center gap-1">
-                            <Text style={{ fontSize: 10, color: "#9CA3AF" }}>
-                              ⚡{task.importance} 🔥{task.urgency}
-                            </Text>
-                            <View
-                              style={{
-                                backgroundColor: QUADRANT_BG[task.quadrant],
-                                paddingHorizontal: 6,
-                                paddingVertical: 2,
-                                borderRadius: 6,
-                                marginLeft: 4,
-                              }}
-                            >
-                              <Text
-                                style={{
-                                  color: "#FFFFFF",
-                                  fontSize: 10,
-                                  fontWeight: "700",
-                                }}
-                              >
-                                {task.quadrant}
-                              </Text>
-                            </View>
-                          </View>
-                        </View>
-                      </View>
-
-                      {/* EXPANDED VIEW */}
-                      {isExpanded && (
-                        <View
-                          style={{
-                            paddingHorizontal: 12,
-                            paddingBottom: 12,
-                            borderTopWidth: 1,
-                            borderTopColor: "rgba(128,128,128,0.15)",
-                          }}
-                        >
-                          {/* Description */}
-                          {task.description && task.description !== task.title && (
-                            <Text
-                              className="text-muted"
-                              style={{ fontSize: 13, lineHeight: 18, marginTop: 8 }}
-                              numberOfLines={4}
-                            >
-                              {task.description}
-                            </Text>
-                          )}
-
-                          {/* Metrics row */}
-                          <View className="flex-row items-center gap-3 mt-2">
-                            <Text style={{ fontSize: 12, color: "#FF6B6B" }}>
-                              {isRu ? "Важность" : "Imp"}: {task.importance}/7
-                            </Text>
-                            <Text style={{ fontSize: 12, color: "#FFA94D" }}>
-                              {isRu ? "Срочность" : "Urg"}: {task.urgency}/7
-                            </Text>
-                            {task.dueDate && (
-                              <Text style={{ fontSize: 12, color: "#9CA3AF" }}>
-                                📅 {task.dueDate}
-                                {task.dueTime ? ` ${task.dueTime}` : ""}
-                              </Text>
-                            )}
-                          </View>
-
-                          {/* Notification frequency if custom */}
-                          {task.notificationFrequency && task.notificationFrequency !== "global" && (
-                            <View className="flex-row items-center mt-2">
-                              <Text style={{ fontSize: 11, color: "#0a7ea4" }}>
-                                🔔 {getNotifFreqLabel(task.notificationFrequency)}
-                              </Text>
-                            </View>
-                          )}
-
-                          {/* File attachments preview */}
-                          {hasAttachments && (
-                            <View className="flex-row flex-wrap gap-2 mt-2">
-                              {task.attachments!.map((att, idx) => (
-                                <View
-                                  key={idx}
-                                  style={{
-                                    width: 48,
-                                    height: 48,
-                                    borderRadius: 8,
-                                    backgroundColor: "rgba(128,128,128,0.15)",
-                                    overflow: "hidden",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                  }}
-                                >
-                                  {att.type === "image" ? (
-                                    <Image
-                                      source={{ uri: att.uri }}
-                                      style={{ width: 48, height: 48 }}
-                                      resizeMode="cover"
-                                    />
-                                  ) : (
-                                    <Text style={{ fontSize: 20 }}>📎</Text>
-                                  )}
-                                </View>
-                              ))}
-                            </View>
-                          )}
-
-                          {/* Status + Edit button row */}
-                          <View className="flex-row items-center justify-between mt-3">
-                            {/* Status badge */}
-                            <Pressable
-                              onPress={() =>
-                                handleStatusChange(task.id, task.status)
-                              }
-                              style={({ pressed }) => [
-                                {
-                                  flexDirection: "row",
-                                  alignItems: "center",
-                                  backgroundColor: getStatusColor(task.status) + "20",
-                                  paddingHorizontal: 10,
-                                  paddingVertical: 4,
-                                  borderRadius: 10,
-                                  opacity: pressed ? 0.7 : 1,
-                                },
-                              ]}
-                            >
-                              <Text
-                                style={{
-                                  color: getStatusColor(task.status),
-                                  fontSize: 12,
-                                  fontWeight: "600",
-                                }}
-                              >
-                                {STATUS_ICONS[task.status]}{" "}
-                                {getStatusLabel(task.status)}
-                              </Text>
-                            </Pressable>
-
-                            {/* Three-dot menu → Edit */}
-                            <Pressable
-                              onPress={() =>
-                                router.push(`/task-detail/${task.id}`)
-                              }
-                              style={({ pressed }) => [
-                                {
-                                  paddingHorizontal: 12,
-                                  paddingVertical: 6,
-                                  borderRadius: 8,
-                                  opacity: pressed ? 0.5 : 1,
-                                },
-                              ]}
-                            >
-                              <Text
-                                style={{
-                                  fontSize: 20,
-                                  fontWeight: "700",
-                                  color: "#9CA3AF",
-                                  letterSpacing: 2,
-                                }}
-                              >
-                                ⋮
-                              </Text>
-                            </Pressable>
-                          </View>
-                        </View>
-                      )}
-                    </View>
-                  </Pressable>
-                </View>
-              );
-            })}
+            {filteredTasks.map((task) => (
+              <SwipeableTaskCard
+                key={task.id}
+                task={task}
+                isExpanded={expandedTaskId === task.id}
+                isRu={isRu}
+                onToggleExpand={toggleExpand}
+                onStatusChange={handleStatusChange}
+                onDelete={handleDelete}
+              />
+            ))}
           </ScrollView>
         )}
 
