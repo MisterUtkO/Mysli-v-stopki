@@ -21,6 +21,13 @@ async function getDB() {
 export async function initializeDatabase() {
   const database = await getDB();
 
+  // Drop old table if it exists (for migration)
+  try {
+    await database.execAsync(`DROP TABLE IF EXISTS tasks;`);
+  } catch (e) {
+    // Ignore errors
+  }
+
   await database.execAsync(`
     CREATE TABLE IF NOT EXISTS tasks (
       id TEXT PRIMARY KEY,
@@ -33,6 +40,7 @@ export async function initializeDatabase() {
       status TEXT NOT NULL,
       quadrant TEXT NOT NULL,
       priorityScore INTEGER NOT NULL,
+      emoji TEXT,
       createdAt INTEGER NOT NULL,
       updatedAt INTEGER NOT NULL
     );
@@ -57,8 +65,8 @@ export async function createTask(task: Omit<Task, "id" | "createdAt" | "updatedA
   };
 
   await database.runAsync(
-    `INSERT INTO tasks (id, title, description, importance, urgency, dueDate, dueTime, status, quadrant, priorityScore, createdAt, updatedAt)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO tasks (id, title, description, importance, urgency, dueDate, dueTime, status, quadrant, priorityScore, emoji, createdAt, updatedAt)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       newTask.id,
       newTask.title,
@@ -70,6 +78,7 @@ export async function createTask(task: Omit<Task, "id" | "createdAt" | "updatedA
       newTask.status,
       newTask.quadrant,
       newTask.priorityScore,
+      newTask.emoji || null,
       newTask.createdAt,
       newTask.updatedAt,
     ]
