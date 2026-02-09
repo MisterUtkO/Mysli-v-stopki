@@ -134,3 +134,18 @@ All features have been implemented, tested, and verified. The app is ready for u
 - ✅ Language switching functional
 - ✅ Theme switching functional
 - ✅ Data persistence verified
+
+## Critical Bug Fixes & New Features (NEW)
+- [x] Fix DROP TABLE on init causing data loss
+- [x] Fix tasks disappearing after adding new ones
+- [x] Fix data not persisting between app restarts
+- [x] Implement proper database migration without data loss
+- [x] Add drag-and-drop reordering for tasks
+- [x] Add hourly notification reminders option
+- [x] Show notification preview immediately on task creation
+- [x] Auto-request permissions on app launch (storage, notifications)
+- [x] Full architecture review and logic verification
+- [x] Full Russian localization in task-detail edit screen
+- [x] Emoji picker in task-detail edit screen
+- [x] Live quadrant preview in task-detail edit screen
+- [x] Recalculate quadrant and priority score on task save

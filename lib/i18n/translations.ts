@@ -43,6 +43,12 @@ export interface Translations {
     active: string;
     done: string;
     archived: string;
+    all: string;
+    notStarted: string;
+    inProgress: string;
+    completed: string;
+    delete: string;
+    deleteConfirm: string;
   };
 
   // Task Detail Screen
@@ -194,6 +200,12 @@ const EN: Translations = {
     active: "Active",
     done: "Done",
     archived: "Archived",
+    all: "All",
+    notStarted: "Not started",
+    inProgress: "In progress",
+    completed: "Completed",
+    delete: "Delete",
+    deleteConfirm: "Delete task?",
   },
 
   taskDetail: {
@@ -338,6 +350,12 @@ const RU: Translations = {
     active: "Активные",
     done: "Завершенные",
     archived: "Архивированные",
+    all: "Все",
+    notStarted: "Не начато",
+    inProgress: "В процессе",
+    completed: "Выполнено",
+    delete: "Удалить",
+    deleteConfirm: "Удалить задачу?",
   },
 
   taskDetail: {

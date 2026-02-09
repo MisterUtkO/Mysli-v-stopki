@@ -42,17 +42,36 @@ export function determineQuadrant(
 }
 
 /**
- * Create a task with calculated priority score and quadrant
+ * Create a task with calculated priority score and quadrant.
+ * Accepts partial task data (without id, createdAt, updatedAt, priorityScore, quadrant, sortOrder)
+ * and returns the data enriched with priorityScore and quadrant.
  */
 export function createTaskWithScoring(
-  task: Omit<Task, "priorityScore" | "quadrant">,
+  taskInput: {
+    title: string;
+    description: string;
+    importance: number;
+    urgency: number;
+    dueDate?: string;
+    dueTime?: string;
+    status: string;
+    emoji?: string;
+  },
   config: ScoringConfig
-): Task {
-  const priorityScore = calculatePriorityScore(task.importance, task.urgency);
-  const quadrant = determineQuadrant(task.importance, task.urgency, config);
+): Omit<Task, "id" | "createdAt" | "updatedAt"> {
+  const priorityScore = calculatePriorityScore(taskInput.importance, taskInput.urgency);
+  const quadrant = determineQuadrant(taskInput.importance, taskInput.urgency, config);
 
   return {
-    ...task,
+    title: taskInput.title,
+    description: taskInput.description,
+    importance: taskInput.importance,
+    urgency: taskInput.urgency,
+    dueDate: taskInput.dueDate,
+    dueTime: taskInput.dueTime,
+    status: taskInput.status as Task["status"],
+    emoji: taskInput.emoji,
+    sortOrder: 0, // Will be overridden by db
     priorityScore,
     quadrant,
   };

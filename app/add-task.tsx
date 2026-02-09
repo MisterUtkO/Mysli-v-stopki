@@ -1,17 +1,34 @@
 import { useState } from "react";
-import { View, Text, TextInput, Pressable, ScrollView, Alert } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  Pressable,
+  ScrollView,
+  Alert,
+  Platform,
+} from "react-native";
 import { useRouter } from "expo-router";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import * as Notifications from "expo-notifications";
 import { ScreenContainer } from "@/components/screen-container";
 import { useTaskContext } from "@/lib/context/task-context";
 import { useI18n } from "@/lib/context/i18n-context";
 import { EmojiPicker } from "@/components/emoji-picker";
+import { determineQuadrant } from "@/lib/domain/scoring";
 import Slider from "@react-native-community/slider";
+
+const QUADRANT_LABELS: Record<string, { en: string; ru: string; color: string }> = {
+  Q1: { en: "Do Now", ru: "Сделать сейчас", color: "#FF6B6B" },
+  Q2: { en: "Schedule", ru: "Запланировать", color: "#FFA94D" },
+  Q3: { en: "Delegate", ru: "Делегировать", color: "#74C0FC" },
+  Q4: { en: "Low priority", ru: "Низкий приоритет", color: "#51CF66" },
+};
 
 export default function AddTaskScreen() {
   const router = useRouter();
   const { createTask } = useTaskContext();
-  const { t } = useI18n();
+  const { t, language } = useI18n();
 
   const [input, setInput] = useState("");
   const [importance, setImportance] = useState(4);
@@ -24,6 +41,13 @@ export default function AddTaskScreen() {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Live quadrant preview
+  const currentQuadrant = determineQuadrant(importance, urgency, {
+    importanceThreshold: 4,
+    urgencyThreshold: 4,
+  });
+  const quadrantInfo = QUADRANT_LABELS[currentQuadrant];
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
     setShowDatePicker(false);
@@ -39,30 +63,61 @@ export default function AddTaskScreen() {
     }
   };
 
+  const formatDate = (date: Date): string => {
+    return date.toLocaleDateString(language === "ru" ? "ru-RU" : "en-US", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  };
+
+  const formatTime = (date: Date): string => {
+    return date.toLocaleTimeString(language === "ru" ? "ru-RU" : "en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  // Show notification preview immediately after task creation
+  const showNotificationPreview = async (title: string, quadrant: string) => {
+    try {
+      const qInfo = QUADRANT_LABELS[quadrant];
+      const qLabel = language === "ru" ? qInfo.ru : qInfo.en;
+
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: language === "ru" ? "✅ Задача создана" : "✅ Task created",
+          body: `${emoji || ""} ${title}\n${language === "ru" ? "Квадрант" : "Quadrant"}: ${quadrant} — ${qLabel}`,
+          sound: true,
+        },
+        trigger: null, // Immediate
+      });
+    } catch (e) {
+      console.log("Notification preview failed:", e);
+    }
+  };
+
   const handleAddTask = async () => {
     if (!input.trim()) {
-      setError("Пожалуйста, введите описание задачи");
+      setError(
+        language === "ru"
+          ? "Пожалуйста, введите описание задачи"
+          : "Please enter a task description"
+      );
       return;
     }
 
     setLoading(true);
     setError(null);
-    
-    try {
-      const title = input.substring(0, 50);
-      const dueDateStr = dueDate ? dueDate.toISOString().split("T")[0] : undefined;
-      const dueTimeStr = dueTime ? dueTime.toTimeString().substring(0, 5) : undefined;
 
-      console.log("Creating task with:", {
-        title,
-        description: input,
-        importance,
-        urgency,
-        dueDate: dueDateStr,
-        dueTime: dueTimeStr,
-        emoji,
-        status: "not_started",
-      });
+    try {
+      const title = input.length > 50 ? input.substring(0, 50) + "..." : input;
+      const dueDateStr = dueDate
+        ? dueDate.toISOString().split("T")[0]
+        : undefined;
+      const dueTimeStr = dueTime
+        ? dueTime.toTimeString().substring(0, 5)
+        : undefined;
 
       await createTask({
         title,
@@ -75,12 +130,20 @@ export default function AddTaskScreen() {
         status: "not_started",
       });
 
+      // Show notification preview
+      await showNotificationPreview(title, currentQuadrant);
+
       router.back();
-    } catch (error) {
-      console.error("Failed to create task:", error);
-      const errorMessage = error instanceof Error ? error.message : "Ошибка при создании задачи";
+    } catch (err) {
+      console.error("Failed to create task:", err);
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : language === "ru"
+            ? "Ошибка при создании задачи"
+            : "Error creating task";
       setError(errorMessage);
-      Alert.alert("Ошибка", errorMessage);
+      Alert.alert(t.common.error, errorMessage);
     } finally {
       setLoading(false);
     }
@@ -88,38 +151,101 @@ export default function AddTaskScreen() {
 
   return (
     <ScreenContainer className="p-4">
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-        <View className="gap-4">
-          <Text className="text-2xl font-bold text-foreground">Добавить задачу</Text>
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View className="gap-5">
+          {/* Header */}
+          <Text
+            className="text-foreground font-bold"
+            style={{ fontSize: 28, lineHeight: 34 }}
+          >
+            {t.taskDetail?.newTask ||
+              (language === "ru" ? "Добавить задачу" : "Add task")}
+          </Text>
 
+          {/* Error */}
           {error && (
-            <View className="bg-error/10 border border-error rounded-lg p-3">
-              <Text className="text-error text-sm">{error}</Text>
+            <View
+              style={{
+                backgroundColor: "#FEE2E2",
+                borderWidth: 1,
+                borderColor: "#EF4444",
+                borderRadius: 12,
+                padding: 12,
+              }}
+            >
+              <Text style={{ color: "#EF4444", fontSize: 14 }}>{error}</Text>
             </View>
           )}
 
+          {/* Live quadrant preview */}
+          <View
+            style={{
+              backgroundColor: quadrantInfo.color + "15",
+              borderLeftWidth: 4,
+              borderLeftColor: quadrantInfo.color,
+              borderRadius: 12,
+              padding: 14,
+            }}
+          >
+            <Text
+              style={{
+                color: quadrantInfo.color,
+                fontSize: 15,
+                fontWeight: "700",
+              }}
+            >
+              {currentQuadrant} —{" "}
+              {language === "ru" ? quadrantInfo.ru : quadrantInfo.en}
+            </Text>
+          </View>
+
+          {/* Task description */}
           <View>
+            <Text
+              className="text-foreground font-semibold"
+              style={{ fontSize: 16, marginBottom: 8 }}
+            >
+              {t.taskDetail?.description ||
+                (language === "ru" ? "Описание задачи" : "Task description")}
+            </Text>
             <TextInput
               value={input}
               onChangeText={(text) => {
                 setInput(text);
                 setError(null);
               }}
-              placeholder="Введите описание задачи..."
+              placeholder={
+                language === "ru"
+                  ? "Введите описание задачи..."
+                  : "Enter task description..."
+              }
               placeholderTextColor="#999"
               multiline
               numberOfLines={4}
-              className="bg-surface border border-border rounded-lg p-3 text-foreground"
+              className="bg-surface border border-border rounded-2xl p-4 text-foreground"
+              style={{ fontSize: 16, lineHeight: 22, minHeight: 100, textAlignVertical: "top" }}
             />
           </View>
 
+          {/* Importance slider */}
           <View>
             <View className="flex-row justify-between mb-2">
-              <Text className="text-sm font-semibold text-foreground">Важность</Text>
-              <Text className="text-sm font-bold text-primary">{importance}/7</Text>
+              <Text
+                className="text-foreground font-semibold"
+                style={{ fontSize: 16 }}
+              >
+                {t.taskDetail?.importance ||
+                  (language === "ru" ? "Важность" : "Importance")}
+              </Text>
+              <Text style={{ fontSize: 18, fontWeight: "800", color: "#FF6B6B" }}>
+                {importance}/7
+              </Text>
             </View>
             <Slider
-              style={{ height: 40 }}
+              style={{ height: 44 }}
               minimumValue={1}
               maximumValue={7}
               step={1}
@@ -127,16 +253,26 @@ export default function AddTaskScreen() {
               onValueChange={setImportance}
               minimumTrackTintColor="#FF6B6B"
               maximumTrackTintColor="#E5E7EB"
+              thumbTintColor="#FF6B6B"
             />
           </View>
 
+          {/* Urgency slider */}
           <View>
             <View className="flex-row justify-between mb-2">
-              <Text className="text-sm font-semibold text-foreground">Срочность</Text>
-              <Text className="text-sm font-bold text-primary">{urgency}/7</Text>
+              <Text
+                className="text-foreground font-semibold"
+                style={{ fontSize: 16 }}
+              >
+                {t.taskDetail?.urgency ||
+                  (language === "ru" ? "Срочность" : "Urgency")}
+              </Text>
+              <Text style={{ fontSize: 18, fontWeight: "800", color: "#FFA94D" }}>
+                {urgency}/7
+              </Text>
             </View>
             <Slider
-              style={{ height: 40 }}
+              style={{ height: 44 }}
               minimumValue={1}
               maximumValue={7}
               step={1}
@@ -144,42 +280,132 @@ export default function AddTaskScreen() {
               onValueChange={setUrgency}
               minimumTrackTintColor="#FFA94D"
               maximumTrackTintColor="#E5E7EB"
+              thumbTintColor="#FFA94D"
             />
           </View>
 
+          {/* Emoji picker */}
           <View>
-            <Text className="text-sm font-semibold text-foreground mb-2">Эмодзи</Text>
+            <Text
+              className="text-foreground font-semibold"
+              style={{ fontSize: 16, marginBottom: 8 }}
+            >
+              {language === "ru" ? "Эмодзи" : "Emoji"}
+            </Text>
             <Pressable
               onPress={() => setShowEmojiPicker(true)}
-              className="bg-surface border border-border rounded-lg p-3 flex-row items-center justify-between"
+              style={({ pressed }) => [
+                {
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: 14,
+                  borderRadius: 16,
+                  borderWidth: 1,
+                  borderColor: emoji ? "#0a7ea4" : "#E5E7EB",
+                  backgroundColor: emoji ? "#0a7ea410" : "transparent",
+                  opacity: pressed ? 0.7 : 1,
+                },
+              ]}
             >
-              <Text className="text-foreground">
-                {emoji ? `Выбран: ${emoji}` : "Выберите эмодзи"}
+              <Text className="text-foreground" style={{ fontSize: 16 }}>
+                {emoji
+                  ? language === "ru"
+                    ? `Выбран: ${emoji}`
+                    : `Selected: ${emoji}`
+                  : language === "ru"
+                    ? "Выберите эмодзи"
+                    : "Choose emoji"}
               </Text>
-              {emoji && <Text className="text-3xl">{emoji}</Text>}
+              {emoji && <Text style={{ fontSize: 32 }}>{emoji}</Text>}
             </Pressable>
           </View>
 
-          <View className="gap-2">
-            <Text className="text-sm font-semibold text-foreground">Крайний срок (опционально)</Text>
-
-            <Pressable
-              onPress={() => setShowDatePicker(true)}
-              className="bg-surface border border-border rounded-lg p-3"
+          {/* Due date & time */}
+          <View className="gap-3">
+            <Text
+              className="text-foreground font-semibold"
+              style={{ fontSize: 16 }}
             >
-              <Text className="text-foreground">
-                {dueDate ? dueDate.toDateString() : "Выберите дату"}
-              </Text>
-            </Pressable>
+              {t.taskDetail?.dueDate ||
+                (language === "ru"
+                  ? "Крайний срок (опционально)"
+                  : "Due date (optional)")}
+            </Text>
 
-            <Pressable
-              onPress={() => setShowTimePicker(true)}
-              className="bg-surface border border-border rounded-lg p-3"
-            >
-              <Text className="text-foreground">
-                {dueTime ? dueTime.toTimeString().substring(0, 5) : "Выберите время"}
-              </Text>
-            </Pressable>
+            <View className="flex-row gap-3">
+              <Pressable
+                onPress={() => setShowDatePicker(true)}
+                style={({ pressed }) => [
+                  {
+                    flex: 1,
+                    padding: 14,
+                    borderRadius: 16,
+                    borderWidth: 1,
+                    borderColor: dueDate ? "#0a7ea4" : "#E5E7EB",
+                    backgroundColor: dueDate ? "#0a7ea410" : "transparent",
+                    opacity: pressed ? 0.7 : 1,
+                  },
+                ]}
+              >
+                <Text
+                  style={{
+                    fontSize: 15,
+                    color: dueDate ? "#0a7ea4" : "#999",
+                    textAlign: "center",
+                  }}
+                >
+                  📅 {dueDate ? formatDate(dueDate) : language === "ru" ? "Дата" : "Date"}
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => setShowTimePicker(true)}
+                style={({ pressed }) => [
+                  {
+                    flex: 1,
+                    padding: 14,
+                    borderRadius: 16,
+                    borderWidth: 1,
+                    borderColor: dueTime ? "#0a7ea4" : "#E5E7EB",
+                    backgroundColor: dueTime ? "#0a7ea410" : "transparent",
+                    opacity: pressed ? 0.7 : 1,
+                  },
+                ]}
+              >
+                <Text
+                  style={{
+                    fontSize: 15,
+                    color: dueTime ? "#0a7ea4" : "#999",
+                    textAlign: "center",
+                  }}
+                >
+                  ⏰ {dueTime ? formatTime(dueTime) : language === "ru" ? "Время" : "Time"}
+                </Text>
+              </Pressable>
+            </View>
+
+            {/* Clear due date */}
+            {(dueDate || dueTime) && (
+              <Pressable
+                onPress={() => {
+                  setDueDate(null);
+                  setDueTime(null);
+                }}
+                style={({ pressed }) => [
+                  {
+                    padding: 8,
+                    opacity: pressed ? 0.5 : 1,
+                  },
+                ]}
+              >
+                <Text
+                  style={{ color: "#EF4444", fontSize: 14, textAlign: "center" }}
+                >
+                  {language === "ru" ? "✕ Убрать срок" : "✕ Clear deadline"}
+                </Text>
+              </Pressable>
+            )}
           </View>
 
           {showDatePicker && (
@@ -207,21 +433,57 @@ export default function AddTaskScreen() {
             selectedEmoji={emoji}
           />
 
-          <View className="flex-row gap-3 mt-4">
+          {/* Action buttons */}
+          <View className="flex-row gap-3 mt-2">
             <Pressable
               onPress={() => router.back()}
-              className="flex-1 bg-surface border border-border rounded-lg p-3"
+              style={({ pressed }) => [
+                {
+                  flex: 1,
+                  padding: 16,
+                  borderRadius: 16,
+                  borderWidth: 1,
+                  borderColor: "#E5E7EB",
+                  opacity: pressed ? 0.7 : 1,
+                },
+              ]}
             >
-              <Text className="text-center text-foreground font-semibold">Отмена</Text>
+              <Text
+                className="text-foreground"
+                style={{ textAlign: "center", fontWeight: "600", fontSize: 17 }}
+              >
+                {t.common.cancel}
+              </Text>
             </Pressable>
 
             <Pressable
               onPress={handleAddTask}
               disabled={!input.trim() || loading}
-              className="flex-1 bg-primary rounded-lg p-3 disabled:opacity-50"
+              style={({ pressed }) => [
+                {
+                  flex: 1,
+                  padding: 16,
+                  borderRadius: 16,
+                  backgroundColor:
+                    !input.trim() || loading ? "#9CA3AF" : "#0a7ea4",
+                  opacity: pressed ? 0.8 : 1,
+                  transform: [{ scale: pressed ? 0.98 : 1 }],
+                },
+              ]}
             >
-              <Text className="text-center text-white font-semibold">
-                {loading ? "Добавление..." : "Добавить"}
+              <Text
+                style={{
+                  textAlign: "center",
+                  color: "#FFFFFF",
+                  fontWeight: "700",
+                  fontSize: 17,
+                }}
+              >
+                {loading
+                  ? language === "ru"
+                    ? "Добавление..."
+                    : "Adding..."
+                  : t.common.add}
               </Text>
             </Pressable>
           </View>

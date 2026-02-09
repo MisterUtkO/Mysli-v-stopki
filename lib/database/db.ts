@@ -7,49 +7,68 @@ function generateId(): string {
   return `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
 
-const DB_NAME = "eisenhower.db";
+const DB_NAME = "eisenhower_v2.db";
+const DB_VERSION_KEY = "db_schema_version";
+const CURRENT_VERSION = 2;
 
 let db: SQLite.SQLiteDatabase | null = null;
 
 async function getDB() {
   if (!db) {
     db = await SQLite.openDatabaseAsync(DB_NAME);
+    // Enable WAL mode for better performance
+    await db.execAsync("PRAGMA journal_mode = WAL;");
   }
   return db;
 }
 
 export async function initializeDatabase() {
   const database = await getDB();
+  const storedVersion = await AsyncStorage.getItem(DB_VERSION_KEY);
+  const version = storedVersion ? parseInt(storedVersion, 10) : 0;
 
-  // Drop old table if it exists (for migration)
-  try {
-    await database.execAsync(`DROP TABLE IF EXISTS tasks;`);
-  } catch (e) {
-    // Ignore errors
+  if (version < 1) {
+    // Initial schema creation
+    await database.execAsync(`
+      CREATE TABLE IF NOT EXISTS tasks (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        description TEXT NOT NULL DEFAULT '',
+        importance INTEGER NOT NULL DEFAULT 4,
+        urgency INTEGER NOT NULL DEFAULT 4,
+        dueDate TEXT,
+        dueTime TEXT,
+        status TEXT NOT NULL DEFAULT 'not_started',
+        quadrant TEXT NOT NULL DEFAULT 'Q4',
+        priorityScore INTEGER NOT NULL DEFAULT 0,
+        emoji TEXT,
+        sortOrder INTEGER NOT NULL DEFAULT 0,
+        createdAt INTEGER NOT NULL,
+        updatedAt INTEGER NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      );
+    `);
   }
 
-  await database.execAsync(`
-    CREATE TABLE IF NOT EXISTS tasks (
-      id TEXT PRIMARY KEY,
-      title TEXT NOT NULL,
-      description TEXT NOT NULL,
-      importance INTEGER NOT NULL,
-      urgency INTEGER NOT NULL,
-      dueDate TEXT,
-      dueTime TEXT,
-      status TEXT NOT NULL,
-      quadrant TEXT NOT NULL,
-      priorityScore INTEGER NOT NULL,
-      emoji TEXT,
-      createdAt INTEGER NOT NULL,
-      updatedAt INTEGER NOT NULL
-    );
+  if (version < 2) {
+    // Migration v2: add emoji and sortOrder columns if missing
+    try {
+      await database.execAsync(`ALTER TABLE tasks ADD COLUMN emoji TEXT;`);
+    } catch (e) {
+      // Column may already exist
+    }
+    try {
+      await database.execAsync(`ALTER TABLE tasks ADD COLUMN sortOrder INTEGER NOT NULL DEFAULT 0;`);
+    } catch (e) {
+      // Column may already exist
+    }
+  }
 
-    CREATE TABLE IF NOT EXISTS settings (
-      key TEXT PRIMARY KEY,
-      value TEXT NOT NULL
-    );
-  `);
+  await AsyncStorage.setItem(DB_VERSION_KEY, String(CURRENT_VERSION));
 }
 
 export async function createTask(task: Omit<Task, "id" | "createdAt" | "updatedAt">): Promise<Task> {
@@ -57,16 +76,23 @@ export async function createTask(task: Omit<Task, "id" | "createdAt" | "updatedA
   const id = generateId();
   const now = Date.now();
 
+  // Get max sortOrder to put new task at the end
+  const maxResult = await database.getFirstAsync<{ maxOrder: number }>(
+    "SELECT COALESCE(MAX(sortOrder), 0) as maxOrder FROM tasks"
+  );
+  const sortOrder = (maxResult?.maxOrder || 0) + 1;
+
   const newTask: Task = {
     ...task,
     id,
+    sortOrder,
     createdAt: now,
     updatedAt: now,
   };
 
   await database.runAsync(
-    `INSERT INTO tasks (id, title, description, importance, urgency, dueDate, dueTime, status, quadrant, priorityScore, emoji, createdAt, updatedAt)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO tasks (id, title, description, importance, urgency, dueDate, dueTime, status, quadrant, priorityScore, emoji, sortOrder, createdAt, updatedAt)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       newTask.id,
       newTask.title,
@@ -79,6 +105,7 @@ export async function createTask(task: Omit<Task, "id" | "createdAt" | "updatedA
       newTask.quadrant,
       newTask.priorityScore,
       newTask.emoji || null,
+      newTask.sortOrder,
       newTask.createdAt,
       newTask.updatedAt,
     ]
@@ -89,7 +116,9 @@ export async function createTask(task: Omit<Task, "id" | "createdAt" | "updatedA
 
 export async function getAllTasks(): Promise<Task[]> {
   const database = await getDB();
-  const result = await database.getAllAsync<Task>("SELECT * FROM tasks ORDER BY priorityScore DESC");
+  const result = await database.getAllAsync<Task>(
+    "SELECT * FROM tasks ORDER BY sortOrder ASC, priorityScore DESC"
+  );
   return result || [];
 }
 
@@ -103,18 +132,43 @@ export async function updateTask(id: string, updates: Partial<Task>): Promise<vo
   const database = await getDB();
   const now = Date.now();
 
-  const fields = Object.keys(updates)
-    .filter((key) => key !== "id")
-    .map((key) => `${key} = ?`);
+  // Build SET clause safely
+  const allowedFields = [
+    "title", "description", "importance", "urgency",
+    "dueDate", "dueTime", "status", "quadrant",
+    "priorityScore", "emoji", "sortOrder"
+  ];
 
-  const values = Object.values(updates).filter((_, i) => Object.keys(updates)[i] !== "id");
+  const setClauses: string[] = [];
+  const values: any[] = [];
+
+  for (const field of allowedFields) {
+    if (field in updates) {
+      setClauses.push(`${field} = ?`);
+      values.push((updates as any)[field] ?? null);
+    }
+  }
+
+  if (setClauses.length === 0) return;
+
+  setClauses.push("updatedAt = ?");
   values.push(now);
   values.push(id);
 
   await database.runAsync(
-    `UPDATE tasks SET ${fields.join(", ")}, updatedAt = ? WHERE id = ?`,
+    `UPDATE tasks SET ${setClauses.join(", ")} WHERE id = ?`,
     values
   );
+}
+
+export async function updateTaskOrder(taskOrders: { id: string; sortOrder: number }[]): Promise<void> {
+  const database = await getDB();
+  for (const { id, sortOrder } of taskOrders) {
+    await database.runAsync(
+      "UPDATE tasks SET sortOrder = ? WHERE id = ?",
+      [sortOrder, id]
+    );
+  }
 }
 
 export async function deleteTask(id: string): Promise<void> {
@@ -150,23 +204,24 @@ export async function importTasks(jsonData: string): Promise<void> {
     const database = await getDB();
 
     for (const task of tasks) {
-      const { id, createdAt, updatedAt, ...rest } = task;
       await database.runAsync(
-        `INSERT OR REPLACE INTO tasks (id, title, description, importance, urgency, dueDate, dueTime, status, quadrant, priorityScore, createdAt, updatedAt)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT OR REPLACE INTO tasks (id, title, description, importance, urgency, dueDate, dueTime, status, quadrant, priorityScore, emoji, sortOrder, createdAt, updatedAt)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          id,
-          rest.title,
-          rest.description,
-          rest.importance,
-          rest.urgency,
-          rest.dueDate || null,
-          rest.dueTime || null,
-          rest.status,
-          rest.quadrant,
-          rest.priorityScore,
-          createdAt,
-          updatedAt,
+          task.id,
+          task.title,
+          task.description,
+          task.importance,
+          task.urgency,
+          task.dueDate || null,
+          task.dueTime || null,
+          task.status,
+          task.quadrant,
+          task.priorityScore,
+          task.emoji || null,
+          task.sortOrder || 0,
+          task.createdAt,
+          task.updatedAt,
         ]
       );
     }
@@ -179,4 +234,5 @@ export async function importTasks(jsonData: string): Promise<void> {
 export async function clearAllData(): Promise<void> {
   const database = await getDB();
   await database.execAsync("DELETE FROM tasks; DELETE FROM settings;");
+  await AsyncStorage.removeItem(DB_VERSION_KEY);
 }

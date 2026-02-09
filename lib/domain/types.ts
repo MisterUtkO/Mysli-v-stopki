@@ -24,6 +24,7 @@ export interface Task {
   quadrant: Quadrant;
   priorityScore: number; // 0-100
   emoji?: string; // Optional emoji for visual identification
+  sortOrder: number; // Custom sort order for drag-and-drop
   createdAt: number; // timestamp
   updatedAt: number; // timestamp
 }
@@ -34,7 +35,7 @@ export interface Settings {
   importanceThreshold: number; // 1-7, default 4
   urgencyThreshold: number; // 1-7, default 4
   notificationsEnabled: boolean;
-  notificationFrequency: "never" | "daily" | "weekly" | "always";
+  notificationFrequency: "never" | "hourly" | "daily" | "weekly" | "always";
 }
 
 export interface QuadrantColor {

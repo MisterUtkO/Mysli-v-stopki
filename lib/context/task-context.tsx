@@ -14,17 +14,29 @@ import {
 } from "@/lib/database/db";
 import { createTaskWithScoring } from "@/lib/domain/scoring";
 
+interface CreateTaskInput {
+  title: string;
+  description: string;
+  importance: number;
+  urgency: number;
+  dueDate?: string;
+  dueTime?: string;
+  status: "not_started" | "in_progress" | "completed";
+  emoji?: string;
+}
+
 interface TaskContextType {
   tasks: Task[];
   settings: Settings;
   loading: boolean;
-  createTask: (task: Omit<Task, "id" | "createdAt" | "updatedAt" | "priorityScore" | "quadrant">) => Promise<Task>;
+  createTask: (task: CreateTaskInput) => Promise<Task>;
   updateTask: (id: string, updates: Partial<Task>) => Promise<void>;
   deleteTask: (id: string) => Promise<void>;
   updateSettings: (settings: Partial<Settings>) => Promise<void>;
   exportTasks: () => Promise<string>;
   importTasks: (jsonData: string) => Promise<void>;
   clearAllData: () => Promise<void>;
+  refreshTasks: () => Promise<void>;
 }
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
@@ -43,13 +55,21 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
 
+  const refreshTasks = async () => {
+    try {
+      const loadedTasks = await getAllTasks();
+      setTasks(loadedTasks);
+    } catch (error) {
+      console.error("Failed to refresh tasks:", error);
+    }
+  };
+
   // Initialize database and load data
   useEffect(() => {
     const initialize = async () => {
       try {
         await initializeDatabase();
-        const loadedTasks = await getAllTasks();
-        setTasks(loadedTasks);
+        await refreshTasks();
 
         // Load settings
         const language = (await getSetting("language")) as "en" | "ru" | null;
@@ -65,7 +85,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
           importanceThreshold: impThreshold ? parseInt(impThreshold) : DEFAULT_SETTINGS.importanceThreshold,
           urgencyThreshold: urgThreshold ? parseInt(urgThreshold) : DEFAULT_SETTINGS.urgencyThreshold,
           notificationsEnabled: notifEnabled ? notifEnabled === "true" : DEFAULT_SETTINGS.notificationsEnabled,
-          notificationFrequency: (notifFreq as any) || DEFAULT_SETTINGS.notificationFrequency,
+          notificationFrequency: (notifFreq as Settings["notificationFrequency"]) || DEFAULT_SETTINGS.notificationFrequency,
         });
       } catch (error) {
         console.error("Failed to initialize database:", error);
@@ -77,23 +97,34 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     initialize();
   }, []);
 
-  const createTask = async (
-    task: Omit<Task, "id" | "createdAt" | "updatedAt" | "priorityScore" | "quadrant">
-  ): Promise<Task> => {
-    const taskWithScoring = createTaskWithScoring(task as Omit<Task, "quadrant" | "priorityScore">, {
-      importanceThreshold: settings.importanceThreshold,
-      urgencyThreshold: settings.urgencyThreshold,
-    });
+  const createTask = async (input: CreateTaskInput): Promise<Task> => {
+    const taskWithScoring = createTaskWithScoring(
+      {
+        title: input.title,
+        description: input.description,
+        importance: input.importance,
+        urgency: input.urgency,
+        dueDate: input.dueDate,
+        dueTime: input.dueTime,
+        status: input.status,
+        emoji: input.emoji,
+      },
+      {
+        importanceThreshold: settings.importanceThreshold,
+        urgencyThreshold: settings.urgencyThreshold,
+      }
+    );
 
     const newTask = await dbCreateTask(taskWithScoring);
-    setTasks((prev) => [newTask, ...prev].sort((a, b) => b.priorityScore - a.priorityScore));
+    // Refresh from DB to ensure consistency
+    await refreshTasks();
     return newTask;
   };
 
   const updateTask = async (id: string, updates: Partial<Task>): Promise<void> => {
     await dbUpdateTask(id, updates);
-    const updatedTasks = await getAllTasks();
-    setTasks(updatedTasks);
+    // Refresh from DB to ensure consistency
+    await refreshTasks();
   };
 
   const deleteTask = async (id: string): Promise<void> => {
@@ -105,12 +136,12 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     const updated = { ...settings, ...newSettings };
     setSettings(updated);
 
-    if (newSettings.language) await setSetting("language", newSettings.language);
-    if (newSettings.theme) await setSetting("theme", newSettings.theme);
-    if (newSettings.importanceThreshold) await setSetting("importanceThreshold", String(newSettings.importanceThreshold));
-    if (newSettings.urgencyThreshold) await setSetting("urgencyThreshold", String(newSettings.urgencyThreshold));
+    if (newSettings.language !== undefined) await setSetting("language", newSettings.language);
+    if (newSettings.theme !== undefined) await setSetting("theme", newSettings.theme);
+    if (newSettings.importanceThreshold !== undefined) await setSetting("importanceThreshold", String(newSettings.importanceThreshold));
+    if (newSettings.urgencyThreshold !== undefined) await setSetting("urgencyThreshold", String(newSettings.urgencyThreshold));
     if (newSettings.notificationsEnabled !== undefined) await setSetting("notificationsEnabled", String(newSettings.notificationsEnabled));
-    if (newSettings.notificationFrequency) await setSetting("notificationFrequency", newSettings.notificationFrequency);
+    if (newSettings.notificationFrequency !== undefined) await setSetting("notificationFrequency", newSettings.notificationFrequency);
   };
 
   const exportTasks = async (): Promise<string> => {
@@ -119,8 +150,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
 
   const importTasks = async (jsonData: string): Promise<void> => {
     await dbImportTasks(jsonData);
-    const loadedTasks = await getAllTasks();
-    setTasks(loadedTasks);
+    await refreshTasks();
   };
 
   const clearAllData = async (): Promise<void> => {
@@ -141,6 +171,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         exportTasks,
         importTasks,
         clearAllData,
+        refreshTasks,
       }}
     >
       {children}
