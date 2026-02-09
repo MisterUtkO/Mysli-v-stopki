@@ -149,3 +149,16 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Emoji picker in task-detail edit screen
 - [x] Live quadrant preview in task-detail edit screen
 - [x] Recalculate quadrant and priority score on task save
+
+## Phase 8: Major UI/UX Overhaul — SDVGNote Rebrand
+- [x] Rename app to SDVGNote (app.config.ts, branding)
+- [x] Replace app icon with user-provided ChatGPT image
+- [x] Collapsible task cards — compact by default (emoji + title only), expand on tap
+- [x] Three-dot menu (⋮) on expanded task card for editing
+- [x] Reduce status filter area size (make compact like green area in screenshot)
+- [x] Auto-sort tasks by importance+urgency (Q1→Q4, most urgent first)
+- [x] Per-task notification frequency (override global setting, e.g. every 10 min)
+- [x] File attachment support in task creation and editing
+- [x] Photo attachment preview (minimalist thumbnail)
+- [x] Streamline task creation — minimum touches required
+- [x] Optional details (importance, urgency, emoji, files) — not mandatory for creation

@@ -19,9 +19,9 @@ const timestamp = bundleId.split(".").pop()?.replace(/^t/, "") ?? "";
 const schemeFromBundleId = `manus${timestamp}`;
 
 const env = {
-  appName: "Eisenhower Priority",
+  appName: "SDVGNote",
   appSlug: "eisenhower-priority-app",
-  logoUrl: "https://private-us-east-1.manuscdn.com/sessionFile/Q0865UgNBa0ZNtDqP9s0RM/sandbox/gFASVsMOCmv7Y4pj1EI6Qf-img-1_1770321085000_na1fn_aWNvbg.png?x-oss-process=image/resize,w_1920,h_1920/format,webp/quality,q_80&Expires=1798761600&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9wcml2YXRlLXVzLWVhc3QtMS5tYW51c2Nkbi5jb20vc2Vzc2lvbkZpbGUvUTA4NjVVZ05CYTBaTnREcVA5czBSTS9zYW5kYm94L2dGQVNWc01PQ212N1k0cGoxRUk2UWYtaW1nLTFfMTc3MDMyMTA4NTAwMF9uYTFmbl9hV052YmcucG5nP3gtb3NzLXByb2Nlc3M9aW1hZ2UvcmVzaXplLHdfMTkyMCxoXzE5MjAvZm9ybWF0LHdlYnAvcXVhbGl0eSxxXzgwIiwiQ29uZGl0aW9uIjp7IkRhdGVMZXNzVGhhbiI6eyJBV1M6RXBvY2hUaW1lIjoxNzk4NzYxNjAwfX19XX0_&Key-Pair-Id=K2HSFNDJXOU9YS&Signature=iYZcjSfO7c~BdCv8SzuyUwydXRUXqVCoctOvuLmjfpet1~igWcwyKZG0cldewK-i2CvRcVq76fWDtduWOg9P2PRW5huKBqaVvHBJsKFNiEjtpc~J55Y-xLDw1BrEv5ISDptVZaLOfKH~cBQcjB1SEFMZ8ZZB9xrsCPbIk82DG65FI2DBt49I1dyEpbQNL0R0drlLlhWdVVpxmvRscOnnxMtRvwJNYSWcoCTMMD3K2AaVMslkS8f9wtCuAX4ce7sXjYo5gdAM7vnR~up6YvNtE-FiRJI3DDxiX2kdNj3JquefW-bQDWd0Hlh9BQJ4-zXdlaLv85pSr7lwV6h8WA82sg__",
+  logoUrl: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663313035753/KfjtyBDjUhyBeBJN.png",
   scheme: schemeFromBundleId,
   iosBundleId: bundleId,
   androidPackage: bundleId,

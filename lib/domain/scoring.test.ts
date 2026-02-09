@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { calculatePriorityScore, determineQuadrant, sortTasksByPriority } from "./scoring";
+import { calculatePriorityScore, determineQuadrant, sortTasksByPriority, createTaskWithScoring } from "./scoring";
 import type { Task, ScoringConfig } from "./types";
 
 const defaultConfig: ScoringConfig = {
@@ -70,6 +70,8 @@ describe("Scoring Service", () => {
           quadrant: "Q4",
           priorityScore: 0,
           sortOrder: 1,
+          notificationFrequency: "global",
+          attachments: [],
           createdAt: Date.now(),
           updatedAt: Date.now(),
         },
@@ -83,6 +85,8 @@ describe("Scoring Service", () => {
           quadrant: "Q1",
           priorityScore: 100,
           sortOrder: 2,
+          notificationFrequency: "global",
+          attachments: [],
           createdAt: Date.now(),
           updatedAt: Date.now(),
         },
@@ -91,6 +95,82 @@ describe("Scoring Service", () => {
       const sorted = sortTasksByPriority(tasks);
       expect(sorted[0].priorityScore).toBe(100);
       expect(sorted[1].priorityScore).toBe(0);
+    });
+  });
+
+  describe("createTaskWithScoring", () => {
+    it("should create task with default notificationFrequency and attachments", () => {
+      const result = createTaskWithScoring(
+        {
+          title: "Test task",
+          description: "Test description",
+          importance: 5,
+          urgency: 6,
+          status: "not_started",
+        },
+        defaultConfig
+      );
+
+      expect(result.title).toBe("Test task");
+      expect(result.notificationFrequency).toBe("global");
+      expect(result.attachments).toEqual([]);
+      expect(result.quadrant).toBe("Q1");
+      expect(result.priorityScore).toBeGreaterThan(0);
+    });
+
+    it("should pass through custom notificationFrequency", () => {
+      const result = createTaskWithScoring(
+        {
+          title: "Urgent",
+          description: "Urgent task",
+          importance: 7,
+          urgency: 7,
+          status: "not_started",
+          notificationFrequency: "10min",
+        },
+        defaultConfig
+      );
+
+      expect(result.notificationFrequency).toBe("10min");
+    });
+
+    it("should pass through attachments", () => {
+      const attachments = [
+        { uri: "file://photo.jpg", type: "image" as const, name: "photo.jpg" },
+        { uri: "file://doc.pdf", type: "file" as const, name: "doc.pdf" },
+      ];
+
+      const result = createTaskWithScoring(
+        {
+          title: "With files",
+          description: "Task with attachments",
+          importance: 3,
+          urgency: 2,
+          status: "not_started",
+          attachments,
+        },
+        defaultConfig
+      );
+
+      expect(result.attachments).toHaveLength(2);
+      expect(result.attachments![0].type).toBe("image");
+      expect(result.attachments![1].type).toBe("file");
+    });
+
+    it("should calculate Q4 for low importance and urgency", () => {
+      const result = createTaskWithScoring(
+        {
+          title: "Low",
+          description: "Low priority",
+          importance: 1,
+          urgency: 1,
+          status: "not_started",
+        },
+        defaultConfig
+      );
+
+      expect(result.quadrant).toBe("Q4");
+      expect(result.priorityScore).toBe(0);
     });
   });
 });

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import type { Task, Settings } from "@/lib/domain/types";
+import type { Task, Settings, NotificationFrequency, TaskAttachment } from "@/lib/domain/types";
 import {
   createTask as dbCreateTask,
   getAllTasks,
@@ -23,6 +23,8 @@ interface CreateTaskInput {
   dueTime?: string;
   status: "not_started" | "in_progress" | "completed";
   emoji?: string;
+  notificationFrequency?: NotificationFrequency;
+  attachments?: TaskAttachment[];
 }
 
 interface TaskContextType {
@@ -108,6 +110,8 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         dueTime: input.dueTime,
         status: input.status,
         emoji: input.emoji,
+        notificationFrequency: input.notificationFrequency,
+        attachments: input.attachments,
       },
       {
         importanceThreshold: settings.importanceThreshold,

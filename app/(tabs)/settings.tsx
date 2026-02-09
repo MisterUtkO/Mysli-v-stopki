@@ -469,7 +469,7 @@ export default function SettingsScreen() {
               </Text>
             </View>
             <Text className="text-foreground" style={{ fontSize: 15 }}>
-              Eisenhower Priority
+              SDVGNote
             </Text>
             <Text className="text-muted" style={{ fontSize: 13, marginTop: 4 }}>
               {t.settings.version}: 1.0.0

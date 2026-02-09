@@ -1,14 +1,24 @@
 import { useState, useEffect } from "react";
-import { View, Text, TextInput, Pressable, ScrollView, Alert } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  Pressable,
+  ScrollView,
+  Alert,
+  Image,
+} from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import Slider from "@react-native-community/slider";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import * as ImagePicker from "expo-image-picker";
+import * as DocumentPicker from "expo-document-picker";
 import { ScreenContainer } from "@/components/screen-container";
 import { useTaskContext } from "@/lib/context/task-context";
 import { useI18n } from "@/lib/context/i18n-context";
 import { EmojiPicker } from "@/components/emoji-picker";
 import { determineQuadrant, calculatePriorityScore } from "@/lib/domain/scoring";
-import type { Task } from "@/lib/domain/types";
+import type { Task, NotificationFrequency, TaskAttachment } from "@/lib/domain/types";
 
 const QUADRANT_LABELS: Record<string, { en: string; ru: string; color: string }> = {
   Q1: { en: "Do Now", ru: "Сделать сейчас", color: "#FF6B6B" },
@@ -17,11 +27,22 @@ const QUADRANT_LABELS: Record<string, { en: string; ru: string; color: string }>
   Q4: { en: "Low priority", ru: "Низкий приоритет", color: "#51CF66" },
 };
 
+const NOTIF_OPTIONS: { value: NotificationFrequency; en: string; ru: string }[] = [
+  { value: "global", en: "Default", ru: "По умолч." },
+  { value: "never", en: "Never", ru: "Никогда" },
+  { value: "10min", en: "Every 10 min", ru: "Каждые 10 мин" },
+  { value: "30min", en: "Every 30 min", ru: "Каждые 30 мин" },
+  { value: "hourly", en: "Hourly", ru: "Каждый час" },
+  { value: "daily", en: "Daily", ru: "Ежедневно" },
+  { value: "weekly", en: "Weekly", ru: "Еженедельно" },
+];
+
 export default function TaskDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { tasks, updateTask, settings } = useTaskContext();
-  const { t, language } = useI18n();
+  const { tasks, updateTask, deleteTask, settings } = useTaskContext();
+  const { language } = useI18n();
+  const isRu = language === "ru";
 
   const [task, setTask] = useState<Task | null>(null);
   const [description, setDescription] = useState("");
@@ -30,9 +51,12 @@ export default function TaskDetailScreen() {
   const [emoji, setEmoji] = useState<string | undefined>();
   const [dueDate, setDueDate] = useState<Date | null>(null);
   const [dueTime, setDueTime] = useState<Date | null>(null);
+  const [notifFrequency, setNotifFrequency] = useState<NotificationFrequency>("global");
+  const [attachments, setAttachments] = useState<TaskAttachment[]>([]);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -44,6 +68,8 @@ export default function TaskDetailScreen() {
         setImportance(foundTask.importance);
         setUrgency(foundTask.urgency);
         setEmoji(foundTask.emoji || undefined);
+        setNotifFrequency(foundTask.notificationFrequency || "global");
+        setAttachments(foundTask.attachments || []);
         if (foundTask.dueDate) {
           setDueDate(new Date(foundTask.dueDate));
         }
@@ -57,7 +83,6 @@ export default function TaskDetailScreen() {
     }
   }, [id, tasks]);
 
-  // Live quadrant preview
   const currentQuadrant = determineQuadrant(importance, urgency, {
     importanceThreshold: settings.importanceThreshold,
     urgencyThreshold: settings.urgencyThreshold,
@@ -75,18 +100,61 @@ export default function TaskDetailScreen() {
   };
 
   const formatDate = (date: Date): string => {
-    return date.toLocaleDateString(language === "ru" ? "ru-RU" : "en-US", {
+    return date.toLocaleDateString(isRu ? "ru-RU" : "en-US", {
       day: "numeric",
-      month: "long",
-      year: "numeric",
+      month: "short",
     });
   };
 
   const formatTime = (date: Date): string => {
-    return date.toLocaleTimeString(language === "ru" ? "ru-RU" : "en-US", {
+    return date.toLocaleTimeString(isRu ? "ru-RU" : "en-US", {
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  const handlePickImage = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        quality: 0.7,
+        allowsMultipleSelection: true,
+      });
+      if (!result.canceled && result.assets) {
+        const newAttachments: TaskAttachment[] = result.assets.map(
+          (asset: { uri: string; fileName?: string | null }) => ({
+            uri: asset.uri,
+            type: "image" as const,
+            name: asset.fileName || "photo.jpg",
+          })
+        );
+        setAttachments((prev) => [...prev, ...newAttachments]);
+      }
+    } catch (e) {
+      console.log("Image picker error:", e);
+    }
+  };
+
+  const handlePickFile = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({ multiple: true });
+      if (!result.canceled && result.assets) {
+        const newAttachments: TaskAttachment[] = result.assets.map(
+          (asset: { uri: string; name?: string }) => ({
+            uri: asset.uri,
+            type: "file" as const,
+            name: asset.name || "file",
+          })
+        );
+        setAttachments((prev) => [...prev, ...newAttachments]);
+      }
+    } catch (e) {
+      console.log("Document picker error:", e);
+    }
+  };
+
+  const removeAttachment = (index: number) => {
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSave = async () => {
@@ -113,14 +181,16 @@ export default function TaskDetailScreen() {
         emoji,
         priorityScore,
         quadrant,
+        notificationFrequency: notifFrequency,
+        attachments,
       });
 
       router.back();
     } catch (error) {
       console.error("Failed to update task:", error);
       Alert.alert(
-        language === "ru" ? "Ошибка" : "Error",
-        language === "ru" ? "Не удалось сохранить задачу" : "Failed to save task"
+        isRu ? "Ошибка" : "Error",
+        isRu ? "Не удалось сохранить задачу" : "Failed to save task"
       );
     } finally {
       setLoading(false);
@@ -130,16 +200,15 @@ export default function TaskDetailScreen() {
   const handleDelete = () => {
     if (!task) return;
     Alert.alert(
-      language === "ru" ? "Удалить задачу?" : "Delete task?",
+      isRu ? "Удалить задачу?" : "Delete task?",
       task.title,
       [
-        { text: language === "ru" ? "Отмена" : "Cancel", style: "cancel" },
+        { text: isRu ? "Отмена" : "Cancel", style: "cancel" },
         {
-          text: language === "ru" ? "Удалить" : "Delete",
+          text: isRu ? "Удалить" : "Delete",
           style: "destructive",
           onPress: async () => {
-            const { deleteTask } = useTaskContext();
-            // We can't call hook here, so we'll navigate back
+            await deleteTask(task.id);
             router.back();
           },
         },
@@ -151,7 +220,7 @@ export default function TaskDetailScreen() {
     return (
       <ScreenContainer className="p-4 justify-center items-center">
         <Text className="text-foreground" style={{ fontSize: 16 }}>
-          {language === "ru" ? "Загрузка..." : "Loading..."}
+          {isRu ? "Загрузка..." : "Loading..."}
         </Text>
       </ScreenContainer>
     );
@@ -162,69 +231,121 @@ export default function TaskDetailScreen() {
       <ScrollView
         contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
-        <View className="gap-5">
+        <View className="gap-4">
           {/* Header */}
-          <Text
-            className="text-foreground font-bold"
-            style={{ fontSize: 28, lineHeight: 34 }}
-          >
-            {language === "ru" ? "Редактировать" : "Edit Task"}
-          </Text>
-
-          {/* Live quadrant preview */}
-          <View
-            style={{
-              backgroundColor: quadrantInfo.color + "15",
-              borderLeftWidth: 4,
-              borderLeftColor: quadrantInfo.color,
-              borderRadius: 12,
-              padding: 14,
-            }}
-          >
-            <Text
+          <View className="flex-row items-center justify-between">
+            <Text className="text-foreground font-bold" style={{ fontSize: 24, lineHeight: 30 }}>
+              {isRu ? "Редактировать" : "Edit Task"}
+            </Text>
+            <View
               style={{
-                color: quadrantInfo.color,
-                fontSize: 15,
-                fontWeight: "700",
+                backgroundColor: quadrantInfo.color,
+                paddingHorizontal: 10,
+                paddingVertical: 4,
+                borderRadius: 10,
               }}
             >
-              {currentQuadrant} — {language === "ru" ? quadrantInfo.ru : quadrantInfo.en}
-            </Text>
+              <Text style={{ color: "#FFF", fontSize: 12, fontWeight: "700" }}>
+                {currentQuadrant}
+              </Text>
+            </View>
           </View>
 
-          {/* Task description */}
-          <View>
-            <Text
-              className="text-foreground font-semibold"
-              style={{ fontSize: 16, marginBottom: 8 }}
+          {/* Description */}
+          <TextInput
+            value={description}
+            onChangeText={setDescription}
+            placeholder={isRu ? "Описание задачи..." : "Task description..."}
+            placeholderTextColor="#999"
+            multiline
+            numberOfLines={3}
+            className="bg-surface border border-border rounded-2xl p-4 text-foreground"
+            style={{ fontSize: 16, lineHeight: 22, minHeight: 80, textAlignVertical: "top" }}
+          />
+
+          {/* Quick emoji + date row */}
+          <View className="flex-row items-center gap-2">
+            <Pressable
+              onPress={() => setShowEmojiPicker(true)}
+              style={({ pressed }) => [
+                {
+                  width: 40,
+                  height: 40,
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: emoji ? "#0a7ea4" : "#E5E7EB",
+                  backgroundColor: emoji ? "#0a7ea410" : "transparent",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  opacity: pressed ? 0.7 : 1,
+                },
+              ]}
             >
-              {language === "ru" ? "Описание задачи" : "Task description"}
-            </Text>
-            <TextInput
-              value={description}
-              onChangeText={setDescription}
-              placeholder={language === "ru" ? "Введите описание задачи..." : "Enter task description..."}
-              placeholderTextColor="#999"
-              multiline
-              numberOfLines={4}
-              className="bg-surface border border-border rounded-2xl p-4 text-foreground"
-              style={{ fontSize: 16, lineHeight: 22, minHeight: 100, textAlignVertical: "top" }}
-            />
+              <Text style={{ fontSize: 22 }}>{emoji || "😀"}</Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => setShowDatePicker(true)}
+              style={({ pressed }) => [
+                {
+                  paddingHorizontal: 12,
+                  paddingVertical: 8,
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: dueDate ? "#0a7ea4" : "#E5E7EB",
+                  backgroundColor: dueDate ? "#0a7ea410" : "transparent",
+                  opacity: pressed ? 0.7 : 1,
+                },
+              ]}
+            >
+              <Text style={{ fontSize: 13, color: dueDate ? "#0a7ea4" : "#999" }}>
+                📅 {dueDate ? formatDate(dueDate) : isRu ? "Дата" : "Date"}
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => setShowTimePicker(true)}
+              style={({ pressed }) => [
+                {
+                  paddingHorizontal: 12,
+                  paddingVertical: 8,
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: dueTime ? "#0a7ea4" : "#E5E7EB",
+                  backgroundColor: dueTime ? "#0a7ea410" : "transparent",
+                  opacity: pressed ? 0.7 : 1,
+                },
+              ]}
+            >
+              <Text style={{ fontSize: 13, color: dueTime ? "#0a7ea4" : "#999" }}>
+                ⏰ {dueTime ? formatTime(dueTime) : isRu ? "Время" : "Time"}
+              </Text>
+            </Pressable>
+
+            {(dueDate || dueTime) && (
+              <Pressable
+                onPress={() => { setDueDate(null); setDueTime(null); }}
+                style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1 }]}
+              >
+                <Text style={{ color: "#EF4444", fontSize: 16 }}>✕</Text>
+              </Pressable>
+            )}
           </View>
 
           {/* Importance slider */}
           <View>
-            <View className="flex-row justify-between mb-2">
-              <Text className="text-foreground font-semibold" style={{ fontSize: 16 }}>
-                {language === "ru" ? "Важность" : "Importance"}
+            <View className="flex-row justify-between mb-1">
+              <Text className="text-foreground font-semibold" style={{ fontSize: 14 }}>
+                🔥 {isRu ? "Важность" : "Importance"}
               </Text>
-              <Text style={{ fontSize: 18, fontWeight: "800", color: "#FF6B6B" }}>
+              <Text style={{ fontSize: 16, fontWeight: "800", color: "#FF6B6B" }}>
                 {importance}/7
               </Text>
             </View>
             <Slider
-              style={{ height: 44 }}
+              style={{ height: 36 }}
               minimumValue={1}
               maximumValue={7}
               step={1}
@@ -238,16 +359,16 @@ export default function TaskDetailScreen() {
 
           {/* Urgency slider */}
           <View>
-            <View className="flex-row justify-between mb-2">
-              <Text className="text-foreground font-semibold" style={{ fontSize: 16 }}>
-                {language === "ru" ? "Срочность" : "Urgency"}
+            <View className="flex-row justify-between mb-1">
+              <Text className="text-foreground font-semibold" style={{ fontSize: 14 }}>
+                ⚡ {isRu ? "Срочность" : "Urgency"}
               </Text>
-              <Text style={{ fontSize: 18, fontWeight: "800", color: "#FFA94D" }}>
+              <Text style={{ fontSize: 16, fontWeight: "800", color: "#FFA94D" }}>
                 {urgency}/7
               </Text>
             </View>
             <Slider
-              style={{ height: 44 }}
+              style={{ height: 36 }}
               minimumValue={1}
               maximumValue={7}
               step={1}
@@ -259,115 +380,143 @@ export default function TaskDetailScreen() {
             />
           </View>
 
-          {/* Emoji picker */}
+          {/* File attachments */}
           <View>
-            <Text
-              className="text-foreground font-semibold"
-              style={{ fontSize: 16, marginBottom: 8 }}
-            >
-              {language === "ru" ? "Эмодзи" : "Emoji"}
-            </Text>
-            <Pressable
-              onPress={() => setShowEmojiPicker(true)}
-              style={({ pressed }) => [
-                {
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: 14,
-                  borderRadius: 16,
-                  borderWidth: 1,
-                  borderColor: emoji ? "#0a7ea4" : "#E5E7EB",
-                  backgroundColor: emoji ? "#0a7ea410" : "transparent",
-                  opacity: pressed ? 0.7 : 1,
-                },
-              ]}
-            >
-              <Text className="text-foreground" style={{ fontSize: 16 }}>
-                {emoji
-                  ? language === "ru"
-                    ? `Выбран: ${emoji}`
-                    : `Selected: ${emoji}`
-                  : language === "ru"
-                    ? "Выберите эмодзи"
-                    : "Choose emoji"}
+            <View className="flex-row items-center gap-2 mb-2">
+              <Text className="text-foreground font-semibold" style={{ fontSize: 14 }}>
+                📎 {isRu ? "Вложения" : "Attachments"}
               </Text>
-              {emoji && <Text style={{ fontSize: 32 }}>{emoji}</Text>}
-            </Pressable>
-          </View>
-
-          {/* Due date & time */}
-          <View className="gap-3">
-            <Text className="text-foreground font-semibold" style={{ fontSize: 16 }}>
-              {language === "ru" ? "Крайний срок (опционально)" : "Due date (optional)"}
-            </Text>
-
-            <View className="flex-row gap-3">
               <Pressable
-                onPress={() => setShowDatePicker(true)}
+                onPress={handlePickImage}
                 style={({ pressed }) => [
                   {
-                    flex: 1,
-                    padding: 14,
-                    borderRadius: 16,
-                    borderWidth: 1,
-                    borderColor: dueDate ? "#0a7ea4" : "#E5E7EB",
-                    backgroundColor: dueDate ? "#0a7ea410" : "transparent",
+                    paddingHorizontal: 10,
+                    paddingVertical: 4,
+                    borderRadius: 10,
+                    backgroundColor: "#0a7ea420",
                     opacity: pressed ? 0.7 : 1,
                   },
                 ]}
               >
-                <Text
-                  style={{
-                    fontSize: 15,
-                    color: dueDate ? "#0a7ea4" : "#999",
-                    textAlign: "center",
-                  }}
-                >
-                  📅 {dueDate ? formatDate(dueDate) : language === "ru" ? "Дата" : "Date"}
+                <Text style={{ fontSize: 12, color: "#0a7ea4", fontWeight: "600" }}>
+                  🖼 {isRu ? "Фото" : "Photo"}
                 </Text>
               </Pressable>
-
               <Pressable
-                onPress={() => setShowTimePicker(true)}
+                onPress={handlePickFile}
                 style={({ pressed }) => [
                   {
-                    flex: 1,
-                    padding: 14,
-                    borderRadius: 16,
-                    borderWidth: 1,
-                    borderColor: dueTime ? "#0a7ea4" : "#E5E7EB",
-                    backgroundColor: dueTime ? "#0a7ea410" : "transparent",
+                    paddingHorizontal: 10,
+                    paddingVertical: 4,
+                    borderRadius: 10,
+                    backgroundColor: "#0a7ea420",
                     opacity: pressed ? 0.7 : 1,
                   },
                 ]}
               >
-                <Text
-                  style={{
-                    fontSize: 15,
-                    color: dueTime ? "#0a7ea4" : "#999",
-                    textAlign: "center",
-                  }}
-                >
-                  ⏰ {dueTime ? formatTime(dueTime) : language === "ru" ? "Время" : "Time"}
+                <Text style={{ fontSize: 12, color: "#0a7ea4", fontWeight: "600" }}>
+                  📄 {isRu ? "Файл" : "File"}
                 </Text>
               </Pressable>
             </View>
 
-            {(dueDate || dueTime) && (
-              <Pressable
-                onPress={() => {
-                  setDueDate(null);
-                  setDueTime(null);
-                }}
-                style={({ pressed }) => [{ padding: 8, opacity: pressed ? 0.5 : 1 }]}
-              >
-                <Text style={{ color: "#EF4444", fontSize: 14, textAlign: "center" }}>
-                  {language === "ru" ? "✕ Убрать срок" : "✕ Clear deadline"}
-                </Text>
-              </Pressable>
+            {attachments.length > 0 && (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+                {attachments.map((att, idx) => (
+                  <View key={idx} style={{ position: "relative" }}>
+                    <View
+                      style={{
+                        width: 60,
+                        height: 60,
+                        borderRadius: 10,
+                        backgroundColor: "rgba(128,128,128,0.15)",
+                        overflow: "hidden",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      {att.type === "image" ? (
+                        <Image source={{ uri: att.uri }} style={{ width: 60, height: 60 }} resizeMode="cover" />
+                      ) : (
+                        <View style={{ alignItems: "center" }}>
+                          <Text style={{ fontSize: 24 }}>📄</Text>
+                          <Text style={{ fontSize: 8, color: "#999" }} numberOfLines={1}>{att.name}</Text>
+                        </View>
+                      )}
+                    </View>
+                    <Pressable
+                      onPress={() => removeAttachment(idx)}
+                      style={({ pressed }) => [
+                        {
+                          position: "absolute",
+                          top: -4,
+                          right: -4,
+                          width: 18,
+                          height: 18,
+                          borderRadius: 9,
+                          backgroundColor: "#EF4444",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          opacity: pressed ? 0.7 : 1,
+                        },
+                      ]}
+                    >
+                      <Text style={{ color: "#FFF", fontSize: 10, fontWeight: "700" }}>✕</Text>
+                    </Pressable>
+                  </View>
+                ))}
+              </ScrollView>
             )}
           </View>
+
+          {/* Advanced: per-task notification frequency */}
+          <Pressable
+            onPress={() => setShowAdvanced(!showAdvanced)}
+            style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1, paddingVertical: 4 }]}
+          >
+            <Text style={{ fontSize: 13, color: "#0a7ea4", fontWeight: "600" }}>
+              {showAdvanced
+                ? isRu ? "▲ Скрыть доп. настройки" : "▲ Hide advanced"
+                : isRu ? "▼ Доп. настройки (уведомления)" : "▼ Advanced (notifications)"}
+            </Text>
+          </Pressable>
+
+          {showAdvanced && (
+            <View className="bg-surface rounded-2xl p-3 border border-border">
+              <Text className="text-foreground font-semibold" style={{ fontSize: 13, marginBottom: 8 }}>
+                🔔 {isRu ? "Частота уведомлений" : "Notification frequency"}
+              </Text>
+              <View className="flex-row flex-wrap gap-2">
+                {NOTIF_OPTIONS.map((opt) => (
+                  <Pressable
+                    key={opt.value}
+                    onPress={() => setNotifFrequency(opt.value)}
+                    style={({ pressed }) => [
+                      {
+                        paddingHorizontal: 10,
+                        paddingVertical: 6,
+                        borderRadius: 10,
+                        borderWidth: 1.5,
+                        borderColor: notifFrequency === opt.value ? "#0a7ea4" : "#E5E7EB",
+                        backgroundColor: notifFrequency === opt.value ? "#0a7ea420" : "transparent",
+                        opacity: pressed ? 0.7 : 1,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        fontWeight: notifFrequency === opt.value ? "700" : "500",
+                        color: notifFrequency === opt.value ? "#0a7ea4" : "#9CA3AF",
+                      }}
+                    >
+                      {isRu ? opt.ru : opt.en}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+          )}
 
           {showDatePicker && (
             <DateTimePicker
@@ -395,13 +544,13 @@ export default function TaskDetailScreen() {
           />
 
           {/* Action buttons */}
-          <View className="flex-row gap-3 mt-2">
+          <View className="flex-row gap-3 mt-1">
             <Pressable
               onPress={() => router.back()}
               style={({ pressed }) => [
                 {
                   flex: 1,
-                  padding: 16,
+                  padding: 14,
                   borderRadius: 16,
                   borderWidth: 1,
                   borderColor: "#E5E7EB",
@@ -409,11 +558,8 @@ export default function TaskDetailScreen() {
                 },
               ]}
             >
-              <Text
-                className="text-foreground"
-                style={{ textAlign: "center", fontWeight: "600", fontSize: 17 }}
-              >
-                {language === "ru" ? "Отмена" : "Cancel"}
+              <Text className="text-foreground" style={{ textAlign: "center", fontWeight: "600", fontSize: 16 }}>
+                {isRu ? "Отмена" : "Cancel"}
               </Text>
             </Pressable>
 
@@ -423,7 +569,7 @@ export default function TaskDetailScreen() {
               style={({ pressed }) => [
                 {
                   flex: 1,
-                  padding: 16,
+                  padding: 14,
                   borderRadius: 16,
                   backgroundColor: !description.trim() || loading ? "#9CA3AF" : "#0a7ea4",
                   opacity: pressed ? 0.8 : 1,
@@ -431,24 +577,28 @@ export default function TaskDetailScreen() {
                 },
               ]}
             >
-              <Text
-                style={{
-                  textAlign: "center",
-                  color: "#FFFFFF",
-                  fontWeight: "700",
-                  fontSize: 17,
-                }}
-              >
-                {loading
-                  ? language === "ru"
-                    ? "Сохранение..."
-                    : "Saving..."
-                  : language === "ru"
-                    ? "Сохранить"
-                    : "Save"}
+              <Text style={{ textAlign: "center", color: "#FFFFFF", fontWeight: "700", fontSize: 16 }}>
+                {loading ? (isRu ? "Сохранение..." : "Saving...") : isRu ? "Сохранить" : "Save"}
               </Text>
             </Pressable>
           </View>
+
+          {/* Delete button */}
+          <Pressable
+            onPress={handleDelete}
+            style={({ pressed }) => [
+              {
+                padding: 14,
+                borderRadius: 16,
+                backgroundColor: "#EF444420",
+                opacity: pressed ? 0.7 : 1,
+              },
+            ]}
+          >
+            <Text style={{ textAlign: "center", color: "#EF4444", fontWeight: "600", fontSize: 16 }}>
+              🗑 {isRu ? "Удалить задачу" : "Delete task"}
+            </Text>
+          </Pressable>
         </View>
       </ScrollView>
     </ScreenContainer>

@@ -1,4 +1,4 @@
-import type { Task, Quadrant } from "./types";
+import type { Task, Quadrant, NotificationFrequency, TaskAttachment } from "./types";
 
 export interface ScoringConfig {
   importanceThreshold: number; // 1-7
@@ -56,6 +56,8 @@ export function createTaskWithScoring(
     dueTime?: string;
     status: string;
     emoji?: string;
+    notificationFrequency?: NotificationFrequency;
+    attachments?: TaskAttachment[];
   },
   config: ScoringConfig
 ): Omit<Task, "id" | "createdAt" | "updatedAt"> {
@@ -72,6 +74,8 @@ export function createTaskWithScoring(
     status: taskInput.status as Task["status"],
     emoji: taskInput.emoji,
     sortOrder: 0, // Will be overridden by db
+    notificationFrequency: taskInput.notificationFrequency || "global",
+    attachments: taskInput.attachments || [],
     priorityScore,
     quadrant,
   };

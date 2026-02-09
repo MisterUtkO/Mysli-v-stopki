@@ -1,5 +1,5 @@
 /**
- * Simplified Eisenhower Priority App Types
+ * SDVGNote — Task Priority App Types
  * Uses 7-point scale for importance and urgency
  */
 
@@ -7,9 +7,17 @@ export type TaskStatus = "not_started" | "in_progress" | "completed";
 
 export type Quadrant = "Q1" | "Q2" | "Q3" | "Q4";
 
+export type NotificationFrequency = "global" | "never" | "10min" | "30min" | "hourly" | "daily" | "weekly";
+
 export interface ScoringConfig {
   importanceThreshold: number; // 1-7
   urgencyThreshold: number; // 1-7
+}
+
+export interface TaskAttachment {
+  uri: string;
+  type: "image" | "file";
+  name: string;
 }
 
 export interface Task {
@@ -25,6 +33,8 @@ export interface Task {
   priorityScore: number; // 0-100
   emoji?: string; // Optional emoji for visual identification
   sortOrder: number; // Custom sort order for drag-and-drop
+  notificationFrequency?: NotificationFrequency; // Per-task notification override
+  attachments?: TaskAttachment[]; // File attachments
   createdAt: number; // timestamp
   updatedAt: number; // timestamp
 }
