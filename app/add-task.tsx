@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, Text, TextInput, Pressable, ScrollView, Modal } from "react-native";
+import { View, Text, TextInput, Pressable, ScrollView, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { ScreenContainer } from "@/components/screen-container";
@@ -20,6 +20,7 @@ export default function AddTaskScreen() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
     setShowDatePicker(false);
@@ -36,13 +37,28 @@ export default function AddTaskScreen() {
   };
 
   const handleAddTask = async () => {
-    if (!input.trim()) return;
+    if (!input.trim()) {
+      setError("Please enter a task description");
+      return;
+    }
 
     setLoading(true);
+    setError(null);
+    
     try {
       const title = input.substring(0, 50);
       const dueDateStr = dueDate ? dueDate.toISOString().split("T")[0] : undefined;
       const dueTimeStr = dueTime ? dueTime.toTimeString().substring(0, 5) : undefined;
+
+      console.log("Creating task with:", {
+        title,
+        description: input,
+        importance,
+        urgency,
+        dueDate: dueDateStr,
+        dueTime: dueTimeStr,
+        status: "not_started",
+      });
 
       await createTask({
         title,
@@ -57,6 +73,9 @@ export default function AddTaskScreen() {
       router.back();
     } catch (error) {
       console.error("Failed to create task:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to create task";
+      setError(errorMessage);
+      Alert.alert("Error", errorMessage);
     } finally {
       setLoading(false);
     }
@@ -66,14 +85,21 @@ export default function AddTaskScreen() {
     <ScreenContainer className="p-4">
       <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
         <View className="gap-4">
-          {/* Title */}
           <Text className="text-2xl font-bold text-foreground">Add Task</Text>
 
-          {/* Input */}
+          {error && (
+            <View className="bg-error/10 border border-error rounded-lg p-3">
+              <Text className="text-error text-sm">{error}</Text>
+            </View>
+          )}
+
           <View>
             <TextInput
               value={input}
-              onChangeText={setInput}
+              onChangeText={(text) => {
+                setInput(text);
+                setError(null);
+              }}
               placeholder="Enter task description..."
               placeholderTextColor="#999"
               multiline
@@ -82,7 +108,6 @@ export default function AddTaskScreen() {
             />
           </View>
 
-          {/* Importance Slider */}
           <View>
             <View className="flex-row justify-between mb-2">
               <Text className="text-sm font-semibold text-foreground">Importance</Text>
@@ -100,7 +125,6 @@ export default function AddTaskScreen() {
             />
           </View>
 
-          {/* Urgency Slider */}
           <View>
             <View className="flex-row justify-between mb-2">
               <Text className="text-sm font-semibold text-foreground">Urgency</Text>
@@ -118,11 +142,9 @@ export default function AddTaskScreen() {
             />
           </View>
 
-          {/* Date/Time Section */}
           <View className="gap-2">
             <Text className="text-sm font-semibold text-foreground">Deadline (Optional)</Text>
 
-            {/* Date Button */}
             <Pressable
               onPress={() => setShowDatePicker(true)}
               className="bg-surface border border-border rounded-lg p-3"
@@ -132,7 +154,6 @@ export default function AddTaskScreen() {
               </Text>
             </Pressable>
 
-            {/* Time Button */}
             <Pressable
               onPress={() => setShowTimePicker(true)}
               className="bg-surface border border-border rounded-lg p-3"
@@ -143,7 +164,6 @@ export default function AddTaskScreen() {
             </Pressable>
           </View>
 
-          {/* Date/Time Pickers */}
           {showDatePicker && (
             <DateTimePicker
               value={dueDate || new Date()}
@@ -162,7 +182,6 @@ export default function AddTaskScreen() {
             />
           )}
 
-          {/* Buttons */}
           <View className="flex-row gap-3 mt-4">
             <Pressable
               onPress={() => router.back()}
