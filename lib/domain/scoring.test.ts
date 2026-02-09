@@ -1,167 +1,94 @@
 import { describe, it, expect } from "vitest";
-import { calculateScoring, validateWeights } from "./scoring";
-import type { Metrics, ScoringWeights, Thresholds } from "./types";
+import { calculatePriorityScore, determineQuadrant, sortTasksByPriority } from "./scoring";
+import type { Task, ScoringConfig } from "./types";
 
-describe("Scoring Service (Simplified)", () => {
-  const defaultWeights: ScoringWeights = {
-    wImportance: 0.5,
-    wUrgency: 0.5,
-  };
+const defaultConfig: ScoringConfig = {
+  importanceThreshold: 4,
+  urgencyThreshold: 4,
+};
 
-  const defaultThresholds: Thresholds = {
-    importanceThreshold: 6,
-    urgencyThreshold: 6,
-  };
-
-  describe("calculateScoring", () => {
-    it("should classify Q1 (Important & Urgent)", () => {
-      const metrics: Metrics = {
-        importanceScore: 9,
-        urgencyScore: 9,
-      };
-
-      const result = calculateScoring(metrics, defaultWeights, defaultThresholds);
-
-      expect(result.importantFlag).toBe(true);
-      expect(result.urgentFlag).toBe(true);
-      expect(result.quadrant).toBe("Q1");
-      expect(result.nextActionHint).toBe("Do Now");
-      expect(result.priorityScore).toBeGreaterThan(70);
+describe("Scoring Service", () => {
+  describe("calculatePriorityScore", () => {
+    it("should return 0 for minimum values (1, 1)", () => {
+      const score = calculatePriorityScore(1, 1);
+      expect(score).toBe(0);
     });
 
-    it("should classify Q2 (Important & Not Urgent)", () => {
-      const metrics: Metrics = {
-        importanceScore: 8,
-        urgencyScore: 3,
-      };
-
-      const result = calculateScoring(metrics, defaultWeights, defaultThresholds);
-
-      expect(result.importantFlag).toBe(true);
-      expect(result.urgentFlag).toBe(false);
-      expect(result.quadrant).toBe("Q2");
-      expect(result.nextActionHint).toBe("Schedule");
+    it("should return 100 for maximum values (7, 7)", () => {
+      const score = calculatePriorityScore(7, 7);
+      expect(score).toBe(100);
     });
 
-    it("should classify Q3 (Not Important & Urgent)", () => {
-      const metrics: Metrics = {
-        importanceScore: 4,
-        urgencyScore: 8,
-      };
-
-      const result = calculateScoring(metrics, defaultWeights, defaultThresholds);
-
-      expect(result.importantFlag).toBe(false);
-      expect(result.urgentFlag).toBe(true);
-      expect(result.quadrant).toBe("Q3");
-      expect(result.nextActionHint).toBe("Delegate");
+    it("should return 50 for middle values (4, 4)", () => {
+      const score = calculatePriorityScore(4, 4);
+      expect(score).toBe(50);
     });
 
-    it("should classify Q4 (Not Important & Not Urgent)", () => {
-      const metrics: Metrics = {
-        importanceScore: 2,
-        urgencyScore: 2,
-      };
-
-      const result = calculateScoring(metrics, defaultWeights, defaultThresholds);
-
-      expect(result.importantFlag).toBe(false);
-      expect(result.urgentFlag).toBe(false);
-      expect(result.quadrant).toBe("Q4");
-      expect(result.nextActionHint).toBe("Delete");
-    });
-
-    it("should respect custom thresholds", () => {
-      const metrics: Metrics = {
-        importanceScore: 7,
-        urgencyScore: 5,
-      };
-
-      const customThresholds: Thresholds = {
-        importanceThreshold: 8,
-        urgencyThreshold: 6,
-      };
-
-      const result = calculateScoring(metrics, defaultWeights, customThresholds);
-
-      expect(result.importantFlag).toBe(false); // 7 < 8
-      expect(result.urgentFlag).toBe(false); // 5 < 6
-      expect(result.quadrant).toBe("Q4");
-    });
-
-    it("should calculate priority score between 0 and 100", () => {
-      const metrics: Metrics = {
-        importanceScore: 5,
-        urgencyScore: 5,
-      };
-
-      const result = calculateScoring(metrics, defaultWeights, defaultThresholds);
-
-      expect(result.priorityScore).toBeGreaterThanOrEqual(0);
-      expect(result.priorityScore).toBeLessThanOrEqual(100);
-    });
-
-    it("should increase priority with higher importance", () => {
-      const lowImportanceMetrics: Metrics = {
-        importanceScore: 3,
-        urgencyScore: 5,
-      };
-
-      const highImportanceMetrics: Metrics = {
-        importanceScore: 9,
-        urgencyScore: 5,
-      };
-
-      const lowResult = calculateScoring(lowImportanceMetrics, defaultWeights, defaultThresholds);
-      const highResult = calculateScoring(highImportanceMetrics, defaultWeights, defaultThresholds);
-
-      expect(highResult.priorityScore).toBeGreaterThan(lowResult.priorityScore);
-    });
-
-    it("should increase priority with higher urgency", () => {
-      const lowUrgencyMetrics: Metrics = {
-        importanceScore: 5,
-        urgencyScore: 3,
-      };
-
-      const highUrgencyMetrics: Metrics = {
-        importanceScore: 5,
-        urgencyScore: 9,
-      };
-
-      const lowResult = calculateScoring(lowUrgencyMetrics, defaultWeights, defaultThresholds);
-      const highResult = calculateScoring(highUrgencyMetrics, defaultWeights, defaultThresholds);
-
-      expect(highResult.priorityScore).toBeGreaterThan(lowResult.priorityScore);
+    it("should average importance and urgency", () => {
+      const score = calculatePriorityScore(7, 1);
+      expect(score).toBe(50); // (1.0 + 0.0) / 2 * 100
     });
   });
 
-  describe("validateWeights", () => {
-    it("should validate correct weights", () => {
-      const weights: ScoringWeights = {
-        wImportance: 0.5,
-        wUrgency: 0.5,
-      };
-
-      expect(validateWeights(weights)).toBe(true);
+  describe("determineQuadrant", () => {
+    it("should return Q1 for high importance and urgency", () => {
+      const quadrant = determineQuadrant(5, 5, defaultConfig);
+      expect(quadrant).toBe("Q1");
     });
 
-    it("should reject weights that don't sum to 1.0", () => {
-      const weights: ScoringWeights = {
-        wImportance: 0.6,
-        wUrgency: 0.3,
-      };
-
-      expect(validateWeights(weights)).toBe(false);
+    it("should return Q2 for high importance, low urgency", () => {
+      const quadrant = determineQuadrant(5, 2, defaultConfig);
+      expect(quadrant).toBe("Q2");
     });
 
-    it("should allow small floating point errors", () => {
-      const weights: ScoringWeights = {
-        wImportance: 0.5,
-        wUrgency: 0.5000000001,
-      };
+    it("should return Q3 for low importance, high urgency", () => {
+      const quadrant = determineQuadrant(2, 5, defaultConfig);
+      expect(quadrant).toBe("Q3");
+    });
 
-      expect(validateWeights(weights)).toBe(true);
+    it("should return Q4 for low importance and urgency", () => {
+      const quadrant = determineQuadrant(2, 2, defaultConfig);
+      expect(quadrant).toBe("Q4");
+    });
+
+    it("should use threshold for boundary", () => {
+      const quadrant = determineQuadrant(4, 4, defaultConfig);
+      expect(quadrant).toBe("Q1"); // >= threshold
+    });
+  });
+
+  describe("sortTasksByPriority", () => {
+    it("should sort tasks by priority score descending", () => {
+      const tasks: Task[] = [
+        {
+          id: "1",
+          title: "Low priority",
+          description: "",
+          importance: 1,
+          urgency: 1,
+          status: "not_started",
+          quadrant: "Q4",
+          priorityScore: 0,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        },
+        {
+          id: "2",
+          title: "High priority",
+          description: "",
+          importance: 7,
+          urgency: 7,
+          status: "not_started",
+          quadrant: "Q1",
+          priorityScore: 100,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        },
+      ];
+
+      const sorted = sortTasksByPriority(tasks);
+      expect(sorted[0].priorityScore).toBe(100);
+      expect(sorted[1].priorityScore).toBe(0);
     });
   });
 });

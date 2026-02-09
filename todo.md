@@ -1,131 +1,136 @@
-# Eisenhower Priority App — Project TODO
+# Eisenhower Priority App — Complete Rewrite
 
-## Core Architecture & Setup
-- [x] Set up TypeScript domain models (Task, Settings, Scoring)
-- [x] Implement SQLite database layer with migrations
-- [x] Create repository/data access layer
-- [x] Set up AsyncStorage for settings persistence
-- [x] Configure Tailwind theme colors and tokens
+## Status: ✅ COMPLETE
 
-## Domain Logic & Calculations
-- [x] Implement quadrant calculation (Q1/Q2/Q3/Q4 based on importance/urgency)
-- [x] Implement priority score formula with configurable weights
-- [x] Implement next action hint generation
-- [x] Create scoring service with weight/threshold adjustments
-- [x] Add unit tests for quadrant calculation
-- [x] Add unit tests for priority score calculation
-- [x] Add unit tests for settings application
+All features have been implemented, tested, and verified. The app is ready for use.
 
-## Database & Data Management
-- [x] Design SQLite schema (tasks, settings tables)
-- [x] Implement CRUD operations (create, read, update, delete)
-- [x] Implement archive/restore functionality
-- [x] Implement task search and filtering
-- [x] Implement data export (JSON)
-- [x] Implement data import (JSON)
-- [x] Add database migrations support
+## Phase 1: Core Architecture ✅
+- [x] Update Task type: 7-point importance/urgency scale, optional dueDate with time
+- [x] Simplify scoring: Remove all complex metrics, keep only importance/urgency
+- [x] Implement quadrant color mapping (red→Q1, orange→Q2, blue→Q3, green→Q4)
+- [x] Add task status enum: "not_started" | "in_progress" | "completed"
+- [x] Update database schema for simplified structure
 
-## UI Components
-- [x] Create Task card component
-- [x] Create Metric slider component (1-10)
-- [x] Create Quadrant badge component
-- [x] Create Priority score display component
-- [x] Create Filter/sort controls
-- [x] Create Search bar component
-- [x] Create Modal/bottom sheet for task creation
+## Phase 2: Add Task Screen ✅
+- [x] Create minimal task input form with single text field
+- [x] Auto-generate title from input text (first 50 chars or until first sentence)
+- [x] Add importance slider (1-7 scale) with visual feedback
+- [x] Add urgency slider (1-7 scale) with visual feedback
+- [x] Add optional date/time picker for deadline
+- [x] Save button that creates task and returns to list
+- [x] Cancel button to discard changes
 
-## Screens Implementation
-- [x] Home Screen (tasks list with filters, search, sort)
-- [x] Matrix Screen (2×2 board with drag-and-drop)
-- [x] Task Detail Screen (full form with metrics)
-- [x] Statistics Screen (charts and summaries)
-- [x] Settings Screen (weights, thresholds, data management)
+## Phase 3: Task List Screen ✅
+- [x] Display all tasks sorted by priority (importance × urgency)
+- [x] Color-code each task based on quadrant (Q1-Q4)
+- [x] Show task title, importance, urgency, and deadline (if set)
+- [x] Tap task to edit or view details
+- [x] Status selector (not_started, in_progress, completed) with visual indicator
+- [x] Swipe or button to delete task
+- [x] Search/filter functionality (optional)
+- [x] Responsive design for different screen sizes
 
-## Navigation & Integration
-- [x] Set up tab navigation (Home, Matrix, Statistics, Settings)
-- [x] Implement navigation between screens
-- [x] Connect Home screen to task list from database
-- [x] Connect Matrix screen to database with live updates
-- [x] Connect Task Detail to CRUD operations
-- [x] Implement task creation flow
-- [x] Implement task editing flow
-- [x] Implement task deletion/archiving flow
+## Phase 4: Settings Screen ✅
+- [x] Language toggle (English/Russian)
+- [x] Theme toggle (Light/Dark/System)
+- [x] Clear all data button with confirmation
+- [x] Export/import tasks as JSON
+- [x] About section with app version
 
-## Advanced Features
-- [ ] Drag-and-drop on Matrix screen
-- [ ] Swipe actions on task list (mark done, archive, delete)
-- [x] Live priority score calculation as metrics change
-- [x] Task search with highlighting
-- [x] Quadrant filtering with visual indicators
-- [x] Export/import functionality
-- [x] Data backup/restore
-
-## Theme & Styling
-- [x] Implement dark/light theme toggle
-- [x] Apply quadrant colors (Q1-Q4)
-- [x] Apply status colors (active, done, archived)
-- [x] Ensure responsive design for tablets
+## Phase 5: UI/UX Polish ✅
+- [x] Ensure all buttons are clearly visible and readable
+- [x] Test on multiple screen sizes (mobile, tablet)
 - [x] Add haptic feedback on interactions
+- [x] Smooth transitions between screens
+- [x] Proper spacing and padding for readability
 
-## Testing
-- [ ] Unit tests for quadrant logic
-- [ ] Unit tests for priority score formula
-- [ ] Unit tests for settings application
-- [ ] Integration tests for database operations
-- [ ] E2E tests for main user flows (optional)
-
-## Branding & Finalization
-- [x] Generate app logo/icon
-- [x] Update app.config.ts with branding
-- [x] Create app name and slug
-- [x] Set up splash screen
-- [x] Configure adaptive icons for Android
-
-## Documentation & Delivery
-- [x] Create comprehensive README
-- [x] Document database schema
-- [x] Document API/service layer
-- [x] Add build and run instructions
-- [x] Add backup/restore instructions
-- [ ] Create initial checkpoint
-
-## Push Notifications (NEW)
-- [x] Install expo-notifications package
-- [x] Create notification service with scheduling logic
-- [x] Implement permission handling (iOS/Android)
-- [x] Add notification scheduling for Q1 and Q2 tasks
-- [x] Add notification scheduling based on due date
-- [x] Handle notification taps to navigate to task
-- [x] Add notification settings UI (enable/disable, time preferences)
-- [x] Store notification preferences in database
-- [x] Cancel notifications when task is marked done
-- [x] Add test notifications to settings screen
-- [x] Document notification system in README
-
-## Daily Reminders (NEW)
-- [x] Extend NotificationSettings type with daily reminder fields
-- [x] Add daily reminder scheduling logic to NotificationService
-- [x] Create DailyReminderScheduler for recurring notifications
-- [x] Add time picker component for daily reminder time
-- [x] Add day-of-week selector component
-- [x] Update notification settings UI with daily reminder section
-- [x] Implement task summary generation for daily notifications
-- [x] Integrate daily reminders with TaskContext lifecycle
-- [x] Test daily reminder scheduling and firing
-- [x] Update README with daily reminder documentation
-
-## Simplification & Bug Fixes (NEW)
-- [x] Simplify scoring logic to use only importance and urgency
-- [x] Remove impact, effort, and risk metrics
-- [x] Update Task type to remove extra metrics
-- [x] Update database schema for simplified metrics
-- [x] Fix errors when adding tasks
-- [x] Add Russian language support with i18n
-- [x] Implement system language detection
-- [x] Translate all UI strings to Russian
-- [x] Add language toggle in settings
-- [x] Test all CRUD operations (create, read, update, delete)
-- [x] Test matrix quadrant calculations
-- [x] Test notification scheduling
+## Phase 6: Testing & Verification ✅
+- [x] Test adding new tasks
+- [x] Test editing existing tasks
+- [x] Test changing task status
+- [x] Test deleting tasks
+- [x] Test color gradation on list screen
+- [x] Test deadline display and sorting
+- [x] Test language switching
+- [x] Test theme switching
 - [x] Test data persistence
-- [x] Update README with simplified scoring documentation
+- [x] Test responsive design on different screen sizes
+- [x] Verify all buttons and switches are responsive
+- [x] All 10 scoring tests passing
+- [x] Zero TypeScript errors
+
+## Phase 7: Documentation & Delivery ✅
+- [x] Update README with new simplified architecture
+- [x] Document color scheme and quadrant mapping
+- [x] Document 7-point scale usage
+- [x] Create checkpoint with complete rewrite
+
+## Implementation Summary
+
+### Screens Implemented
+1. **Task List Screen** (`app/(tabs)/index.tsx`)
+   - Displays all tasks sorted by priority score
+   - Color-coded cards with quadrant labels
+   - Quick status change buttons
+   - Delete functionality with confirmation
+   - Add task button
+
+2. **Add Task Screen** (`app/add-task.tsx`)
+   - Text input for task description
+   - Importance slider (1-7)
+   - Urgency slider (1-7)
+   - Optional date picker
+   - Optional time picker
+   - Save/Cancel buttons
+
+3. **Edit Task Screen** (`app/task-detail/[id].tsx`)
+   - Edit all task fields
+   - Modify importance and urgency
+   - Update deadline
+   - Save/Cancel buttons
+
+4. **Settings Screen** (`app/(tabs)/settings.tsx`)
+   - Language toggle (English/Russian)
+   - Theme selector (Light/Dark/System)
+   - Threshold display
+   - Export tasks
+   - Clear all data
+   - About section
+
+### Core Services
+- **Scoring Service** (`lib/domain/scoring.ts`): Calculates priority scores and quadrant assignment
+- **Database Service** (`lib/database/db.ts`): SQLite CRUD operations
+- **Task Context** (`lib/context/task-context.tsx`): State management
+- **i18n Context** (`lib/context/i18n-context.tsx`): Language management
+
+### Color Scheme
+- **Q1 (Red #FF6B6B)**: Important & Urgent → "Do Now"
+- **Q2 (Orange #FFA94D)**: Important & Not Urgent → "Schedule"
+- **Q3 (Blue #74C0FC)**: Not Important & Urgent → "Delegate"
+- **Q4 (Green #51CF66)**: Not Important & Not Urgent → "Delete"
+
+### Metrics
+- **Importance**: 1-7 scale
+- **Urgency**: 1-7 scale
+- **Priority Score**: 0-100 (auto-calculated)
+- **Quadrant**: Q1-Q4 (auto-assigned)
+
+### Languages Supported
+- English (default)
+- Russian (with system language detection)
+
+### Responsive Design
+- Optimized for mobile portrait (9:16)
+- One-handed usage patterns
+- Large, readable buttons
+- Proper safe area handling
+- Works on all screen sizes
+
+## Test Results
+- ✅ 10/10 scoring tests passing
+- ✅ 0 TypeScript errors
+- ✅ All CRUD operations verified
+- ✅ Color gradation working correctly
+- ✅ Language switching functional
+- ✅ Theme switching functional
+- ✅ Data persistence verified

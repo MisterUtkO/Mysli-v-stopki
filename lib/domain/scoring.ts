@@ -1,115 +1,73 @@
-import type { Metrics, ScoringWeights, Thresholds, ScoringOutput } from "./types";
+import type { Task, Quadrant } from "./types";
 
-/**
- * Scoring Service (Simplified)
- * Calculates Eisenhower quadrant, priority score, and next action hint
- * Based only on importance and urgency metrics
- */
-
-/**
- * Determines if a metric value exceeds a threshold
- */
-function meetsThreshold(value: number, threshold: number): boolean {
-  return value >= threshold;
+export interface ScoringConfig {
+  importanceThreshold: number; // 1-7
+  urgencyThreshold: number; // 1-7
 }
 
 /**
- * Determines the Eisenhower quadrant based on importance and urgency flags
+ * Calculate priority score based on importance and urgency (1-7 scale)
+ * Score is normalized to 0-100 range
  */
-function getQuadrant(
-  importantFlag: boolean,
-  urgentFlag: boolean
-): "Q1" | "Q2" | "Q3" | "Q4" {
-  if (importantFlag && urgentFlag) return "Q1";
-  if (importantFlag && !urgentFlag) return "Q2";
-  if (!importantFlag && urgentFlag) return "Q3";
-  return "Q4";
-}
-
-/**
- * Determines the next action hint based on quadrant
- */
-function getNextActionHint(
-  quadrant: "Q1" | "Q2" | "Q3" | "Q4"
-): "Do Now" | "Schedule" | "Delegate" | "Delete" {
-  switch (quadrant) {
-    case "Q1":
-      return "Do Now";
-    case "Q2":
-      return "Schedule";
-    case "Q3":
-      return "Delegate";
-    case "Q4":
-      return "Delete";
-  }
-}
-
-/**
- * Calculates priority score using weighted formula (simplified)
- * Formula: priorityScore = scale(wImportance * importance + wUrgency * urgency)
- * Normalized to 0-100 range
- */
-function calculatePriorityScore(
-  metrics: Metrics,
-  weights: ScoringWeights
+export function calculatePriorityScore(
+  importance: number,
+  urgency: number
 ): number {
-  const { importanceScore, urgencyScore } = metrics;
-  const { wImportance, wUrgency } = weights;
+  // Normalize 1-7 scale to 0-1 range
+  const normalizedImportance = (importance - 1) / 6;
+  const normalizedUrgency = (urgency - 1) / 6;
 
-  // Raw weighted sum
-  const rawScore = wImportance * importanceScore + wUrgency * urgencyScore;
+  // Average of both metrics
+  const avgScore = (normalizedImportance + normalizedUrgency) / 2;
 
-  // Calculate max and min possible values
-  // Max: 0.5 * 10 + 0.5 * 10 = 10
-  // Min: 0.5 * 1 + 0.5 * 1 = 1
-  const maxPossible = wImportance * 10 + wUrgency * 10;
-  const minPossible = wImportance * 1 + wUrgency * 1;
-
-  // Normalize to 0-100 range
-  const range = maxPossible - minPossible;
-  const normalized = (rawScore - minPossible) / range;
-  const scaled = Math.max(0, Math.min(100, normalized * 100));
-
-  // Round to 1 decimal place
-  return Math.round(scaled * 10) / 10;
+  // Scale to 0-100
+  return Math.round(avgScore * 100);
 }
 
 /**
- * Main scoring function that calculates all derived fields
+ * Determine quadrant based on importance and urgency thresholds
  */
-export function calculateScoring(
-  metrics: Metrics,
-  weights: ScoringWeights,
-  thresholds: Thresholds
-): ScoringOutput {
-  const importantFlag = meetsThreshold(
-    metrics.importanceScore,
-    thresholds.importanceThreshold
-  );
-  const urgentFlag = meetsThreshold(
-    metrics.urgencyScore,
-    thresholds.urgencyThreshold
-  );
+export function determineQuadrant(
+  importance: number,
+  urgency: number,
+  config: ScoringConfig
+): Quadrant {
+  const isImportant = importance >= config.importanceThreshold;
+  const isUrgent = urgency >= config.urgencyThreshold;
 
-  const quadrant = getQuadrant(importantFlag, urgentFlag);
-  const priorityScore = calculatePriorityScore(metrics, weights);
-  const nextActionHint = getNextActionHint(quadrant);
+  if (isImportant && isUrgent) return "Q1"; // Do Now - Red
+  if (isImportant && !isUrgent) return "Q2"; // Schedule - Orange
+  if (!isImportant && isUrgent) return "Q3"; // Delegate - Blue
+  return "Q4"; // Delete - Green
+}
+
+/**
+ * Create a task with calculated priority score and quadrant
+ */
+export function createTaskWithScoring(
+  task: Omit<Task, "priorityScore" | "quadrant">,
+  config: ScoringConfig
+): Task {
+  const priorityScore = calculatePriorityScore(task.importance, task.urgency);
+  const quadrant = determineQuadrant(task.importance, task.urgency, config);
 
   return {
-    importantFlag,
-    urgentFlag,
-    quadrant,
+    ...task,
     priorityScore,
-    nextActionHint,
+    quadrant,
   };
 }
 
 /**
- * Validates that weights sum to approximately 1.0
+ * Sort tasks by priority score (highest first)
  */
-export function validateWeights(weights: ScoringWeights): boolean {
-  const sum = weights.wImportance + weights.wUrgency;
+export function sortTasksByPriority(tasks: Task[]): Task[] {
+  return [...tasks].sort((a, b) => b.priorityScore - a.priorityScore);
+}
 
-  // Allow small floating point error
-  return Math.abs(sum - 1.0) < 0.01;
+/**
+ * Filter tasks by quadrant
+ */
+export function filterTasksByQuadrant(tasks: Task[], quadrant: Quadrant): Task[] {
+  return tasks.filter((task) => task.quadrant === quadrant);
 }
