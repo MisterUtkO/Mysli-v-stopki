@@ -34,6 +34,8 @@ const DEFAULT_SETTINGS: Settings = {
   theme: "system",
   importanceThreshold: 4,
   urgencyThreshold: 4,
+  notificationsEnabled: true,
+  notificationFrequency: "daily",
 };
 
 export function TaskProvider({ children }: { children: React.ReactNode }) {
@@ -54,12 +56,16 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         const theme = (await getSetting("theme")) as "light" | "dark" | "system" | null;
         const impThreshold = await getSetting("importanceThreshold");
         const urgThreshold = await getSetting("urgencyThreshold");
+        const notifEnabled = await getSetting("notificationsEnabled");
+        const notifFreq = await getSetting("notificationFrequency");
 
         setSettings({
           language: language || DEFAULT_SETTINGS.language,
           theme: theme || DEFAULT_SETTINGS.theme,
           importanceThreshold: impThreshold ? parseInt(impThreshold) : DEFAULT_SETTINGS.importanceThreshold,
           urgencyThreshold: urgThreshold ? parseInt(urgThreshold) : DEFAULT_SETTINGS.urgencyThreshold,
+          notificationsEnabled: notifEnabled ? notifEnabled === "true" : DEFAULT_SETTINGS.notificationsEnabled,
+          notificationFrequency: (notifFreq as any) || DEFAULT_SETTINGS.notificationFrequency,
         });
       } catch (error) {
         console.error("Failed to initialize database:", error);
@@ -103,6 +109,8 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     if (newSettings.theme) await setSetting("theme", newSettings.theme);
     if (newSettings.importanceThreshold) await setSetting("importanceThreshold", String(newSettings.importanceThreshold));
     if (newSettings.urgencyThreshold) await setSetting("urgencyThreshold", String(newSettings.urgencyThreshold));
+    if (newSettings.notificationsEnabled !== undefined) await setSetting("notificationsEnabled", String(newSettings.notificationsEnabled));
+    if (newSettings.notificationFrequency) await setSetting("notificationFrequency", newSettings.notificationFrequency);
   };
 
   const exportTasks = async (): Promise<string> => {

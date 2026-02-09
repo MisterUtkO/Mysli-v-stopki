@@ -2,22 +2,10 @@ import { useState, useEffect } from "react";
 import { View, Text, TextInput, Pressable, FlatList } from "react-native";
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
+import { SwipeableTaskCard } from "@/components/swipeable-task-card";
 import { useTaskContext } from "@/lib/context/task-context";
 import { useI18n } from "@/lib/context/i18n-context";
 import type { Task, TaskStatus } from "@/lib/domain/types";
-
-const QUADRANT_COLORS: Record<string, string> = {
-  Q1: "bg-red-500",
-  Q2: "bg-orange-400",
-  Q3: "bg-blue-400",
-  Q4: "bg-green-500",
-};
-
-const STATUS_COLORS: Record<string, string> = {
-  not_started: "border-l-4 border-gray-400",
-  in_progress: "border-l-4 border-blue-500",
-  completed: "border-l-4 border-green-500",
-};
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -54,51 +42,13 @@ export default function HomeScreen() {
   };
 
   const renderTaskCard = ({ item }: { item: Task }) => (
-    <Pressable
+    <SwipeableTaskCard
+      task={item}
+      emoji={item.emoji}
       onPress={() => router.push(`/task-detail/${item.id}`)}
-      className={`bg-surface border border-border rounded-lg p-4 mb-3 ${STATUS_COLORS[item.status]}`}
-    >
-      <View className="flex-row justify-between items-start mb-2">
-        <View className="flex-1">
-          <Text className="text-lg font-bold text-foreground">{item.title}</Text>
-          <Text className="text-sm text-muted mt-1">{item.description}</Text>
-        </View>
-        <View className={`${QUADRANT_COLORS[item.quadrant]} px-2 py-1 rounded`}>
-          <Text className="text-white text-xs font-bold">{item.quadrant}</Text>
-        </View>
-      </View>
-
-      <View className="flex-row justify-between items-center mt-3">
-        <View className="flex-row gap-2">
-          <Pressable
-            onPress={() =>
-              handleStatusChange(
-                item.id,
-                item.status === "completed" ? ("not_started" as const) : ("completed" as const)
-              )
-            }
-            className={`px-3 py-1 rounded ${
-              item.status === "completed" ? "bg-green-500" : "bg-gray-300"
-            }`}
-          >
-            <Text className="text-xs font-semibold text-white">
-              {item.status === "completed" ? "✓" : "○"}
-            </Text>
-          </Pressable>
-
-          <Pressable
-            onPress={() => handleDelete(item.id)}
-            className="px-3 py-1 rounded bg-red-500"
-          >
-            <Text className="text-xs font-semibold text-white">✕</Text>
-          </Pressable>
-        </View>
-
-        {item.dueDate && (
-          <Text className="text-xs text-muted">{item.dueDate}</Text>
-        )}
-      </View>
-    </Pressable>
+      onStatusChange={(newStatus) => handleStatusChange(item.id, newStatus)}
+      onDelete={() => handleDelete(item.id)}
+    />
   );
 
   return (

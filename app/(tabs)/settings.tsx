@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { View, Text, Pressable, ScrollView, Alert } from "react-native";
+import { View, Text, Pressable, ScrollView, Alert, Switch } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { useTaskContext } from "@/lib/context/task-context";
 import { useI18n } from "@/lib/context/i18n-context";
 import { useThemeContext } from "@/lib/theme-provider";
 
 export default function SettingsScreen() {
-  const { exportTasks, clearAllData } = useTaskContext();
+  const { settings, updateSettings, exportTasks, clearAllData } = useTaskContext();
   const { language, setLanguage, t } = useI18n();
   const { colorScheme, setColorScheme } = useThemeContext();
   const [exporting, setExporting] = useState(false);
@@ -14,11 +14,25 @@ export default function SettingsScreen() {
   const handleLanguageToggle = async () => {
     const newLang = language === "en" ? "ru" : "en";
     await setLanguage(newLang);
+    await updateSettings({ language: newLang });
   };
 
   const handleThemeToggle = async () => {
     const newTheme = colorScheme === "light" ? "dark" : "light";
     await setColorScheme(newTheme);
+    await updateSettings({ theme: newTheme });
+  };
+
+  const handleNotificationsToggle = async () => {
+    await updateSettings({
+      notificationsEnabled: !settings.notificationsEnabled,
+    });
+  };
+
+  const handleNotificationFrequencyChange = async (
+    frequency: "never" | "daily" | "weekly" | "always"
+  ) => {
+    await updateSettings({ notificationFrequency: frequency });
   };
 
   const handleExport = async () => {
@@ -105,6 +119,59 @@ export default function SettingsScreen() {
                   : "Включить светлую тему"}
               </Text>
             </Pressable>
+          </View>
+
+          {/* Notifications Section */}
+          <View className="bg-surface rounded-lg p-4 border border-border">
+            <View className="flex-row justify-between items-center mb-3">
+              <Text className="text-lg font-semibold text-foreground">
+                {t.notifications.title}
+              </Text>
+              <Switch
+                value={settings.notificationsEnabled}
+                onValueChange={handleNotificationsToggle}
+              />
+            </View>
+
+            {settings.notificationsEnabled && (
+              <View className="gap-3">
+                <Text className="text-sm font-semibold text-foreground mb-2">
+                  Частота уведомлений:
+                </Text>
+                <View className="gap-2">
+                  {(
+                    [
+                      { value: "never" as const, label: "Никогда" },
+                      { value: "weekly" as const, label: "Еженедельно" },
+                      { value: "daily" as const, label: "Ежедневно" },
+                      { value: "always" as const, label: "Всегда" },
+                    ]
+                  ).map((freq) => (
+                    <Pressable
+                      key={freq.value}
+                      onPress={() =>
+                        handleNotificationFrequencyChange(freq.value)
+                      }
+                      className={`p-2 rounded border ${
+                        settings.notificationFrequency === freq.value
+                          ? "bg-primary border-primary"
+                          : "bg-background border-border"
+                      }`}
+                    >
+                      <Text
+                        className={`font-medium ${
+                          settings.notificationFrequency === freq.value
+                            ? "text-white"
+                            : "text-foreground"
+                        }`}
+                      >
+                        {freq.label}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+            )}
           </View>
 
           {/* Data Management Section */}

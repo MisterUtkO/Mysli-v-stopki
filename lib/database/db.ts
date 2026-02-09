@@ -1,7 +1,11 @@
 import * as SQLite from "expo-sqlite";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { Task, Settings } from "@/lib/domain/types";
-import { v4 as uuidv4 } from "uuid";
+
+// Simple ID generator to avoid crypto.getRandomValues() issues
+function generateId(): string {
+  return `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+}
 
 const DB_NAME = "eisenhower.db";
 
@@ -42,7 +46,7 @@ export async function initializeDatabase() {
 
 export async function createTask(task: Omit<Task, "id" | "createdAt" | "updatedAt">): Promise<Task> {
   const database = await getDB();
-  const id = uuidv4();
+  const id = generateId();
   const now = Date.now();
 
   const newTask: Task = {

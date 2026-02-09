@@ -23,6 +23,7 @@ export interface Task {
   status: TaskStatus;
   quadrant: Quadrant;
   priorityScore: number; // 0-100
+  emoji?: string; // Optional emoji for visual identification
   createdAt: number; // timestamp
   updatedAt: number; // timestamp
 }
@@ -32,6 +33,8 @@ export interface Settings {
   theme: "light" | "dark" | "system";
   importanceThreshold: number; // 1-7, default 4
   urgencyThreshold: number; // 1-7, default 4
+  notificationsEnabled: boolean;
+  notificationFrequency: "never" | "daily" | "weekly" | "always";
 }
 
 export interface QuadrantColor {
@@ -40,6 +43,24 @@ export interface QuadrantColor {
   text: string;
   label: string;
 }
+
+export const TASK_EMOJIS = [
+  "🔥", // Fire - urgent
+  "🧊", // Ice - cold/frozen
+  "🤢", // Nausea - disgusting
+  "⚡", // Lightning - energy
+  "💎", // Diamond - valuable
+  "🎯", // Target - goal
+  "🚀", // Rocket - fast
+  "🐢", // Turtle - slow
+  "🎨", // Art - creative
+  "🔧", // Tools - technical
+  "📚", // Books - learning
+  "💪", // Muscle - strength
+  "🌟", // Star - important
+  "⏰", // Clock - time-sensitive
+  "🎪", // Circus - fun
+];
 
 export const QUADRANT_COLORS: Record<Quadrant, QuadrantColor> = {
   Q1: {

@@ -5,6 +5,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { ScreenContainer } from "@/components/screen-container";
 import { useTaskContext } from "@/lib/context/task-context";
 import { useI18n } from "@/lib/context/i18n-context";
+import { EmojiPicker } from "@/components/emoji-picker";
 import Slider from "@react-native-community/slider";
 
 export default function AddTaskScreen() {
@@ -17,8 +18,10 @@ export default function AddTaskScreen() {
   const [urgency, setUrgency] = useState(4);
   const [dueDate, setDueDate] = useState<Date | null>(null);
   const [dueTime, setDueTime] = useState<Date | null>(null);
+  const [emoji, setEmoji] = useState<string | undefined>();
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -57,6 +60,7 @@ export default function AddTaskScreen() {
         urgency,
         dueDate: dueDateStr,
         dueTime: dueTimeStr,
+        emoji,
         status: "not_started",
       });
 
@@ -67,6 +71,7 @@ export default function AddTaskScreen() {
         urgency,
         dueDate: dueDateStr,
         dueTime: dueTimeStr,
+        emoji,
         status: "not_started",
       });
 
@@ -142,6 +147,19 @@ export default function AddTaskScreen() {
             />
           </View>
 
+          <View>
+            <Text className="text-sm font-semibold text-foreground mb-2">Эмодзи</Text>
+            <Pressable
+              onPress={() => setShowEmojiPicker(true)}
+              className="bg-surface border border-border rounded-lg p-3 flex-row items-center justify-between"
+            >
+              <Text className="text-foreground">
+                {emoji ? `Выбран: ${emoji}` : "Выберите эмодзи"}
+              </Text>
+              {emoji && <Text className="text-3xl">{emoji}</Text>}
+            </Pressable>
+          </View>
+
           <View className="gap-2">
             <Text className="text-sm font-semibold text-foreground">Крайний срок (опционально)</Text>
 
@@ -181,6 +199,13 @@ export default function AddTaskScreen() {
               onChange={handleTimeChange}
             />
           )}
+
+          <EmojiPicker
+            visible={showEmojiPicker}
+            onSelect={setEmoji}
+            onClose={() => setShowEmojiPicker(false)}
+            selectedEmoji={emoji}
+          />
 
           <View className="flex-row gap-3 mt-4">
             <Pressable
