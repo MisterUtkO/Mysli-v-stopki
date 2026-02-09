@@ -38,7 +38,7 @@ export default function AddTaskScreen() {
 
   const handleAddTask = async () => {
     if (!input.trim()) {
-      setError("Please enter a task description");
+      setError("Пожалуйста, введите описание задачи");
       return;
     }
 
@@ -73,9 +73,9 @@ export default function AddTaskScreen() {
       router.back();
     } catch (error) {
       console.error("Failed to create task:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to create task";
+      const errorMessage = error instanceof Error ? error.message : "Ошибка при создании задачи";
       setError(errorMessage);
-      Alert.alert("Error", errorMessage);
+      Alert.alert("Ошибка", errorMessage);
     } finally {
       setLoading(false);
     }
@@ -85,7 +85,7 @@ export default function AddTaskScreen() {
     <ScreenContainer className="p-4">
       <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
         <View className="gap-4">
-          <Text className="text-2xl font-bold text-foreground">Add Task</Text>
+          <Text className="text-2xl font-bold text-foreground">Добавить задачу</Text>
 
           {error && (
             <View className="bg-error/10 border border-error rounded-lg p-3">
@@ -100,7 +100,7 @@ export default function AddTaskScreen() {
                 setInput(text);
                 setError(null);
               }}
-              placeholder="Enter task description..."
+              placeholder="Введите описание задачи..."
               placeholderTextColor="#999"
               multiline
               numberOfLines={4}
@@ -110,7 +110,7 @@ export default function AddTaskScreen() {
 
           <View>
             <View className="flex-row justify-between mb-2">
-              <Text className="text-sm font-semibold text-foreground">Importance</Text>
+              <Text className="text-sm font-semibold text-foreground">Важность</Text>
               <Text className="text-sm font-bold text-primary">{importance}/7</Text>
             </View>
             <Slider
@@ -127,7 +127,7 @@ export default function AddTaskScreen() {
 
           <View>
             <View className="flex-row justify-between mb-2">
-              <Text className="text-sm font-semibold text-foreground">Urgency</Text>
+              <Text className="text-sm font-semibold text-foreground">Срочность</Text>
               <Text className="text-sm font-bold text-primary">{urgency}/7</Text>
             </View>
             <Slider
@@ -143,14 +143,14 @@ export default function AddTaskScreen() {
           </View>
 
           <View className="gap-2">
-            <Text className="text-sm font-semibold text-foreground">Deadline (Optional)</Text>
+            <Text className="text-sm font-semibold text-foreground">Крайний срок (опционально)</Text>
 
             <Pressable
               onPress={() => setShowDatePicker(true)}
               className="bg-surface border border-border rounded-lg p-3"
             >
               <Text className="text-foreground">
-                {dueDate ? dueDate.toDateString() : "Select date"}
+                {dueDate ? dueDate.toDateString() : "Выберите дату"}
               </Text>
             </Pressable>
 
@@ -159,7 +159,7 @@ export default function AddTaskScreen() {
               className="bg-surface border border-border rounded-lg p-3"
             >
               <Text className="text-foreground">
-                {dueTime ? dueTime.toTimeString().substring(0, 5) : "Select time"}
+                {dueTime ? dueTime.toTimeString().substring(0, 5) : "Выберите время"}
               </Text>
             </Pressable>
           </View>
@@ -187,7 +187,7 @@ export default function AddTaskScreen() {
               onPress={() => router.back()}
               className="flex-1 bg-surface border border-border rounded-lg p-3"
             >
-              <Text className="text-center text-foreground font-semibold">Cancel</Text>
+              <Text className="text-center text-foreground font-semibold">Отмена</Text>
             </Pressable>
 
             <Pressable
@@ -196,7 +196,7 @@ export default function AddTaskScreen() {
               className="flex-1 bg-primary rounded-lg p-3 disabled:opacity-50"
             >
               <Text className="text-center text-white font-semibold">
-                {loading ? "Adding..." : "Add Task"}
+                {loading ? "Добавление..." : "Добавить"}
               </Text>
             </Pressable>
           </View>

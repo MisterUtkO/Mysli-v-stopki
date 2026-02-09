@@ -1,12 +1,13 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Appearance, View, useColorScheme as useSystemColorScheme } from "react-native";
 import { colorScheme as nativewindColorScheme, vars } from "nativewind";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { SchemeColors, type ColorScheme } from "@/constants/theme";
 
 type ThemeContextValue = {
   colorScheme: ColorScheme;
-  setColorScheme: (scheme: ColorScheme) => void;
+  setColorScheme: (scheme: ColorScheme) => Promise<void>;
 };
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
@@ -14,6 +15,24 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const systemScheme = useSystemColorScheme() ?? "light";
   const [colorScheme, setColorSchemeState] = useState<ColorScheme>(systemScheme);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Load saved theme on mount
+  useEffect(() => {
+    const loadTheme = async () => {
+      try {
+        const saved = await AsyncStorage.getItem("app_theme");
+        if (saved === "light" || saved === "dark") {
+          setColorSchemeState(saved);
+        }
+      } catch (error) {
+        console.warn("Failed to load theme:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadTheme();
+  }, []);
 
   const applyScheme = useCallback((scheme: ColorScheme) => {
     nativewindColorScheme.set(scheme);
@@ -29,14 +48,24 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const setColorScheme = useCallback((scheme: ColorScheme) => {
-    setColorSchemeState(scheme);
-    applyScheme(scheme);
-  }, [applyScheme]);
+  const setColorScheme = useCallback(
+    async (scheme: ColorScheme) => {
+      setColorSchemeState(scheme);
+      applyScheme(scheme);
+      try {
+        await AsyncStorage.setItem("app_theme", scheme);
+      } catch (error) {
+        console.error("Failed to save theme:", error);
+      }
+    },
+    [applyScheme]
+  );
 
   useEffect(() => {
-    applyScheme(colorScheme);
-  }, [applyScheme, colorScheme]);
+    if (!isLoading) {
+      applyScheme(colorScheme);
+    }
+  }, [applyScheme, colorScheme, isLoading]);
 
   const themeVariables = useMemo(
     () =>
@@ -51,7 +80,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         "color-warning": SchemeColors[colorScheme].warning,
         "color-error": SchemeColors[colorScheme].error,
       }),
-    [colorScheme],
+    [colorScheme]
   );
 
   const value = useMemo(
@@ -59,9 +88,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       colorScheme,
       setColorScheme,
     }),
-    [colorScheme, setColorScheme],
+    [colorScheme, setColorScheme]
   );
-  console.log(value, themeVariables)
+
+  if (isLoading) {
+    return null;
+  }
 
   return (
     <ThemeContext.Provider value={value}>
@@ -77,3 +109,5 @@ export function useThemeContext(): ThemeContextValue {
   }
   return ctx;
 }
+
+export type { ColorScheme };

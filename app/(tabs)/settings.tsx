@@ -1,42 +1,50 @@
+import { useState } from "react";
 import { View, Text, Pressable, ScrollView, Alert } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { useTaskContext } from "@/lib/context/task-context";
 import { useI18n } from "@/lib/context/i18n-context";
+import { useThemeContext } from "@/lib/theme-provider";
 
 export default function SettingsScreen() {
-  const { settings, updateSettings, exportTasks, importTasks, clearAllData } = useTaskContext();
-  const { language, setLanguage } = useI18n();
+  const { exportTasks, clearAllData } = useTaskContext();
+  const { language, setLanguage, t } = useI18n();
+  const { colorScheme, setColorScheme } = useThemeContext();
+  const [exporting, setExporting] = useState(false);
 
   const handleLanguageToggle = async () => {
     const newLang = language === "en" ? "ru" : "en";
     await setLanguage(newLang);
-    await updateSettings({ language: newLang });
   };
 
   const handleThemeToggle = async () => {
-    const themes = ["light", "dark", "system"] as const;
-    const currentIndex = themes.indexOf(settings.theme);
-    const newTheme = themes[(currentIndex + 1) % themes.length];
-    await updateSettings({ theme: newTheme });
+    const newTheme = colorScheme === "light" ? "dark" : "light";
+    await setColorScheme(newTheme);
   };
 
   const handleExport = async () => {
+    setExporting(true);
     try {
       const data = await exportTasks();
-      Alert.alert("Export Successful", `Exported ${data.length} bytes of data`);
+      Alert.alert("Успешно", "Данные экспортированы");
     } catch (error) {
-      Alert.alert("Export Failed", String(error));
+      Alert.alert("Ошибка", "Не удалось экспортировать данные");
+    } finally {
+      setExporting(false);
     }
   };
 
   const handleClearData = () => {
-    Alert.alert("Clear All Data", "This cannot be undone!", [
-      { text: "Cancel", onPress: () => {} },
+    Alert.alert("Очистить все данные?", "Это действие нельзя отменить!", [
+      { text: "Отмена", onPress: () => {} },
       {
-        text: "Clear",
+        text: "Удалить",
         onPress: async () => {
-          await clearAllData();
-          Alert.alert("Success", "All data cleared");
+          try {
+            await clearAllData();
+            Alert.alert("Успешно", "Все данные удалены");
+          } catch (error) {
+            Alert.alert("Ошибка", "Не удалось очистить данные");
+          }
         },
         style: "destructive",
       },
@@ -46,75 +54,97 @@ export default function SettingsScreen() {
   return (
     <ScreenContainer className="p-4">
       <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-        <Text className="text-2xl font-bold text-foreground mb-6">Settings</Text>
+        <View className="gap-4">
+          <Text className="text-2xl font-bold text-foreground mb-2">
+            {t.settings.title}
+          </Text>
 
-        {/* Language */}
-        <View className="bg-surface rounded-lg p-4 mb-4 border border-border">
-          <View className="flex-row justify-between items-center">
-            <Text className="text-foreground font-semibold">Language</Text>
+          {/* Language Section */}
+          <View className="bg-surface rounded-lg p-4 border border-border">
+            <View className="flex-row justify-between items-center mb-3">
+              <Text className="text-lg font-semibold text-foreground">
+                {t.settings.language}
+              </Text>
+              <View className="bg-primary px-3 py-1 rounded">
+                <Text className="text-white font-bold text-sm">
+                  {language === "en" ? "EN" : "РУ"}
+                </Text>
+              </View>
+            </View>
             <Pressable
               onPress={handleLanguageToggle}
-              className="bg-primary rounded-lg px-4 py-2"
+              className="bg-primary rounded-lg p-3"
             >
-              <Text className="text-white font-semibold">
-                {language === "en" ? "English" : "Русский"}
+              <Text className="text-center text-white font-semibold">
+                {language === "en"
+                  ? "Переключить на русский"
+                  : "Switch to English"}
               </Text>
             </Pressable>
           </View>
-        </View>
 
-        {/* Theme */}
-        <View className="bg-surface rounded-lg p-4 mb-4 border border-border">
-          <View className="flex-row justify-between items-center">
-            <Text className="text-foreground font-semibold">Theme</Text>
+          {/* Theme Section */}
+          <View className="bg-surface rounded-lg p-4 border border-border">
+            <View className="flex-row justify-between items-center mb-3">
+              <Text className="text-lg font-semibold text-foreground">
+                {t.settings.theme}
+              </Text>
+              <View className="bg-primary px-3 py-1 rounded">
+                <Text className="text-white font-bold text-sm">
+                  {colorScheme === "light" ? "☀️" : "🌙"}
+                </Text>
+              </View>
+            </View>
             <Pressable
               onPress={handleThemeToggle}
-              className="bg-primary rounded-lg px-4 py-2"
+              className="bg-primary rounded-lg p-3"
             >
-              <Text className="text-white font-semibold capitalize">
-                {settings.theme}
+              <Text className="text-center text-white font-semibold">
+                {colorScheme === "light"
+                  ? "Включить темную тему"
+                  : "Включить светлую тему"}
               </Text>
             </Pressable>
           </View>
-        </View>
 
-        {/* Importance Threshold */}
-        <View className="bg-surface rounded-lg p-4 mb-4 border border-border">
-          <View className="flex-row justify-between items-center">
-            <Text className="text-foreground font-semibold">Importance Threshold</Text>
-            <Text className="text-primary font-bold">{settings.importanceThreshold}/7</Text>
+          {/* Data Management Section */}
+          <View className="bg-surface rounded-lg p-4 border border-border">
+            <Text className="text-lg font-semibold text-foreground mb-3">
+              {t.settings.dataManagement}
+            </Text>
+
+            <Pressable
+              onPress={handleExport}
+              disabled={exporting}
+              className="bg-blue-500 rounded-lg p-3 mb-2 disabled:opacity-50"
+            >
+              <Text className="text-center text-white font-semibold">
+                {exporting ? "Экспортирование..." : t.settings.exportData}
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={handleClearData}
+              className="bg-red-500 rounded-lg p-3"
+            >
+              <Text className="text-center text-white font-semibold">
+                {t.settings.clearAllData}
+              </Text>
+            </Pressable>
           </View>
-        </View>
 
-        {/* Urgency Threshold */}
-        <View className="bg-surface rounded-lg p-4 mb-4 border border-border">
-          <View className="flex-row justify-between items-center">
-            <Text className="text-foreground font-semibold">Urgency Threshold</Text>
-            <Text className="text-primary font-bold">{settings.urgencyThreshold}/7</Text>
+          {/* About Section */}
+          <View className="bg-surface rounded-lg p-4 border border-border">
+            <Text className="text-lg font-semibold text-foreground mb-2">
+              {t.settings.about}
+            </Text>
+            <Text className="text-sm text-muted mb-1">
+              Eisenhower Priority App
+            </Text>
+            <Text className="text-xs text-muted">
+              {t.settings.version}: 1.0.0
+            </Text>
           </View>
-        </View>
-
-        {/* Export */}
-        <Pressable
-          onPress={handleExport}
-          className="bg-surface rounded-lg p-4 mb-4 border border-border"
-        >
-          <Text className="text-foreground font-semibold text-center">Export Tasks</Text>
-        </Pressable>
-
-        {/* Clear Data */}
-        <Pressable
-          onPress={handleClearData}
-          className="bg-error rounded-lg p-4 mb-4"
-        >
-          <Text className="text-white font-semibold text-center">Clear All Data</Text>
-        </Pressable>
-
-        {/* About */}
-        <View className="bg-surface rounded-lg p-4 border border-border">
-          <Text className="text-foreground font-semibold mb-2">About</Text>
-          <Text className="text-muted text-sm">Eisenhower Priority App v1.0</Text>
-          <Text className="text-muted text-sm">Simplified task prioritization</Text>
         </View>
       </ScrollView>
     </ScreenContainer>
