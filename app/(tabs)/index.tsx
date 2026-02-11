@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Platform,
   LayoutAnimation,
   UIManager,
+  Animated,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
@@ -17,7 +18,6 @@ import { useI18n } from "@/lib/context/i18n-context";
 import { SwipeableTaskCard } from "@/components/swipeable-task-card";
 import type { Task, TaskStatus } from "@/lib/domain/types";
 
-// Enable LayoutAnimation on Android
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
@@ -34,13 +34,14 @@ export default function HomeScreen() {
   const { t, language } = useI18n();
   const isRu = language === "ru";
   const [search, setSearch] = useState("");
+  const [searchVisible, setSearchVisible] = useState(false);
   const [filteredTasks, setFilteredTasks] = useState<Task[]>(tasks);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
+  const searchInputRef = useRef<TextInput>(null);
 
   useEffect(() => {
     let filtered = [...tasks];
-
     if (search.trim()) {
       filtered = filtered.filter(
         (task) =>
@@ -48,14 +49,10 @@ export default function HomeScreen() {
           task.description.toLowerCase().includes(search.toLowerCase())
       );
     }
-
     if (selectedStatus) {
       filtered = filtered.filter((task) => task.status === selectedStatus);
     }
-
-    // Auto-sort by priority score (highest first = most urgent+important first)
     filtered.sort((a, b) => b.priorityScore - a.priorityScore);
-
     setFilteredTasks(filtered);
   }, [tasks, search, selectedStatus]);
 
@@ -86,6 +83,17 @@ export default function HomeScreen() {
     setExpandedTaskId(expandedTaskId === taskId ? null : taskId);
   };
 
+  const toggleSearch = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    if (searchVisible) {
+      setSearch("");
+      setSearchVisible(false);
+    } else {
+      setSearchVisible(true);
+      setTimeout(() => searchInputRef.current?.focus(), 100);
+    }
+  };
+
   const getStatusLabel = (status: TaskStatus): string => {
     switch (status) {
       case "not_started": return isRu ? "Не начато" : "Not started";
@@ -105,22 +113,66 @@ export default function HomeScreen() {
   return (
     <ScreenContainer className="p-4">
       <View className="flex-1">
-        {/* Header */}
-        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-          <Text className="text-2xl font-bold text-foreground">
+        {/* Header: + button left, title center, search icon right */}
+        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+          {/* Add task button (top-left) */}
+          <Pressable
+            onPress={() => router.push("/add-task")}
+            style={({ pressed }) => [
+              {
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+                backgroundColor: "#0a7ea4",
+                alignItems: "center",
+                justifyContent: "center",
+                opacity: pressed ? 0.7 : 1,
+                transform: [{ scale: pressed ? 0.95 : 1 }],
+              },
+            ]}
+          >
+            <Text style={{ color: "#FFFFFF", fontSize: 24, fontWeight: "700", lineHeight: 28, marginTop: -1 }}>+</Text>
+          </Pressable>
+
+          {/* Title */}
+          <Text className="text-xl font-bold text-foreground">
             {t.home.title}
           </Text>
+
+          {/* Search icon (top-right) */}
+          <Pressable
+            onPress={toggleSearch}
+            style={({ pressed }) => [
+              {
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+                backgroundColor: searchVisible ? "#0a7ea4" : "transparent",
+                borderWidth: searchVisible ? 0 : 1.5,
+                borderColor: "#9CA3AF",
+                alignItems: "center",
+                justifyContent: "center",
+                opacity: pressed ? 0.7 : 1,
+              },
+            ]}
+          >
+            <Text style={{ fontSize: 18, color: searchVisible ? "#FFFFFF" : "#9CA3AF" }}>🔍</Text>
+          </Pressable>
         </View>
 
-        {/* Search */}
-        <TextInput
-          value={search}
-          onChangeText={setSearch}
-          placeholder={t.home.search}
-          placeholderTextColor="#999"
-          className="bg-surface border border-border rounded-xl p-3 text-foreground mb-2"
-          style={{ fontSize: 15 }}
-        />
+        {/* Search field (hidden by default) */}
+        {searchVisible && (
+          <TextInput
+            ref={searchInputRef}
+            value={search}
+            onChangeText={setSearch}
+            placeholder={t.home.search}
+            placeholderTextColor="#999"
+            returnKeyType="done"
+            className="bg-surface border border-border rounded-xl p-3 text-foreground mb-2"
+            style={{ fontSize: 15 }}
+          />
+        )}
 
         {/* Compact status filters */}
         <View style={{ flexDirection: "row", gap: 6, marginBottom: 8, flexWrap: "wrap" }}>
@@ -128,9 +180,9 @@ export default function HomeScreen() {
             onPress={() => setSelectedStatus(null)}
             style={({ pressed }) => [
               {
-                paddingHorizontal: 12,
-                paddingVertical: 6,
-                borderRadius: 14,
+                paddingHorizontal: 10,
+                paddingVertical: 5,
+                borderRadius: 12,
                 backgroundColor: selectedStatus === null ? "#0a7ea4" : "transparent",
                 borderWidth: 1,
                 borderColor: selectedStatus === null ? "#0a7ea4" : "#9CA3AF",
@@ -138,54 +190,31 @@ export default function HomeScreen() {
               },
             ]}
           >
-            <Text
-              style={{
-                fontSize: 13,
-                fontWeight: "600",
-                color: selectedStatus === null ? "#FFFFFF" : "#9CA3AF",
-              }}
-            >
+            <Text style={{ fontSize: 12, fontWeight: "600", color: selectedStatus === null ? "#FFFFFF" : "#9CA3AF" }}>
               {isRu ? "Все" : "All"}
             </Text>
           </Pressable>
-          {(["not_started", "in_progress", "completed"] as TaskStatus[]).map(
-            (status) => (
-              <Pressable
-                key={status}
-                onPress={() =>
-                  setSelectedStatus(selectedStatus === status ? null : status)
-                }
-                style={({ pressed }) => [
-                  {
-                    paddingHorizontal: 12,
-                    paddingVertical: 6,
-                    borderRadius: 14,
-                    backgroundColor:
-                      selectedStatus === status
-                        ? getStatusColor(status)
-                        : "transparent",
-                    borderWidth: 1,
-                    borderColor:
-                      selectedStatus === status
-                        ? getStatusColor(status)
-                        : "#9CA3AF",
-                    opacity: pressed ? 0.7 : 1,
-                  },
-                ]}
-              >
-                <Text
-                  style={{
-                    fontSize: 13,
-                    fontWeight: "600",
-                    color:
-                      selectedStatus === status ? "#FFFFFF" : "#9CA3AF",
-                  }}
-                >
-                  {STATUS_ICONS[status]} {getStatusLabel(status)}
-                </Text>
-              </Pressable>
-            )
-          )}
+          {(["not_started", "in_progress", "completed"] as TaskStatus[]).map((status) => (
+            <Pressable
+              key={status}
+              onPress={() => setSelectedStatus(selectedStatus === status ? null : status)}
+              style={({ pressed }) => [
+                {
+                  paddingHorizontal: 10,
+                  paddingVertical: 5,
+                  borderRadius: 12,
+                  backgroundColor: selectedStatus === status ? getStatusColor(status) : "transparent",
+                  borderWidth: 1,
+                  borderColor: selectedStatus === status ? getStatusColor(status) : "#9CA3AF",
+                  opacity: pressed ? 0.7 : 1,
+                },
+              ]}
+            >
+              <Text style={{ fontSize: 12, fontWeight: "600", color: selectedStatus === status ? "#FFFFFF" : "#9CA3AF" }}>
+                {STATUS_ICONS[status]} {getStatusLabel(status)}
+              </Text>
+            </Pressable>
+          ))}
         </View>
 
         {/* Swipe hint */}
@@ -198,16 +227,10 @@ export default function HomeScreen() {
         {/* Task list */}
         {filteredTasks.length === 0 ? (
           <View className="flex-1 items-center justify-center">
-            <Text className="text-muted text-center text-lg">
-              {t.home.noTasks}
-            </Text>
+            <Text className="text-muted text-center text-lg">{t.home.noTasks}</Text>
           </View>
         ) : (
-          <ScrollView
-            className="flex-1"
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 80 }}
-          >
+          <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
             {filteredTasks.map((task) => (
               <SwipeableTaskCard
                 key={task.id}
@@ -221,32 +244,6 @@ export default function HomeScreen() {
             ))}
           </ScrollView>
         )}
-
-        {/* Add task button */}
-        <Pressable
-          onPress={() => router.push("/add-task")}
-          style={({ pressed }) => [
-            {
-              backgroundColor: "#0a7ea4",
-              borderRadius: 16,
-              padding: 14,
-              marginTop: 6,
-              opacity: pressed ? 0.8 : 1,
-              transform: [{ scale: pressed ? 0.98 : 1 }],
-            },
-          ]}
-        >
-          <Text
-            style={{
-              textAlign: "center",
-              color: "#FFFFFF",
-              fontWeight: "700",
-              fontSize: 17,
-            }}
-          >
-            + {t.home.addTask}
-          </Text>
-        </Pressable>
       </View>
     </ScreenContainer>
   );

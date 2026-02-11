@@ -8,7 +8,8 @@ import { useI18n } from "@/lib/context/i18n-context";
 
 export default function TabLayout() {
   const colors = useColors();
-  const { t } = useI18n();
+  const { t, language } = useI18n();
+  const isRu = language === "ru";
   const insets = useSafeAreaInsets();
   const bottomPadding = Platform.OS === "web" ? 12 : Math.max(insets.bottom, 8);
   const tabBarHeight = 56 + bottomPadding;
@@ -34,6 +35,13 @@ export default function TabLayout() {
         options={{
           title: t.home.title,
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="achievements"
+        options={{
+          title: isRu ? "Достижения" : "Achievements",
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="trophy.fill" color={color} />,
         }}
       />
       <Tabs.Screen

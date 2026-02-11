@@ -2,7 +2,7 @@ import "@/global.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
 import { Platform } from "react-native";
@@ -20,6 +20,10 @@ import { trpc, createTRPCClient } from "@/lib/trpc";
 import { initManusRuntime, subscribeSafeAreaInsets } from "@/lib/_core/manus-runtime";
 import { TaskProvider } from "@/lib/context/task-context";
 import { I18nProvider } from "@/lib/context/i18n-context";
+import { AchievementProvider, useAchievements } from "@/lib/context/achievement-context";
+import { AchievementCelebration } from "@/components/achievement-celebration";
+import { useTaskContext } from "@/lib/context/task-context";
+import { useI18n } from "@/lib/context/i18n-context";
 import * as Notifications from "expo-notifications";
 import { Alert } from "react-native";
 
@@ -36,6 +40,36 @@ declare global {
       EXPO_PUBLIC_API_URL?: string;
     }
   }
+}
+
+/**
+ * Component that checks achievements whenever tasks change
+ * and shows celebration overlay for newly unlocked achievements
+ */
+function AchievementChecker() {
+  const { tasks } = useTaskContext();
+  const { language } = useI18n();
+  const { newlyUnlocked, dismissNewAchievement, checkAndUnlock } = useAchievements();
+  const isRu = language === "ru";
+  const prevTaskCountRef = useRef(tasks.length);
+
+  useEffect(() => {
+    // Check achievements whenever tasks change
+    if (tasks.length > 0) {
+      checkAndUnlock(tasks);
+    }
+    prevTaskCountRef.current = tasks.length;
+  }, [tasks]);
+
+  if (!newlyUnlocked) return null;
+
+  return (
+    <AchievementCelebration
+      achievement={newlyUnlocked}
+      isRu={isRu}
+      onDismiss={dismissNewAchievement}
+    />
+  );
 }
 
 export default function RootLayout() {
@@ -147,13 +181,16 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <I18nProvider>
             <TaskProvider>
-              <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="(tabs)" />
-                <Stack.Screen name="add-task" options={{ presentation: "modal", title: "Add Task" }} />
-                <Stack.Screen name="task-detail/[id]" options={{ presentation: "modal", title: "Task Details" }} />
-                <Stack.Screen name="oauth/callback" />
-              </Stack>
-              <StatusBar style="auto" />
+              <AchievementProvider>
+                <AchievementChecker />
+                <Stack screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="(tabs)" />
+                  <Stack.Screen name="add-task" options={{ presentation: "modal", title: "Add Task" }} />
+                  <Stack.Screen name="task-detail/[id]" options={{ presentation: "modal", title: "Task Details" }} />
+                  <Stack.Screen name="oauth/callback" />
+                </Stack>
+                <StatusBar style="auto" />
+              </AchievementProvider>
             </TaskProvider>
           </I18nProvider>
         </QueryClientProvider>

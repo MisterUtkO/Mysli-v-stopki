@@ -39,6 +39,13 @@ export interface Task {
   updatedAt: number; // timestamp
 }
 
+export interface MotivationalSettings {
+  enabled: boolean;
+  text: string; // Custom motivational message
+  frequency: "never" | "10min" | "30min" | "hourly" | "daily" | "weekly";
+  exactTime?: string; // HH:MM format for daily notification at exact time
+}
+
 export interface Settings {
   language: "en" | "ru";
   theme: "light" | "dark" | "system";
@@ -46,6 +53,25 @@ export interface Settings {
   urgencyThreshold: number; // 1-7, default 4
   notificationsEnabled: boolean;
   notificationFrequency: "never" | "hourly" | "daily" | "weekly" | "always";
+  motivational?: MotivationalSettings;
+}
+
+// Achievement system types
+export interface AchievementDefinition {
+  id: string;
+  emoji: string; // Emoji used as sticker visual
+  titleEn: string;
+  titleRu: string;
+  descriptionEn: string;
+  descriptionRu: string;
+  conditionType: "tasks_created_day" | "tasks_completed_day" | "tasks_completed_total" | "streak_days" | "q1_completed" | "all_quadrants" | "custom";
+  conditionValue: number; // Threshold value for the condition
+  rarity: "common" | "rare" | "epic" | "legendary";
+}
+
+export interface UnlockedAchievement {
+  achievementId: string;
+  unlockedAt: number; // timestamp
 }
 
 export interface QuadrantColor {
@@ -56,46 +82,12 @@ export interface QuadrantColor {
 }
 
 export const TASK_EMOJIS = [
-  "🔥", // Fire - urgent
-  "🧊", // Ice - cold/frozen
-  "🤢", // Nausea - disgusting
-  "⚡", // Lightning - energy
-  "💎", // Diamond - valuable
-  "🎯", // Target - goal
-  "🚀", // Rocket - fast
-  "🐢", // Turtle - slow
-  "🎨", // Art - creative
-  "🔧", // Tools - technical
-  "📚", // Books - learning
-  "💪", // Muscle - strength
-  "🌟", // Star - important
-  "⏰", // Clock - time-sensitive
-  "🎪", // Circus - fun
+  "🔥", "🧊", "🤢", "⚡", "💎", "🎯", "🚀", "🐢", "🎨", "🔧", "📚", "💪", "🌟", "⏰", "🎪",
 ];
 
 export const QUADRANT_COLORS: Record<Quadrant, QuadrantColor> = {
-  Q1: {
-    background: "#FF6B6B", // Red
-    border: "#C92A2A",
-    text: "#FFFFFF",
-    label: "Do Now",
-  },
-  Q2: {
-    background: "#FFA94D", // Orange
-    border: "#E67700",
-    text: "#FFFFFF",
-    label: "Schedule",
-  },
-  Q3: {
-    background: "#74C0FC", // Blue
-    border: "#1971C2",
-    text: "#FFFFFF",
-    label: "Delegate",
-  },
-  Q4: {
-    background: "#51CF66", // Green
-    border: "#2B8A3E",
-    text: "#FFFFFF",
-    label: "Delete",
-  },
+  Q1: { background: "#FF6B6B", border: "#C92A2A", text: "#FFFFFF", label: "Do Now" },
+  Q2: { background: "#FFA94D", border: "#E67700", text: "#FFFFFF", label: "Schedule" },
+  Q3: { background: "#74C0FC", border: "#1971C2", text: "#FFFFFF", label: "Delegate" },
+  Q4: { background: "#51CF66", border: "#2B8A3E", text: "#FFFFFF", label: "Delete" },
 };

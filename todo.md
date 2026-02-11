@@ -175,3 +175,16 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Gradient color system for task cards based on importance+urgency score
 - [x] Bright red for highest priority (Q1, score 7+7), lighter/cooler colors for lower priority
 - [x] Psychological color gradient: red → orange → yellow → green → blue/gray
+
+## Phase 11: Major Feature Update
+- [x] Move add task button (+) to top-left of header
+- [x] Hide search field behind magnifier icon (🔍) at top-right
+- [x] Implement working scheduled notifications (per-task frequency)
+- [x] Motivational reminder notifications with custom text and schedule in settings
+- [x] Achievements system with sticker grid (4 columns, vertical scroll)
+- [x] Stickers silhouetted in black by default, revealed on unlock
+- [x] Celebration notification on achievement unlock
+- [x] Popup with achievement description on sticker tap
+- [x] Admin/developer interface for adding new stickers and conditions
+- [x] iOS/Android home screen widget (documentation provided, requires native build)
+- [x] Full localization of all new features (RU/EN)
