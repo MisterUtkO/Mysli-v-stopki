@@ -10,6 +10,8 @@ import {
   Platform,
   Dimensions,
   StyleSheet,
+  Animated,
+  PanResponder,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useI18n } from "@/lib/context/i18n-context";
@@ -18,29 +20,14 @@ import { useColors } from "@/hooks/use-colors";
 const STORAGE_KEY = "@sdvgnote_kanban";
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
-// Sticky note colors
 const STICKER_COLORS = [
-  "#FFEB3B", // Yellow (default)
-  "#FF9800", // Orange
-  "#F44336", // Red
-  "#E91E63", // Pink
-  "#9C27B0", // Purple
-  "#2196F3", // Blue
-  "#00BCD4", // Cyan
-  "#4CAF50", // Green
-  "#8BC34A", // Light green
-  "#FFFFFF", // White
+  "#FFEB3B", "#FF9800", "#F44336", "#E91E63", "#9C27B0",
+  "#2196F3", "#00BCD4", "#4CAF50", "#8BC34A", "#FFFFFF",
 ];
 
 const TEXT_COLORS = [
-  "#000000", // Black (default)
-  "#333333", // Dark gray
-  "#FFFFFF", // White
-  "#F44336", // Red
-  "#2196F3", // Blue
-  "#4CAF50", // Green
-  "#FF9800", // Orange
-  "#9C27B0", // Purple
+  "#000000", "#333333", "#FFFFFF", "#F44336",
+  "#2196F3", "#4CAF50", "#FF9800", "#9C27B0",
 ];
 
 interface KanbanSticker {
@@ -58,6 +45,13 @@ interface KanbanColumn {
 
 interface KanbanData {
   columns: KanbanColumn[];
+}
+
+interface AbsoluteRect {
+  pageX: number;
+  pageY: number;
+  width: number;
+  height: number;
 }
 
 const defaultData: KanbanData = {
@@ -93,12 +87,19 @@ export function KanbanBoard() {
   // Edit sticker modal
   const [editingSticker, setEditingSticker] = useState<{ columnId: string; sticker: KanbanSticker } | null>(null);
 
-  // Move sticker modal
+  // Move sticker modal (fallback)
   const [movingSticker, setMovingSticker] = useState<{ columnId: string; sticker: KanbanSticker } | null>(null);
 
   // Rename column modal
   const [renamingColumn, setRenamingColumn] = useState<{ id: string; title: string } | null>(null);
   const [renameText, setRenameText] = useState("");
+
+  // Drag-and-drop state
+  const [draggingSticker, setDraggingSticker] = useState<{ columnId: string; sticker: KanbanSticker } | null>(null);
+  const [highlightedColumnId, setHighlightedColumnId] = useState<string | null>(null);
+  const dragPos = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
+  const columnRects = useRef<Record<string, AbsoluteRect>>({});
+  const columnViewRefs = useRef<Record<string, View | null>>({});
 
   // Load data
   React.useEffect(() => {
@@ -108,7 +109,6 @@ export function KanbanBoard() {
         if (stored) {
           setData(JSON.parse(stored));
         } else {
-          // Set default column names based on language
           setData({
             columns: [
               { id: "col_1", title: isRu ? "Сделать" : "To Do", stickers: [] },
@@ -134,6 +134,33 @@ export function KanbanBoard() {
     }
   }, []);
 
+  // Measure all column positions (absolute page coordinates)
+  const measureColumns = useCallback(() => {
+    for (const colId of Object.keys(columnViewRefs.current)) {
+      const ref = columnViewRefs.current[colId];
+      if (ref) {
+        try {
+          ref.measure((x, y, width, height, pageX, pageY) => {
+            columnRects.current[colId] = { pageX, pageY, width, height };
+          });
+        } catch {
+          // skip
+        }
+      }
+    }
+  }, []);
+
+  // Hit test: which column is the finger over?
+  const hitTestColumn = (pageX: number, pageY: number): string | null => {
+    for (const colId of Object.keys(columnRects.current)) {
+      const r = columnRects.current[colId];
+      if (r && pageX >= r.pageX && pageX <= r.pageX + r.width && pageY >= r.pageY && pageY <= r.pageY + r.height) {
+        return colId;
+      }
+    }
+    return null;
+  };
+
   // Add column
   const handleAddColumn = () => {
     if (!newColumnName.trim()) return;
@@ -150,12 +177,9 @@ export function KanbanBoard() {
   // Rename column
   const handleRenameColumn = () => {
     if (!renamingColumn || !renameText.trim()) return;
-    const newColumns = data.columns.map((col) => {
-      if (col.id === renamingColumn.id) {
-        return { ...col, title: renameText.trim() };
-      }
-      return col;
-    });
+    const newColumns = data.columns.map((col) =>
+      col.id === renamingColumn.id ? { ...col, title: renameText.trim() } : col
+    );
     saveData({ columns: newColumns });
     setRenamingColumn(null);
     setRenameText("");
@@ -169,13 +193,7 @@ export function KanbanBoard() {
       `"${col?.title}"${col && col.stickers.length > 0 ? (isRu ? ` (${col.stickers.length} стикеров)` : ` (${col.stickers.length} stickers)`) : ""}`,
       [
         { text: isRu ? "Отмена" : "Cancel", style: "cancel" },
-        {
-          text: isRu ? "Удалить" : "Delete",
-          style: "destructive",
-          onPress: () => {
-            saveData({ columns: data.columns.filter((c) => c.id !== colId) });
-          },
-        },
+        { text: isRu ? "Удалить" : "Delete", style: "destructive", onPress: () => saveData({ columns: data.columns.filter((c) => c.id !== colId) }) },
       ]
     );
   };
@@ -189,12 +207,9 @@ export function KanbanBoard() {
       bgColor: newStickerBg,
       textColor: newStickerTextColor,
     };
-    const newColumns = data.columns.map((col) => {
-      if (col.id === addStickerColumnId) {
-        return { ...col, stickers: [...col.stickers, sticker] };
-      }
-      return col;
-    });
+    const newColumns = data.columns.map((col) =>
+      col.id === addStickerColumnId ? { ...col, stickers: [...col.stickers, sticker] } : col
+    );
     saveData({ columns: newColumns });
     setNewStickerText("");
     setNewStickerBg("#FFEB3B");
@@ -206,25 +221,17 @@ export function KanbanBoard() {
 
   // Delete sticker
   const handleDeleteSticker = (columnId: string, stickerId: string) => {
-    const newColumns = data.columns.map((col) => {
-      if (col.id === columnId) {
-        return { ...col, stickers: col.stickers.filter((s) => s.id !== stickerId) };
-      }
-      return col;
-    });
+    const newColumns = data.columns.map((col) =>
+      col.id === columnId ? { ...col, stickers: col.stickers.filter((s) => s.id !== stickerId) } : col
+    );
     saveData({ columns: newColumns });
   };
 
   // Move sticker to another column
-  const handleMoveSticker = (targetColumnId: string) => {
-    if (!movingSticker) return;
-    const { columnId: fromCol, sticker } = movingSticker;
-    if (fromCol === targetColumnId) {
-      setMovingSticker(null);
-      return;
-    }
+  const handleMoveSticker = (fromColId: string, sticker: KanbanSticker, targetColumnId: string) => {
+    if (fromColId === targetColumnId) return;
     const newColumns = data.columns.map((col) => {
-      if (col.id === fromCol) {
+      if (col.id === fromColId) {
         return { ...col, stickers: col.stickers.filter((s) => s.id !== sticker.id) };
       }
       if (col.id === targetColumnId) {
@@ -233,8 +240,56 @@ export function KanbanBoard() {
       return col;
     });
     saveData({ columns: newColumns });
-    setMovingSticker(null);
   };
+
+  // Move sticker left/right with arrow buttons
+  const handleMoveArrow = (columnId: string, sticker: KanbanSticker, direction: "left" | "right") => {
+    const colIndex = data.columns.findIndex((c) => c.id === columnId);
+    if (colIndex < 0) return;
+    const targetIndex = direction === "left" ? colIndex - 1 : colIndex + 1;
+    if (targetIndex < 0 || targetIndex >= data.columns.length) return;
+    handleMoveSticker(columnId, sticker, data.columns[targetIndex].id);
+  };
+
+  // Drag-and-drop: start
+  const startStickerDrag = useCallback((columnId: string, sticker: KanbanSticker) => {
+    measureColumns();
+    setTimeout(() => {
+      setDraggingSticker({ columnId, sticker });
+    }, 50);
+  }, [measureColumns]);
+
+  // Drag PanResponder
+  const stickerDragPanResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderGrant: (evt) => {
+        dragPos.setValue({ x: evt.nativeEvent.pageX - 50, y: evt.nativeEvent.pageY - 20 });
+      },
+      onPanResponderMove: (evt) => {
+        const { pageX, pageY } = evt.nativeEvent;
+        dragPos.setValue({ x: pageX - 50, y: pageY - 20 });
+        const target = hitTestColumn(pageX, pageY);
+        setHighlightedColumnId(target);
+      },
+      onPanResponderRelease: (evt) => {
+        const { pageX, pageY } = evt.nativeEvent;
+        const targetColId = hitTestColumn(pageX, pageY);
+        if (draggingSticker && targetColId && targetColId !== draggingSticker.columnId) {
+          handleMoveSticker(draggingSticker.columnId, draggingSticker.sticker, targetColId);
+        }
+        setDraggingSticker(null);
+        setHighlightedColumnId(null);
+        dragPos.setValue({ x: 0, y: 0 });
+      },
+      onPanResponderTerminate: () => {
+        setDraggingSticker(null);
+        setHighlightedColumnId(null);
+        dragPos.setValue({ x: 0, y: 0 });
+      },
+    })
+  ).current;
 
   // Zoom controls
   const zoomIn = () => setScale((s) => Math.min(s + 0.15, 2));
@@ -266,13 +321,9 @@ export function KanbanBoard() {
         <Pressable
           onPress={() => setShowAddColumn(true)}
           style={({ pressed }) => [{
-            flexDirection: "row",
-            alignItems: "center",
-            backgroundColor: colors.primary,
-            paddingHorizontal: 12,
-            paddingVertical: 6,
-            borderRadius: 8,
-            opacity: pressed ? 0.7 : 1,
+            flexDirection: "row", alignItems: "center",
+            backgroundColor: colors.primary, paddingHorizontal: 12, paddingVertical: 6,
+            borderRadius: 8, opacity: pressed ? 0.7 : 1,
           }]}
         >
           <Text style={{ color: "#FFF", fontSize: 13, fontWeight: "700" }}>+ {t.matrix.addColumn}</Text>
@@ -282,41 +333,37 @@ export function KanbanBoard() {
       {/* Board */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 8, paddingBottom: 20 }}>
         <View style={{ flexDirection: "row", gap: 10, transform: [{ scale }] }}>
-          {data.columns.map((column) => (
+          {data.columns.map((column, colIndex) => (
             <View
               key={column.id}
+              ref={(ref) => { columnViewRefs.current[column.id] = ref; }}
+              collapsable={false}
+              onLayout={() => setTimeout(measureColumns, 150)}
               style={{
                 width: COLUMN_WIDTH,
-                backgroundColor: colors.surface,
+                backgroundColor: highlightedColumnId === column.id ? `${colors.primary}20` : colors.surface,
                 borderRadius: 14,
-                borderWidth: 1,
-                borderColor: colors.border,
+                borderWidth: highlightedColumnId === column.id ? 2.5 : 1,
+                borderColor: highlightedColumnId === column.id ? colors.primary : colors.border,
                 overflow: "hidden",
               }}
             >
               {/* Column header */}
               <View style={{
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-                paddingHorizontal: 10,
-                paddingVertical: 8,
-                borderBottomWidth: 1,
-                borderBottomColor: colors.border,
+                flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+                paddingHorizontal: 10, paddingVertical: 8,
+                borderBottomWidth: 1, borderBottomColor: colors.border,
                 backgroundColor: `${colors.primary}15`,
               }}>
                 <Text style={{ fontSize: 14, fontWeight: "800", color: colors.foreground, flex: 1 }} numberOfLines={1}>
                   {column.title}
                 </Text>
                 <View style={{ flexDirection: "row", gap: 6, alignItems: "center" }}>
-                  <Text style={{ fontSize: 11, color: colors.muted, fontWeight: "600" }}>
+                  <Text style={{ fontSize: 11, color: colors.muted, fontWeight: "600", backgroundColor: `${colors.primary}20`, paddingHorizontal: 6, paddingVertical: 1, borderRadius: 8 }}>
                     {column.stickers.length}
                   </Text>
                   <Pressable
-                    onPress={() => {
-                      setRenamingColumn({ id: column.id, title: column.title });
-                      setRenameText(column.title);
-                    }}
+                    onPress={() => { setRenamingColumn({ id: column.id, title: column.title }); setRenameText(column.title); }}
                     style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1, padding: 2 }]}
                   >
                     <Text style={{ fontSize: 13 }}>✏️</Text>
@@ -338,62 +385,67 @@ export function KanbanBoard() {
                   </Text>
                 ) : (
                   column.stickers.map((sticker) => (
-                    <Pressable
-                      key={sticker.id}
-                      onPress={() => setEditingSticker({ columnId: column.id, sticker })}
-                      onLongPress={() => setMovingSticker({ columnId: column.id, sticker })}
-                      style={({ pressed }) => [{
-                        backgroundColor: sticker.bgColor,
-                        borderRadius: 4,
-                        padding: 8,
-                        paddingRight: 20,
-                        marginBottom: 5,
-                        minHeight: 40,
-                        opacity: pressed ? 0.7 : 1,
-                        shadowColor: "#000",
-                        shadowOffset: { width: 1, height: 2 },
-                        shadowOpacity: 0.15,
-                        shadowRadius: 3,
-                        elevation: 3,
-                        transform: [
-                          { rotate: `${(parseInt(sticker.id.slice(-2), 16) % 5 - 2) * 0.5}deg` },
-                          ...(pressed ? [{ scale: 0.95 }] : []),
-                        ],
-                      }]}
-                    >
-                      {/* Pin */}
-                      <View style={{
-                        position: "absolute",
-                        top: -3,
-                        left: "50%",
-                        marginLeft: -5,
-                        width: 10,
-                        height: 10,
-                        borderRadius: 5,
-                        backgroundColor: "#E53935",
-                        borderWidth: 1.5,
-                        borderColor: "#B71C1C",
-                        zIndex: 1,
-                      }} />
-                      {/* Drag handle */}
-                      <View style={{
-                        position: "absolute",
-                        right: 4,
-                        top: "50%",
-                        marginTop: -8,
-                        opacity: 0.3,
-                      }}>
-                        <Text style={{ fontSize: 10, color: sticker.textColor, lineHeight: 12 }}>⋮</Text>
+                    <View key={sticker.id} style={{ marginBottom: 5 }}>
+                      <Pressable
+                        onPress={() => setEditingSticker({ columnId: column.id, sticker })}
+                        onLongPress={() => startStickerDrag(column.id, sticker)}
+                        delayLongPress={300}
+                        style={({ pressed }) => [{
+                          backgroundColor: sticker.bgColor,
+                          borderRadius: 4,
+                          padding: 8,
+                          minHeight: 36,
+                          opacity: pressed ? 0.7 : 1,
+                          shadowColor: "#000",
+                          shadowOffset: { width: 1, height: 2 },
+                          shadowOpacity: 0.15,
+                          shadowRadius: 3,
+                          elevation: 3,
+                          transform: [
+                            { rotate: `${(parseInt(sticker.id.slice(-2), 16) % 5 - 2) * 0.5}deg` },
+                            ...(pressed ? [{ scale: 0.95 }] : []),
+                          ],
+                        }]}
+                      >
+                        {/* Pin */}
+                        <View style={{
+                          position: "absolute", top: -3, left: "50%", marginLeft: -5,
+                          width: 10, height: 10, borderRadius: 5,
+                          backgroundColor: "#E53935", borderWidth: 1.5, borderColor: "#B71C1C", zIndex: 1,
+                        }} />
+                        <Text style={{
+                          color: sticker.textColor, fontSize: 12, lineHeight: 16,
+                          fontFamily: Platform.OS === "ios" ? "Noteworthy" : undefined,
+                        }}>
+                          {sticker.text}
+                        </Text>
+                      </Pressable>
+                      {/* Arrow buttons for quick move */}
+                      <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 2 }}>
+                        <Pressable
+                          onPress={() => colIndex > 0 && handleMoveArrow(column.id, sticker, "left")}
+                          disabled={colIndex === 0}
+                          style={({ pressed }) => [{
+                            opacity: colIndex === 0 ? 0.2 : pressed ? 0.5 : 0.6,
+                            paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4,
+                            backgroundColor: `${colors.primary}15`,
+                          }]}
+                        >
+                          <Text style={{ fontSize: 11, color: colors.primary, fontWeight: "700" }}>← </Text>
+                        </Pressable>
+                        <Pressable
+                          onPress={() => colIndex < data.columns.length - 1 && handleMoveArrow(column.id, sticker, "right")}
+                          disabled={colIndex === data.columns.length - 1}
+                          style={({ pressed }) => [{
+                            opacity: colIndex === data.columns.length - 1 ? 0.2 : pressed ? 0.5 : 0.6,
+                            paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4,
+                            backgroundColor: `${colors.primary}15`,
+                          }]}
+                        >
+                          <Text style={{ fontSize: 11, color: colors.primary, fontWeight: "700" }}> →</Text>
+                        </Pressable>
                       </View>
-                      <Text style={{
-                        color: sticker.textColor,
-                        fontSize: 12,
-                        lineHeight: 16,
-                        fontFamily: Platform.OS === "ios" ? "Noteworthy" : undefined,
-                      }}>
-                        {sticker.text}
-                      </Text>
-                    </Pressable>
+                    </View>
                   ))
                 )}
                 <View style={{ height: 6 }} />
@@ -401,17 +453,10 @@ export function KanbanBoard() {
 
               {/* Add sticker button — compact */}
               <Pressable
-                onPress={() => {
-                  setAddStickerColumnId(column.id);
-                  setShowAddSticker(true);
-                }}
+                onPress={() => { setAddStickerColumnId(column.id); setShowAddSticker(true); }}
                 style={({ pressed }) => [{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  paddingVertical: 4,
-                  borderTopWidth: 0.5,
-                  borderTopColor: colors.border,
+                  flexDirection: "row", alignItems: "center", justifyContent: "center",
+                  paddingVertical: 4, borderTopWidth: 0.5, borderTopColor: colors.border,
                   opacity: pressed ? 0.5 : 0.7,
                 }]}
               >
@@ -423,6 +468,36 @@ export function KanbanBoard() {
           ))}
         </View>
       </ScrollView>
+
+      {/* Drag overlay for sticker */}
+      {draggingSticker && (
+        <View
+          style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, zIndex: 999 }}
+          {...stickerDragPanResponder.panHandlers}
+        >
+          <Animated.View
+            style={{
+              position: "absolute",
+              left: dragPos.x,
+              top: dragPos.y,
+              backgroundColor: draggingSticker.sticker.bgColor,
+              borderRadius: 6,
+              paddingHorizontal: 10, paddingVertical: 6,
+              shadowColor: "#000", shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.3, shadowRadius: 8, elevation: 10,
+              maxWidth: 160,
+              transform: [{ rotate: "-3deg" }, { scale: 1.05 }],
+            }}
+          >
+            <Text style={{ color: draggingSticker.sticker.textColor, fontSize: 12, fontWeight: "600" }} numberOfLines={2}>
+              {draggingSticker.sticker.text}
+            </Text>
+            <Text style={{ color: `${draggingSticker.sticker.textColor}80`, fontSize: 9, marginTop: 2 }}>
+              {isRu ? "Отпустите в столбец" : "Drop into column"}
+            </Text>
+          </Animated.View>
+        </View>
+      )}
 
       {/* Add Sticker Modal */}
       <Modal visible={showAddSticker} transparent animationType="slide" onRequestClose={() => setShowAddSticker(false)}>
@@ -440,14 +515,9 @@ export function KanbanBoard() {
               returnKeyType="done"
               onSubmitEditing={handleAddSticker}
               style={{
-                backgroundColor: newStickerBg,
-                color: newStickerTextColor,
-                borderRadius: 8,
-                padding: 12,
-                fontSize: 15,
-                minHeight: 80,
-                textAlignVertical: "top",
-                marginBottom: 12,
+                backgroundColor: newStickerBg, color: newStickerTextColor,
+                borderRadius: 8, padding: 12, fontSize: 15,
+                minHeight: 80, textAlignVertical: "top", marginBottom: 12,
               }}
             />
 
@@ -455,31 +525,20 @@ export function KanbanBoard() {
             <View style={{ flexDirection: "row", gap: 12, marginBottom: 12 }}>
               <Pressable
                 onPress={() => { setShowBgPicker(!showBgPicker); setShowTextPicker(false); }}
-                style={({ pressed }) => [{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 6,
-                  opacity: pressed ? 0.7 : 1,
-                }]}
+                style={({ pressed }) => [{ flexDirection: "row", alignItems: "center", gap: 6, opacity: pressed ? 0.7 : 1 }]}
               >
                 <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: newStickerBg, borderWidth: 2, borderColor: colors.border }} />
                 <Text style={{ fontSize: 12, color: colors.muted }}>{t.matrix.stickerColor}</Text>
               </Pressable>
               <Pressable
                 onPress={() => { setShowTextPicker(!showTextPicker); setShowBgPicker(false); }}
-                style={({ pressed }) => [{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 6,
-                  opacity: pressed ? 0.7 : 1,
-                }]}
+                style={({ pressed }) => [{ flexDirection: "row", alignItems: "center", gap: 6, opacity: pressed ? 0.7 : 1 }]}
               >
                 <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: newStickerTextColor, borderWidth: 2, borderColor: colors.border }} />
                 <Text style={{ fontSize: 12, color: colors.muted }}>{t.matrix.textColor}</Text>
               </Pressable>
             </View>
 
-            {/* Background color picker */}
             {showBgPicker && (
               <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
                 {STICKER_COLORS.map((c) => (
@@ -487,10 +546,7 @@ export function KanbanBoard() {
                     key={c}
                     onPress={() => { setNewStickerBg(c); setShowBgPicker(false); }}
                     style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: 18,
-                      backgroundColor: c,
+                      width: 36, height: 36, borderRadius: 18, backgroundColor: c,
                       borderWidth: newStickerBg === c ? 3 : 1,
                       borderColor: newStickerBg === c ? colors.primary : colors.border,
                     }}
@@ -499,7 +555,6 @@ export function KanbanBoard() {
               </View>
             )}
 
-            {/* Text color picker */}
             {showTextPicker && (
               <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
                 {TEXT_COLORS.map((c) => (
@@ -507,10 +562,7 @@ export function KanbanBoard() {
                     key={c}
                     onPress={() => { setNewStickerTextColor(c); setShowTextPicker(false); }}
                     style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: 18,
-                      backgroundColor: c,
+                      width: 36, height: 36, borderRadius: 18, backgroundColor: c,
                       borderWidth: newStickerTextColor === c ? 3 : 1,
                       borderColor: newStickerTextColor === c ? colors.primary : colors.border,
                     }}
@@ -519,7 +571,6 @@ export function KanbanBoard() {
               </View>
             )}
 
-            {/* Buttons */}
             <View style={{ flexDirection: "row", gap: 10 }}>
               <Pressable
                 onPress={() => { setShowAddSticker(false); setShowBgPicker(false); setShowTextPicker(false); }}
@@ -552,14 +603,9 @@ export function KanbanBoard() {
               returnKeyType="done"
               onSubmitEditing={handleAddColumn}
               style={{
-                backgroundColor: colors.background,
-                color: colors.foreground,
-                borderRadius: 10,
-                padding: 12,
-                fontSize: 15,
-                borderWidth: 1,
-                borderColor: colors.border,
-                marginBottom: 16,
+                backgroundColor: colors.background, color: colors.foreground,
+                borderRadius: 10, padding: 12, fontSize: 15,
+                borderWidth: 1, borderColor: colors.border, marginBottom: 16,
               }}
             />
             <View style={{ flexDirection: "row", gap: 10 }}>
@@ -585,13 +631,9 @@ export function KanbanBoard() {
         {editingSticker && (
           <Pressable onPress={() => setEditingSticker(null)} style={styles.modalOverlay}>
             <Pressable onPress={() => {}} style={[styles.modalContent, { backgroundColor: colors.surface }]}>
-              {/* Preview */}
               <View style={{
                 backgroundColor: editingSticker.sticker.bgColor,
-                borderRadius: 8,
-                padding: 14,
-                marginBottom: 16,
-                minHeight: 60,
+                borderRadius: 8, padding: 14, marginBottom: 16, minHeight: 60,
               }}>
                 <Text style={{ color: editingSticker.sticker.textColor, fontSize: 14, lineHeight: 20 }}>
                   {editingSticker.sticker.text}
@@ -646,14 +688,9 @@ export function KanbanBoard() {
               returnKeyType="done"
               onSubmitEditing={handleRenameColumn}
               style={{
-                backgroundColor: colors.background,
-                color: colors.foreground,
-                borderRadius: 10,
-                padding: 12,
-                fontSize: 15,
-                borderWidth: 1,
-                borderColor: colors.border,
-                marginBottom: 16,
+                backgroundColor: colors.background, color: colors.foreground,
+                borderRadius: 10, padding: 12, fontSize: 15,
+                borderWidth: 1, borderColor: colors.border, marginBottom: 16,
               }}
             />
             <View style={{ flexDirection: "row", gap: 10 }}>
@@ -674,24 +711,17 @@ export function KanbanBoard() {
         </Pressable>
       </Modal>
 
-      {/* Move Sticker Modal — visual drag-target UI */}
+      {/* Move Sticker Modal (fallback) */}
       <Modal visible={!!movingSticker} transparent animationType="fade" onRequestClose={() => setMovingSticker(null)}>
         {movingSticker && (
           <Pressable onPress={() => setMovingSticker(null)} style={styles.modalOverlay}>
             <Pressable onPress={() => {}} style={[styles.modalContent, { backgroundColor: colors.surface }]}>
-              {/* Sticker preview */}
               <View style={{ alignItems: "center", marginBottom: 12 }}>
                 <View style={{
                   backgroundColor: movingSticker.sticker.bgColor,
-                  borderRadius: 6,
-                  padding: 8,
-                  minWidth: 100,
-                  maxWidth: 200,
-                  shadowColor: "#000",
-                  shadowOffset: { width: 2, height: 3 },
-                  shadowOpacity: 0.2,
-                  shadowRadius: 4,
-                  elevation: 4,
+                  borderRadius: 6, padding: 8, minWidth: 100, maxWidth: 200,
+                  shadowColor: "#000", shadowOffset: { width: 2, height: 3 },
+                  shadowOpacity: 0.2, shadowRadius: 4, elevation: 4,
                   transform: [{ rotate: "-2deg" }],
                 }}>
                   <Text style={{ color: movingSticker.sticker.textColor, fontSize: 12, textAlign: "center" }} numberOfLines={2}>
@@ -700,7 +730,7 @@ export function KanbanBoard() {
                 </View>
               </View>
               <Text style={{ fontSize: 14, fontWeight: "700", color: colors.muted, textAlign: "center", marginBottom: 10 }}>
-                {isRu ? "⇣ Перетащите в столбец ⇣" : "⇣ Drop into column ⇣"}
+                {isRu ? "Переместить в столбец:" : "Move to column:"}
               </Text>
               <View style={{ gap: 6 }}>
                 {data.columns.map((col) => {
@@ -708,24 +738,24 @@ export function KanbanBoard() {
                   return (
                     <Pressable
                       key={col.id}
-                      onPress={() => !isCurrent && handleMoveSticker(col.id)}
+                      onPress={() => {
+                        if (!isCurrent) {
+                          handleMoveSticker(movingSticker.columnId, movingSticker.sticker, col.id);
+                          setMovingSticker(null);
+                        }
+                      }}
                       disabled={isCurrent}
                       style={({ pressed }) => [{
                         backgroundColor: isCurrent ? `${colors.border}40` : pressed ? `${colors.primary}30` : colors.background,
-                        borderRadius: 12,
-                        padding: 12,
+                        borderRadius: 12, padding: 12,
                         borderWidth: isCurrent ? 2 : 1.5,
                         borderColor: isCurrent ? colors.muted : colors.primary,
                         borderStyle: isCurrent ? "solid" : "dashed",
-                        flexDirection: "row",
-                        alignItems: "center",
-                        justifyContent: "space-between",
+                        flexDirection: "row", alignItems: "center", justifyContent: "space-between",
                         opacity: isCurrent ? 0.4 : 1,
                       }]}
                     >
-                      <Text style={{ color: colors.foreground, fontSize: 14, fontWeight: "700" }}>
-                        {col.title}
-                      </Text>
+                      <Text style={{ color: colors.foreground, fontSize: 14, fontWeight: "700" }}>{col.title}</Text>
                       <Text style={{ color: colors.muted, fontSize: 12 }}>
                         {isCurrent ? (isRu ? "текущий" : "current") : `${col.stickers.length} ✉`}
                       </Text>

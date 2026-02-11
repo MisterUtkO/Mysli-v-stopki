@@ -7,7 +7,11 @@ import {
   Animated,
   PanResponder,
   Platform,
-  LayoutChangeEvent,
+  ScrollView,
+  Modal,
+  Dimensions,
+  findNodeHandle,
+  UIManager,
 } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { useTaskContext } from "@/lib/context/task-context";
@@ -33,6 +37,16 @@ interface DraggingTask {
   task: Task;
 }
 
+// Absolute page coordinates for hit testing
+interface AbsoluteRect {
+  pageX: number;
+  pageY: number;
+  width: number;
+  height: number;
+}
+
+const MAX_VISIBLE_TASKS = 4;
+
 export default function MatrixScreen() {
   const { tasks, updateTask, deleteTask } = useTaskContext();
   const { t, language } = useI18n();
@@ -45,12 +59,14 @@ export default function MatrixScreen() {
   const [highlightedQuadrant, setHighlightedQuadrant] = useState<Quadrant | "trash" | null>(null);
   const dragPosition = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
 
-  const quadrantLayouts = useRef<Record<string, { x: number; y: number; width: number; height: number }>>({});
-  const trashLayout = useRef<{ x: number; y: number; width: number; height: number } | null>(null);
-  const containerRef = useRef<View>(null);
-  const containerOffset = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-  const quadrantRefs = useRef<Record<string, View | null>>({});
-  const trashRef = useRef<View | null>(null);
+  // Fallback modal for moving tasks
+  const [moveModalTask, setMoveModalTask] = useState<Task | null>(null);
+
+  // Absolute page coordinates for each quadrant and trash
+  const quadrantRects = useRef<Record<string, AbsoluteRect>>({});
+  const trashRect = useRef<AbsoluteRect | null>(null);
+  const quadrantViewRefs = useRef<Record<string, View | null>>({});
+  const trashViewRef = useRef<View | null>(null);
 
   const activeTasks = tasks.filter((t) => t.status !== "completed");
   const q1Tasks = activeTasks.filter((t) => t.quadrant === "Q1");
@@ -76,60 +92,56 @@ export default function MatrixScreen() {
     }
   };
 
-  const measureAllLayouts = useCallback(() => {
-    if (!containerRef.current) return;
-    for (const q of ["Q1", "Q2", "Q3", "Q4"] as Quadrant[]) {
-      const ref = quadrantRefs.current[q];
-      if (ref && containerRef.current) {
+  // Measure absolute page coordinates for all zones
+  const measureAllZones = useCallback(() => {
+    const quadrants: Quadrant[] = ["Q1", "Q2", "Q3", "Q4"];
+    for (const q of quadrants) {
+      const ref = quadrantViewRefs.current[q];
+      if (ref) {
         try {
-          ref.measureLayout(
-            containerRef.current as any,
-            (x, y, width, height) => {
-              quadrantLayouts.current[q] = {
-                x: x + containerOffset.current.x,
-                y: y + containerOffset.current.y,
-                width,
-                height,
-              };
-            },
-            () => {}
-          );
+          if (Platform.OS === "web") {
+            // On web, use getBoundingClientRect via findNodeHandle
+            const node = findNodeHandle(ref);
+            if (node) {
+              (ref as any).measure?.((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
+                quadrantRects.current[q] = { pageX, pageY, width, height };
+              });
+            }
+          } else {
+            ref.measure((x, y, width, height, pageX, pageY) => {
+              quadrantRects.current[q] = { pageX, pageY, width, height };
+            });
+          }
         } catch {
           // skip
         }
       }
     }
-    if (trashRef.current && containerRef.current) {
+    if (trashViewRef.current) {
       try {
-        trashRef.current.measureLayout(
-          containerRef.current as any,
-          (x, y, width, height) => {
-            trashLayout.current = {
-              x: x + containerOffset.current.x,
-              y: y + containerOffset.current.y,
-              width,
-              height,
-            };
-          },
-          () => {}
-        );
+        trashViewRef.current.measure((x, y, width, height, pageX, pageY) => {
+          trashRect.current = { pageX, pageY, width, height };
+        });
       } catch {
         // skip
       }
     }
   }, []);
 
+  // Hit test using absolute page coordinates
   const hitTest = (pageX: number, pageY: number): Quadrant | "trash" | null => {
-    if (trashLayout.current) {
-      const tl = trashLayout.current;
-      if (pageX >= tl.x && pageX <= tl.x + tl.width && pageY >= tl.y && pageY <= tl.y + tl.height) {
+    // Check trash first
+    if (trashRect.current) {
+      const r = trashRect.current;
+      if (pageX >= r.pageX && pageX <= r.pageX + r.width && pageY >= r.pageY && pageY <= r.pageY + r.height) {
         return "trash";
       }
     }
+    // Check quadrants
     for (const q of ["Q1", "Q2", "Q3", "Q4"] as Quadrant[]) {
-      const layout = quadrantLayouts.current[q];
-      if (layout) {
-        if (pageX >= layout.x && pageX <= layout.x + layout.width && pageY >= layout.y && pageY <= layout.y + layout.height) {
+      const r = quadrantRects.current[q];
+      if (r) {
+        if (pageX >= r.pageX && pageX <= r.pageX + r.width && pageY >= r.pageY && pageY <= r.pageY + r.height) {
           return q;
         }
       }
@@ -163,27 +175,46 @@ export default function MatrixScreen() {
     }
   };
 
-  const renderTaskChip = (task: Task) => {
-    const config = QUADRANT_CONFIG[task.quadrant];
+  // Fallback: move via modal
+  const handleMoveViaModal = async (task: Task, target: Quadrant) => {
+    await handleDrop(task, target);
+    setMoveModalTask(null);
+  };
+
+  // Start drag: measure zones, then set dragging state
+  const startDrag = useCallback((task: Task) => {
+    measureAllZones();
+    // Small delay to let measurements complete
+    setTimeout(() => {
+      setDraggingTask({ task });
+    }, 50);
+  }, [measureAllZones]);
+
+  const renderTaskChip = (task: Task, quadrant: Quadrant) => {
+    const config = QUADRANT_CONFIG[quadrant];
     return (
       <Pressable
         key={task.id}
-        onLongPress={() => { measureAllLayouts(); setDraggingTask({ task }); }}
+        onLongPress={() => startDrag(task)}
+        delayLongPress={300}
         onPress={() => router.push(`/task-detail/${task.id}`)}
         style={({ pressed }) => [{
           flexDirection: "row", alignItems: "center",
           backgroundColor: "rgba(255,255,255,0.25)", borderRadius: 8,
-          paddingHorizontal: 8, paddingVertical: 5, marginBottom: 4,
+          paddingHorizontal: 8, paddingVertical: 5, marginBottom: 3,
           opacity: pressed ? 0.7 : 1,
         }]}
       >
-        {task.emoji && <Text style={{ fontSize: 13, marginRight: 4 }}>{task.emoji}</Text>}
-        <Text style={{ color: config.color, fontSize: 12, fontWeight: "600", flex: 1, lineHeight: 16 }} numberOfLines={1}>
+        {task.emoji && <Text style={{ fontSize: 12, marginRight: 3 }}>{task.emoji}</Text>}
+        <Text style={{ color: config.color, fontSize: 11, fontWeight: "600", flex: 1, lineHeight: 15 }} numberOfLines={1}>
           {task.title}
         </Text>
-        <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 9, marginLeft: 4 }}>
-          ⚡{task.importance} 🔥{task.urgency}
-        </Text>
+        <Pressable
+          onPress={() => setMoveModalTask(task)}
+          style={({ pressed }) => [{ opacity: pressed ? 0.5 : 0.6, paddingLeft: 4 }]}
+        >
+          <Text style={{ fontSize: 10, color: "rgba(255,255,255,0.8)" }}>↔</Text>
+        </Pressable>
       </Pressable>
     );
   };
@@ -191,49 +222,90 @@ export default function MatrixScreen() {
   const renderQuadrant = (quadrant: Quadrant, taskList: Task[]) => {
     const config = QUADRANT_CONFIG[quadrant];
     const isHighlighted = highlightedQuadrant === quadrant;
+    const hasMore = taskList.length > MAX_VISIBLE_TASKS;
+
     return (
       <View
         key={quadrant}
-        ref={(ref) => { quadrantRefs.current[quadrant] = ref; }}
-        onLayout={() => setTimeout(measureAllLayouts, 100)}
+        ref={(ref) => { quadrantViewRefs.current[quadrant] = ref; }}
+        collapsable={false}
+        onLayout={() => setTimeout(measureAllZones, 150)}
         style={{
           flex: 1, backgroundColor: config.bgColor, borderRadius: 12,
-          padding: 8, margin: 3, minHeight: 120,
+          padding: 6, margin: 3, minHeight: 100,
           borderWidth: isHighlighted ? 3 : 0, borderColor: "#FFFFFF",
           opacity: isHighlighted ? 1 : draggingTask ? 0.85 : 1,
+          overflow: "hidden",
         }}
       >
-        <Text style={{ color: config.color, fontSize: 12, fontWeight: "800", marginBottom: 2 }}>{quadrant}</Text>
-        <Text style={{ color: "rgba(255,255,255,0.85)", fontSize: 10, fontWeight: "600", marginBottom: 2 }}>{getQuadrantLabel(quadrant)}</Text>
-        <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 8, marginBottom: 6 }}>{getQuadrantSubLabel(quadrant)}</Text>
+        <Text style={{ color: config.color, fontSize: 11, fontWeight: "800", marginBottom: 1 }}>{quadrant}</Text>
+        <Text style={{ color: "rgba(255,255,255,0.85)", fontSize: 9, fontWeight: "600", marginBottom: 1 }}>{getQuadrantLabel(quadrant)}</Text>
+        <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 7, marginBottom: 4 }}>{getQuadrantSubLabel(quadrant)}</Text>
+
         <View style={{ flex: 1 }}>
           {taskList.length === 0 ? (
-            <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, fontStyle: "italic", textAlign: "center", marginTop: 8 }}>
+            <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, fontStyle: "italic", textAlign: "center", marginTop: 6 }}>
               {isRu ? "Пусто" : "Empty"}
             </Text>
-          ) : taskList.slice(0, 5).map(renderTaskChip)}
-          {taskList.length > 5 && (
-            <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 10, textAlign: "center", marginTop: 2 }}>
-              +{taskList.length - 5} {isRu ? "ещё" : "more"}
-            </Text>
+          ) : (
+            <View style={{ flex: 1, position: "relative" }}>
+              <ScrollView
+                style={{ maxHeight: 120 }}
+                showsVerticalScrollIndicator={false}
+                nestedScrollEnabled
+              >
+                {taskList.map((task) => renderTaskChip(task, quadrant))}
+              </ScrollView>
+              {/* Gradient fade indicator when there are more tasks */}
+              {hasMore && (
+                <View style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 28, pointerEvents: "none" }}>
+                  <View style={{
+                    flex: 1,
+                    backgroundColor: "transparent",
+                    // Use semi-transparent overlay as gradient fallback
+                  }}>
+                    <View style={{
+                      position: "absolute", bottom: 0, left: 0, right: 0, height: 28,
+                      backgroundColor: config.bgColor,
+                      opacity: 0.85,
+                    }} />
+                    <View style={{
+                      position: "absolute", bottom: 0, left: 0, right: 0,
+                      alignItems: "center", paddingBottom: 2,
+                    }}>
+                      <Text style={{ color: "rgba(255,255,255,0.9)", fontSize: 9, fontWeight: "700" }}>
+                        ↓ {isRu ? "ещё" : "more"} {taskList.length - MAX_VISIBLE_TASKS} ↓
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              )}
+            </View>
           )}
         </View>
-        <Text style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, textAlign: "right", marginTop: 4 }}>{taskList.length}</Text>
+        <Text style={{ color: "rgba(255,255,255,0.5)", fontSize: 9, textAlign: "right", marginTop: 2 }}>{taskList.length}</Text>
       </View>
     );
   };
 
+  // PanResponder for drag overlay — uses pageX/pageY directly
   const dragPanResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
-      onPanResponderMove: (evt, gestureState) => {
-        dragPosition.setValue({ x: gestureState.moveX - 60, y: gestureState.moveY - 30 });
-        const target = hitTest(gestureState.moveX, gestureState.moveY);
+      onPanResponderGrant: (evt) => {
+        // Set initial position
+        dragPosition.setValue({ x: evt.nativeEvent.pageX - 60, y: evt.nativeEvent.pageY - 30 });
+      },
+      onPanResponderMove: (evt) => {
+        const { pageX, pageY } = evt.nativeEvent;
+        dragPosition.setValue({ x: pageX - 60, y: pageY - 30 });
+        const target = hitTest(pageX, pageY);
         setHighlightedQuadrant(target);
       },
-      onPanResponderRelease: (evt, gestureState) => {
-        const target = hitTest(gestureState.moveX, gestureState.moveY);
+      onPanResponderRelease: (evt) => {
+        const { pageX, pageY } = evt.nativeEvent;
+        const target = hitTest(pageX, pageY);
         if (draggingTask) handleDrop(draggingTask.task, target);
         setDraggingTask(null);
         setHighlightedQuadrant(null);
@@ -248,12 +320,6 @@ export default function MatrixScreen() {
   ).current;
 
   const isTrashHighlighted = highlightedQuadrant === "trash";
-
-  const handleContainerLayout = useCallback((e: LayoutChangeEvent) => {
-    const { x, y } = e.nativeEvent.layout;
-    containerOffset.current = { x, y };
-    setTimeout(measureAllLayouts, 200);
-  }, [measureAllLayouts]);
 
   return (
     <ScreenContainer className="p-2">
@@ -294,11 +360,7 @@ export default function MatrixScreen() {
       {viewMode === "kanban" ? (
         <KanbanBoard />
       ) : (
-        <View
-          ref={containerRef}
-          style={{ flex: 1 }}
-          onLayout={handleContainerLayout}
-        >
+        <View style={{ flex: 1 }}>
           {/* Axis labels */}
           <View style={{ flexDirection: "row", justifyContent: "center", marginBottom: 2 }}>
             <Text style={{ fontSize: 10, color: colors.muted, fontWeight: "600" }}>
@@ -337,36 +399,40 @@ export default function MatrixScreen() {
 
           {/* Trash bin */}
           <View
-            ref={(ref) => { trashRef.current = ref; }}
-            onLayout={() => setTimeout(measureAllLayouts, 100)}
+            ref={(ref) => { trashViewRef.current = ref; }}
+            collapsable={false}
+            onLayout={() => setTimeout(measureAllZones, 150)}
             style={{
               alignItems: "center", justifyContent: "center",
-              paddingVertical: 10, marginTop: 4, borderRadius: 14,
+              paddingVertical: 8, marginTop: 4, borderRadius: 14,
               backgroundColor: isTrashHighlighted ? "#EF4444" : "rgba(239, 68, 68, 0.1)",
               borderWidth: 2,
               borderColor: isTrashHighlighted ? "#DC2626" : "rgba(239, 68, 68, 0.3)",
               borderStyle: "dashed",
             }}
           >
-            <Text style={{ fontSize: 20 }}>🗑</Text>
-            <Text style={{ fontSize: 11, fontWeight: "700", color: isTrashHighlighted ? "#FFFFFF" : "#EF4444", marginTop: 2 }}>
-              {isRu ? "Перетащите сюда для удаления" : "Drag here to delete"}
+            <Text style={{ fontSize: 18 }}>🗑</Text>
+            <Text style={{ fontSize: 10, fontWeight: "700", color: isTrashHighlighted ? "#FFFFFF" : "#EF4444", marginTop: 1 }}>
+              {isRu ? "Перетащите для удаления" : "Drag here to delete"}
             </Text>
           </View>
 
           {/* Summary */}
-          <View style={{ flexDirection: "row", justifyContent: "space-around", paddingVertical: 6 }}>
-            <Text style={{ fontSize: 11, color: colors.muted }}>{isRu ? "Всего" : "Total"}: {activeTasks.length}</Text>
-            <Text style={{ fontSize: 11, color: "#EF4444" }}>Q1: {q1Tasks.length}</Text>
-            <Text style={{ fontSize: 11, color: "#F59E0B" }}>Q2: {q2Tasks.length}</Text>
-            <Text style={{ fontSize: 11, color: "#3B82F6" }}>Q3: {q3Tasks.length}</Text>
-            <Text style={{ fontSize: 11, color: "#22C55E" }}>Q4: {q4Tasks.length}</Text>
+          <View style={{ flexDirection: "row", justifyContent: "space-around", paddingVertical: 4 }}>
+            <Text style={{ fontSize: 10, color: colors.muted }}>{isRu ? "Всего" : "Total"}: {activeTasks.length}</Text>
+            <Text style={{ fontSize: 10, color: "#EF4444" }}>Q1: {q1Tasks.length}</Text>
+            <Text style={{ fontSize: 10, color: "#F59E0B" }}>Q2: {q2Tasks.length}</Text>
+            <Text style={{ fontSize: 10, color: "#3B82F6" }}>Q3: {q3Tasks.length}</Text>
+            <Text style={{ fontSize: 10, color: "#22C55E" }}>Q4: {q4Tasks.length}</Text>
           </View>
 
-          {/* Drag overlay */}
+          {/* Drag overlay — covers entire screen */}
           {draggingTask && (
             <View
-              style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, zIndex: 999 }}
+              style={{
+                position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+                zIndex: 999,
+              }}
               {...dragPanResponder.panHandlers}
             >
               <Animated.View
@@ -385,11 +451,117 @@ export default function MatrixScreen() {
                 <Text style={{ color: "#FFF", fontSize: 13, fontWeight: "700" }} numberOfLines={1}>
                   {draggingTask.task.emoji ? `${draggingTask.task.emoji} ` : ""}{draggingTask.task.title}
                 </Text>
+                <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 9, marginTop: 2 }}>
+                  {isRu ? "Отпустите в нужный квадрант" : "Drop into target quadrant"}
+                </Text>
               </Animated.View>
             </View>
           )}
         </View>
       )}
+
+      {/* Fallback Move Modal */}
+      <Modal visible={!!moveModalTask} transparent animationType="fade" onRequestClose={() => setMoveModalTask(null)}>
+        {moveModalTask && (
+          <Pressable onPress={() => setMoveModalTask(null)} style={{
+            flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", alignItems: "center",
+          }}>
+            <Pressable onPress={() => {}} style={{
+              width: "88%", maxWidth: 380, borderRadius: 20, padding: 20, backgroundColor: colors.surface,
+            }}>
+              {/* Task preview */}
+              <View style={{
+                backgroundColor: QUADRANT_CONFIG[moveModalTask.quadrant].bgColor,
+                borderRadius: 10, padding: 12, marginBottom: 14, alignItems: "center",
+              }}>
+                <Text style={{ color: "#FFF", fontSize: 14, fontWeight: "700" }} numberOfLines={2}>
+                  {moveModalTask.emoji ? `${moveModalTask.emoji} ` : ""}{moveModalTask.title}
+                </Text>
+                <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 11, marginTop: 2 }}>
+                  {isRu ? `Сейчас: ${moveModalTask.quadrant}` : `Current: ${moveModalTask.quadrant}`}
+                </Text>
+              </View>
+
+              <Text style={{ fontSize: 14, fontWeight: "700", color: colors.muted, textAlign: "center", marginBottom: 10 }}>
+                {isRu ? "Переместить в:" : "Move to:"}
+              </Text>
+
+              <View style={{ gap: 6 }}>
+                {(["Q1", "Q2", "Q3", "Q4"] as Quadrant[]).map((q) => {
+                  const isCurrent = moveModalTask.quadrant === q;
+                  const config = QUADRANT_CONFIG[q];
+                  return (
+                    <Pressable
+                      key={q}
+                      onPress={() => !isCurrent && handleMoveViaModal(moveModalTask, q)}
+                      disabled={isCurrent}
+                      style={({ pressed }) => [{
+                        flexDirection: "row", alignItems: "center",
+                        backgroundColor: isCurrent ? `${colors.border}40` : pressed ? `${config.bgColor}30` : colors.background,
+                        borderRadius: 12, padding: 12,
+                        borderWidth: isCurrent ? 2 : 1.5,
+                        borderColor: isCurrent ? colors.muted : config.bgColor,
+                        borderStyle: isCurrent ? "solid" : "dashed",
+                        opacity: isCurrent ? 0.4 : 1,
+                        gap: 10,
+                      }]}
+                    >
+                      <View style={{
+                        width: 28, height: 28, borderRadius: 6,
+                        backgroundColor: config.bgColor, alignItems: "center", justifyContent: "center",
+                      }}>
+                        <Text style={{ color: "#FFF", fontSize: 11, fontWeight: "800" }}>{q}</Text>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ color: colors.foreground, fontSize: 13, fontWeight: "700" }}>
+                          {getQuadrantLabel(q)}
+                        </Text>
+                        <Text style={{ color: colors.muted, fontSize: 10 }}>
+                          {getQuadrantSubLabel(q)}
+                        </Text>
+                      </View>
+                      <Text style={{ color: colors.muted, fontSize: 11 }}>
+                        {isCurrent ? (isRu ? "текущий" : "current") : ""}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+
+              {/* Delete option */}
+              <Pressable
+                onPress={() => {
+                  setMoveModalTask(null);
+                  handleDrop(moveModalTask, "trash");
+                }}
+                style={({ pressed }) => [{
+                  flexDirection: "row", alignItems: "center", justifyContent: "center",
+                  backgroundColor: pressed ? "#EF444430" : "rgba(239,68,68,0.1)",
+                  borderRadius: 12, padding: 12, marginTop: 8,
+                  borderWidth: 1.5, borderColor: "#EF4444", borderStyle: "dashed",
+                  gap: 8,
+                }]}
+              >
+                <Text style={{ fontSize: 16 }}>🗑</Text>
+                <Text style={{ color: "#EF4444", fontSize: 13, fontWeight: "700" }}>
+                  {isRu ? "Удалить задачу" : "Delete task"}
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => setMoveModalTask(null)}
+                style={({ pressed }) => [{
+                  paddingVertical: 12, paddingHorizontal: 16, borderRadius: 10,
+                  alignItems: "center", backgroundColor: colors.border, marginTop: 8,
+                  opacity: pressed ? 0.7 : 1,
+                }]}
+              >
+                <Text style={{ color: colors.foreground, fontWeight: "600" }}>{isRu ? "Отмена" : "Cancel"}</Text>
+              </Pressable>
+            </Pressable>
+          </Pressable>
+        )}
+      </Modal>
     </ScreenContainer>
   );
 }

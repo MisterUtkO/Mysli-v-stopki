@@ -244,3 +244,11 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] More active emoji animations: faster cycles, shimmer glow background, double-pulse heartbeat, aggressive wiggle
 - [x] Compact kanban add-sticker button (paddingVertical: 4, fontSize: 11, subtle opacity)
 - [x] Drag-and-drop stickers: long-press opens visual drop-zone modal with sticker preview and dashed column targets
+
+## Phase 16: Drag-and-Drop & Matrix Pagination
+
+- [x] Matrix: fix drag-and-drop with measure() absolute page coordinates + hitTest (dynamic columns)
+- [x] Matrix: add fallback modal (↔ button on each task chip) for moving tasks between quadrants
+- [x] Matrix: ScrollView pagination in quadrants with fade overlay + "ещё N" indicator
+- [x] Kanban: real drag-and-drop stickers via measure() + PanResponder + visual drag overlay
+- [x] Kanban: arrow buttons (← →) on each sticker + fallback modal preserved for long-press
