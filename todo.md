@@ -188,3 +188,15 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Admin/developer interface for adding new stickers and conditions
 - [x] iOS/Android home screen widget (documentation provided, requires native build)
 - [x] Full localization of all new features (RU/EN)
+
+## Phase 12: Matrix, Notifications Fix, About, Animated Emojis
+- [x] Eisenhower matrix 2x2 grid screen with tasks distributed by quadrant
+- [x] Drag-and-drop tasks between quadrants on matrix screen
+- [x] Trash bin icon at bottom of matrix for deleting tasks by drag
+- [x] Fix notification scheduler — notifications must actually appear at set intervals/times
+- [x] Fix per-task notification frequency to deliver real notifications
+- [x] Time picker for motivational message (same style as task time picker)
+- [x] Update About section: version 1.0.1
+- [x] Add "Написать разработчику в TG - @MisterUtkO" with clickable link to Telegram
+- [x] Add "Поддержать разработчика - Т-Банк 2200 7006 3018 0684" with copy-to-clipboard
+- [x] Animated emojis on task cards (subtle movement/pulse animations)

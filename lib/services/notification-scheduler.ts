@@ -7,6 +7,9 @@ import type { Task, Settings } from "@/lib/domain/types";
  * Handles:
  * 1. Per-task recurring notifications based on individual or global frequency
  * 2. Motivational reminder notifications with custom text and schedule
+ * 
+ * IMPORTANT: Notifications only work on native iOS/Android (not web).
+ * The foreground handler must be set BEFORE any scheduling calls.
  */
 
 // Frequency to seconds mapping
@@ -27,31 +30,135 @@ const GLOBAL_FREQUENCY_SECONDS: Record<string, number> = {
 };
 
 /**
+ * Request notification permissions and set up foreground handler.
+ * Call this once at app startup.
+ */
+export async function initializeNotifications(): Promise<boolean> {
+  if (Platform.OS === "web") return false;
+
+  try {
+    // Set foreground handler — this MUST be called for notifications to show when app is open
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: true,
+        shouldShowBanner: true,
+        shouldShowList: true,
+      }),
+    });
+
+    // Request permissions
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
+
+    if (existingStatus !== "granted") {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
+
+    if (finalStatus !== "granted") {
+      console.log("Notification permissions not granted");
+      return false;
+    }
+
+    // Set up Android channels
+    if (Platform.OS === "android") {
+      await Notifications.setNotificationChannelAsync("task-reminders", {
+        name: "Task Reminders",
+        importance: Notifications.AndroidImportance.HIGH,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: "#FF6B6B",
+        sound: "default",
+        enableVibrate: true,
+        showBadge: true,
+      });
+
+      await Notifications.setNotificationChannelAsync("motivational", {
+        name: "Motivational Reminders",
+        importance: Notifications.AndroidImportance.HIGH,
+        vibrationPattern: [0, 250],
+        lightColor: "#22C55E",
+        sound: "default",
+        enableVibrate: true,
+        showBadge: true,
+      });
+    }
+
+    console.log("Notifications initialized successfully");
+    return true;
+  } catch (e) {
+    console.log("Failed to initialize notifications:", e);
+    return false;
+  }
+}
+
+/**
  * Cancel all scheduled notifications
  */
 export async function cancelAllScheduledNotifications(): Promise<void> {
   if (Platform.OS === "web") return;
   try {
     await Notifications.cancelAllScheduledNotificationsAsync();
+    console.log("All scheduled notifications cancelled");
   } catch (e) {
     console.log("Failed to cancel notifications:", e);
   }
 }
 
 /**
- * Schedule per-task notifications based on task frequency or global setting
+ * Cancel only task-related notifications (preserve motivational)
+ */
+async function cancelTaskNotifications(): Promise<void> {
+  if (Platform.OS === "web") return;
+  try {
+    const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+    for (const notif of scheduled) {
+      if (notif.content.data?.type === "task_reminder") {
+        await Notifications.cancelScheduledNotificationAsync(notif.identifier);
+      }
+    }
+  } catch (e) {
+    console.log("Failed to cancel task notifications:", e);
+  }
+}
+
+/**
+ * Cancel only motivational notifications
+ */
+async function cancelMotivationalNotifications(): Promise<void> {
+  if (Platform.OS === "web") return;
+  try {
+    const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+    for (const notif of scheduled) {
+      if (notif.content.data?.type === "motivational") {
+        await Notifications.cancelScheduledNotificationAsync(notif.identifier);
+      }
+    }
+  } catch (e) {
+    console.log("Failed to cancel motivational notifications:", e);
+  }
+}
+
+/**
+ * Schedule per-task notifications based on task frequency or global setting.
+ * Cancels existing task notifications first, then reschedules all active tasks.
  */
 export async function scheduleTaskNotifications(
   tasks: Task[],
   settings: Settings
 ): Promise<void> {
   if (Platform.OS === "web") return;
-  if (!settings.notificationsEnabled) return;
+  if (!settings.notificationsEnabled) {
+    await cancelTaskNotifications();
+    return;
+  }
 
   // Cancel existing task notifications first
-  await cancelAllScheduledNotifications();
+  await cancelTaskNotifications();
 
   const activeTasks = tasks.filter((t) => t.status !== "completed");
+  let scheduledCount = 0;
 
   for (const task of activeTasks) {
     // Determine frequency: per-task override or global
@@ -71,6 +178,9 @@ export async function scheduleTaskNotifications(
 
     if (!intervalSeconds) continue;
 
+    // Minimum interval is 60 seconds on iOS
+    if (intervalSeconds < 60) intervalSeconds = 60;
+
     try {
       const emoji = task.emoji ? `${task.emoji} ` : "";
       const quadrantLabel = task.quadrant;
@@ -79,10 +189,11 @@ export async function scheduleTaskNotifications(
         content: {
           title: `${emoji}${task.title}`,
           body: task.dueDate
-            ? `[${quadrantLabel}] ⚡${task.importance}/7 🔥${task.urgency}/7 — ${task.dueDate}`
+            ? `[${quadrantLabel}] ⚡${task.importance}/7 🔥${task.urgency}/7 — ${task.dueDate}${task.dueTime ? ` ${task.dueTime}` : ""}`
             : `[${quadrantLabel}] ⚡${task.importance}/7 🔥${task.urgency}/7`,
           sound: true,
           data: { taskId: task.id, type: "task_reminder" },
+          ...(Platform.OS === "android" ? { channelId: "task-reminders" } : {}),
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
@@ -90,14 +201,18 @@ export async function scheduleTaskNotifications(
           repeats: true,
         },
       });
+      scheduledCount++;
     } catch (e) {
       console.log(`Failed to schedule notification for task ${task.id}:`, e);
     }
   }
+
+  console.log(`Scheduled ${scheduledCount} task notifications`);
 }
 
 /**
- * Schedule a motivational reminder notification
+ * Schedule a motivational reminder notification.
+ * Supports both interval-based and exact-time-based scheduling.
  */
 export async function scheduleMotivationalNotification(
   text: string,
@@ -108,25 +223,23 @@ export async function scheduleMotivationalNotification(
   if (!text.trim()) return;
 
   // Cancel existing motivational notifications
-  const scheduled = await Notifications.getAllScheduledNotificationsAsync();
-  for (const notif of scheduled) {
-    if (notif.content.data?.type === "motivational") {
-      await Notifications.cancelScheduledNotificationAsync(notif.identifier);
-    }
-  }
+  await cancelMotivationalNotifications();
 
   if (frequency === "never") return;
 
   try {
-    if (exactTime) {
+    if (exactTime && exactTime.includes(":")) {
       // Schedule at exact time daily
       const [hours, minutes] = exactTime.split(":").map(Number);
+      if (isNaN(hours) || isNaN(minutes)) return;
+
       await Notifications.scheduleNotificationAsync({
         content: {
           title: "💪 SDVGNote",
           body: text,
           sound: true,
           data: { type: "motivational" },
+          ...(Platform.OS === "android" ? { channelId: "motivational" } : {}),
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.DAILY,
@@ -134,10 +247,14 @@ export async function scheduleMotivationalNotification(
           minute: minutes,
         },
       });
+      console.log(`Motivational notification scheduled daily at ${hours}:${minutes}`);
     } else {
       // Schedule at interval
       const intervalSeconds = FREQUENCY_SECONDS[frequency] || GLOBAL_FREQUENCY_SECONDS[frequency];
       if (!intervalSeconds) return;
+
+      // Minimum 60 seconds
+      const safeInterval = Math.max(intervalSeconds, 60);
 
       await Notifications.scheduleNotificationAsync({
         content: {
@@ -145,13 +262,15 @@ export async function scheduleMotivationalNotification(
           body: text,
           sound: true,
           data: { type: "motivational" },
+          ...(Platform.OS === "android" ? { channelId: "motivational" } : {}),
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-          seconds: intervalSeconds,
+          seconds: safeInterval,
           repeats: true,
         },
       });
+      console.log(`Motivational notification scheduled every ${safeInterval}s`);
     }
   } catch (e) {
     console.log("Failed to schedule motivational notification:", e);
@@ -159,23 +278,43 @@ export async function scheduleMotivationalNotification(
 }
 
 /**
- * Send an immediate test notification
+ * Send an immediate test notification (for testing purposes)
  */
 export async function sendTestNotification(isRu: boolean): Promise<void> {
-  if (Platform.OS === "web") return;
+  if (Platform.OS === "web") {
+    // On web, show an alert instead
+    return;
+  }
   try {
     await Notifications.scheduleNotificationAsync({
       content: {
         title: isRu ? "🔔 Тестовое уведомление" : "🔔 Test notification",
         body: isRu
-          ? "Уведомления работают корректно!"
-          : "Notifications are working correctly!",
+          ? "Уведомления работают корректно! Вы будете получать напоминания о задачах."
+          : "Notifications are working correctly! You will receive task reminders.",
         sound: true,
         data: { type: "test" },
       },
-      trigger: null,
+      trigger: null, // null = immediate
     });
+    console.log("Test notification sent");
   } catch (e) {
     console.log("Failed to send test notification:", e);
+  }
+}
+
+/**
+ * Debug: List all currently scheduled notifications
+ */
+export async function listScheduledNotifications(): Promise<void> {
+  if (Platform.OS === "web") return;
+  try {
+    const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+    console.log(`Currently scheduled: ${scheduled.length} notifications`);
+    for (const n of scheduled) {
+      console.log(`  - ${n.content.title} (type: ${n.content.data?.type})`);
+    }
+  } catch (e) {
+    console.log("Failed to list notifications:", e);
   }
 }

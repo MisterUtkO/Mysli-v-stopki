@@ -20,6 +20,8 @@ const MAPPING = {
   "chevron.right": "chevron-right",
   "gear": "settings",
   "trophy.fill": "emoji-events",
+  "square.grid.2x2.fill": "grid-view",
+  "trash.fill": "delete",
 } as IconMapping;
 
 /**

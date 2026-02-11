@@ -24,7 +24,7 @@ import { AchievementProvider, useAchievements } from "@/lib/context/achievement-
 import { AchievementCelebration } from "@/components/achievement-celebration";
 import { useTaskContext } from "@/lib/context/task-context";
 import { useI18n } from "@/lib/context/i18n-context";
-import * as Notifications from "expo-notifications";
+import { initializeNotifications } from "@/lib/services/notification-scheduler";
 import { Alert } from "react-native";
 
 const DEFAULT_WEB_INSETS: EdgeInsets = { top: 0, right: 0, bottom: 0, left: 0 };
@@ -83,60 +83,9 @@ export default function RootLayout() {
     initManusRuntime();
   }, []);
 
-  // Auto-request permissions on startup
+  // Initialize notifications (permissions + foreground handler + channels)
   useEffect(() => {
-    const requestPermissions = async () => {
-      if (Platform.OS === "web") return;
-
-      try {
-        // Request notification permissions
-        const { status: notifStatus } = await Notifications.getPermissionsAsync();
-        if (notifStatus !== "granted") {
-          const { status } = await Notifications.requestPermissionsAsync();
-          if (status !== "granted") {
-            console.log("Notification permissions not granted");
-          }
-        }
-
-        // Configure notification handler
-        Notifications.setNotificationHandler({
-          handleNotification: async () => ({
-            shouldShowAlert: true,
-            shouldPlaySound: true,
-            shouldSetBadge: true,
-            shouldShowBanner: true,
-            shouldShowList: true,
-          }),
-        });
-
-        // Android notification channel
-        if (Platform.OS === "android") {
-          await Notifications.setNotificationChannelAsync("default", {
-            name: "Default",
-            importance: Notifications.AndroidImportance.MAX,
-            vibrationPattern: [0, 250, 250, 250],
-            lightColor: "#FF6B6B",
-            sound: "default",
-            enableVibrate: true,
-            showBadge: true,
-          });
-
-          await Notifications.setNotificationChannelAsync("reminders", {
-            name: "Reminders",
-            importance: Notifications.AndroidImportance.HIGH,
-            vibrationPattern: [0, 250, 250, 250],
-            lightColor: "#0a7ea4",
-            sound: "default",
-            enableVibrate: true,
-            showBadge: true,
-          });
-        }
-      } catch (error) {
-        console.log("Permission request error:", error);
-      }
-    };
-
-    requestPermissions();
+    initializeNotifications();
   }, []);
 
   const handleSafeAreaUpdate = useCallback((metrics: Metrics) => {

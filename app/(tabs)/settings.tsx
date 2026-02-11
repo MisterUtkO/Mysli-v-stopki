@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   View,
   Text,
@@ -8,12 +8,15 @@ import {
   Switch,
   Platform,
   TextInput,
+  Linking,
+  Modal,
 } from "react-native";
-import * as Notifications from "expo-notifications";
+import * as Clipboard from "expo-clipboard";
 import { ScreenContainer } from "@/components/screen-container";
 import { useTaskContext } from "@/lib/context/task-context";
 import { useI18n } from "@/lib/context/i18n-context";
 import { useThemeContext } from "@/lib/theme-provider";
+import { sendTestNotification } from "@/lib/services/notification-scheduler";
 import type { MotivationalSettings } from "@/lib/domain/types";
 
 type NotifFrequency = "never" | "hourly" | "daily" | "weekly" | "always";
@@ -24,13 +27,30 @@ export default function SettingsScreen() {
   const { language, setLanguage, t } = useI18n();
   const { colorScheme, setColorScheme } = useThemeContext();
   const [exporting, setExporting] = useState(false);
+  const [copiedCard, setCopiedCard] = useState(false);
 
   const isRu = language === "ru";
 
   // Motivational state
   const motivational = settings.motivational || { enabled: false, text: "", frequency: "daily" as MotivFrequency, exactTime: undefined };
   const [motivText, setMotivText] = useState(motivational.text);
-  const [motivTime, setMotivTime] = useState(motivational.exactTime || "");
+
+  // Time picker state
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [pickerHour, setPickerHour] = useState(() => {
+    if (motivational.exactTime) {
+      const [h] = motivational.exactTime.split(":");
+      return parseInt(h) || 9;
+    }
+    return 9;
+  });
+  const [pickerMinute, setPickerMinute] = useState(() => {
+    if (motivational.exactTime) {
+      const parts = motivational.exactTime.split(":");
+      return parseInt(parts[1]) || 0;
+    }
+    return 0;
+  });
 
   const handleLanguageToggle = async () => {
     const newLang = language === "en" ? "ru" : "en";
@@ -46,19 +66,6 @@ export default function SettingsScreen() {
 
   const handleNotificationsToggle = async () => {
     const newValue = !settings.notificationsEnabled;
-    if (newValue && Platform.OS !== "web") {
-      const { status } = await Notifications.getPermissionsAsync();
-      if (status !== "granted") {
-        const { status: newStatus } = await Notifications.requestPermissionsAsync();
-        if (newStatus !== "granted") {
-          Alert.alert(
-            isRu ? "Разрешение не получено" : "Permission denied",
-            isRu ? "Включите уведомления в настройках устройства" : "Enable notifications in device settings"
-          );
-          return;
-        }
-      }
-    }
     await updateSettings({ notificationsEnabled: newValue });
   };
 
@@ -67,17 +74,12 @@ export default function SettingsScreen() {
   };
 
   const handleTestNotification = async () => {
-    try {
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: isRu ? "🔔 Тестовое уведомление" : "🔔 Test notification",
-          body: isRu ? "Уведомления работают корректно!" : "Notifications are working correctly!",
-          sound: true,
-        },
-        trigger: null,
-      });
-    } catch (e) {
-      Alert.alert(isRu ? "Ошибка" : "Error", isRu ? "Не удалось отправить" : "Failed to send");
+    await sendTestNotification(isRu);
+    if (Platform.OS === "web") {
+      Alert.alert(
+        isRu ? "Информация" : "Info",
+        isRu ? "Уведомления работают только на устройстве (iOS/Android)" : "Notifications only work on device (iOS/Android)"
+      );
     }
   };
 
@@ -96,13 +98,15 @@ export default function SettingsScreen() {
     await updateSettings({ motivational: updated });
   };
 
-  const handleMotivationalTimeSave = async () => {
-    // Validate HH:MM format
-    if (motivTime && !/^\d{1,2}:\d{2}$/.test(motivTime)) {
-      Alert.alert(isRu ? "Ошибка" : "Error", isRu ? "Формат: ЧЧ:ММ" : "Format: HH:MM");
-      return;
-    }
-    const updated: MotivationalSettings = { ...motivational, exactTime: motivTime || undefined };
+  const handleTimePickerConfirm = async () => {
+    const timeStr = `${String(pickerHour).padStart(2, "0")}:${String(pickerMinute).padStart(2, "0")}`;
+    const updated: MotivationalSettings = { ...motivational, exactTime: timeStr };
+    await updateSettings({ motivational: updated });
+    setShowTimePicker(false);
+  };
+
+  const handleClearExactTime = async () => {
+    const updated: MotivationalSettings = { ...motivational, exactTime: undefined };
     await updateSettings({ motivational: updated });
   };
 
@@ -138,6 +142,21 @@ export default function SettingsScreen() {
         },
       ]
     );
+  };
+
+  const handleOpenTelegram = () => {
+    Linking.openURL("https://t.me/MisterUtkO");
+  };
+
+  const handleCopyCard = async () => {
+    try {
+      await Clipboard.setStringAsync("2200 7006 3018 0684");
+      setCopiedCard(true);
+      setTimeout(() => setCopiedCard(false), 2000);
+    } catch {
+      // Fallback for web
+      Alert.alert(isRu ? "Номер карты" : "Card number", "2200 7006 3018 0684");
+    }
   };
 
   const frequencyOptions: { value: NotifFrequency; label: string }[] = [
@@ -326,32 +345,46 @@ export default function SettingsScreen() {
                   ))}
                 </View>
 
-                <Text className="text-muted" style={{ fontSize: 13 }}>
-                  {isRu ? "Или точное время (ЧЧ:ММ):" : "Or exact time (HH:MM):"}
+                {/* Exact time picker */}
+                <Text className="text-muted" style={{ fontSize: 13, marginTop: 4 }}>
+                  {isRu ? "Или точное время ежедневно:" : "Or exact daily time:"}
                 </Text>
                 <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
-                  <TextInput
-                    value={motivTime}
-                    onChangeText={setMotivTime}
-                    placeholder="09:00"
-                    placeholderTextColor="#999"
-                    keyboardType="numbers-and-punctuation"
-                    returnKeyType="done"
-                    onSubmitEditing={handleMotivationalTimeSave}
-                    className="bg-background border border-border rounded-xl p-3 text-foreground"
-                    style={{ fontSize: 14, width: 100, textAlign: "center" }}
-                  />
                   <Pressable
-                    onPress={handleMotivationalTimeSave}
+                    onPress={() => setShowTimePicker(true)}
                     style={({ pressed }) => [{
-                      backgroundColor: "#22C55E", borderRadius: 12, paddingHorizontal: 14, paddingVertical: 8,
+                      flexDirection: "row",
+                      alignItems: "center",
+                      backgroundColor: motivational.exactTime ? "#22C55E15" : "transparent",
+                      borderWidth: 1.5,
+                      borderColor: motivational.exactTime ? "#22C55E" : "#D1D5DB",
+                      borderRadius: 12,
+                      paddingHorizontal: 14,
+                      paddingVertical: 10,
                       opacity: pressed ? 0.7 : 1,
                     }]}
                   >
-                    <Text style={{ color: "#FFF", fontWeight: "600", fontSize: 13 }}>
-                      {isRu ? "Сохранить" : "Save"}
+                    <Text style={{ fontSize: 18, marginRight: 8 }}>⏰</Text>
+                    <Text style={{
+                      fontSize: 16,
+                      fontWeight: "700",
+                      color: motivational.exactTime ? "#22C55E" : "#9CA3AF",
+                    }}>
+                      {motivational.exactTime || (isRu ? "Выбрать время" : "Set time")}
                     </Text>
                   </Pressable>
+
+                  {motivational.exactTime && (
+                    <Pressable
+                      onPress={handleClearExactTime}
+                      style={({ pressed }) => [{
+                        paddingHorizontal: 10, paddingVertical: 8, borderRadius: 10,
+                        backgroundColor: "#EF444420", opacity: pressed ? 0.7 : 1,
+                      }]}
+                    >
+                      <Text style={{ color: "#EF4444", fontSize: 13, fontWeight: "600" }}>✕</Text>
+                    </Pressable>
+                  )}
                 </View>
               </View>
             )}
@@ -392,15 +425,203 @@ export default function SettingsScreen() {
 
           {/* About */}
           <View className={sectionStyle}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 4 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 8 }}>
               <Text style={{ fontSize: 22 }}>ℹ️</Text>
               <Text className="text-foreground font-semibold" style={{ fontSize: 16 }}>{t.settings.about}</Text>
             </View>
-            <Text className="text-foreground" style={{ fontSize: 14 }}>SDVGNote</Text>
-            <Text className="text-muted" style={{ fontSize: 12, marginTop: 2 }}>{t.settings.version}: 1.0.0</Text>
+
+            <Text className="text-foreground font-bold" style={{ fontSize: 18 }}>SDVGNote</Text>
+            <Text className="text-muted" style={{ fontSize: 12, marginTop: 2 }}>
+              {t.settings.version}: 1.0.1
+            </Text>
+
+            {/* Telegram */}
+            <View style={{ marginTop: 12 }}>
+              <Text className="text-muted" style={{ fontSize: 13, marginBottom: 4 }}>
+                {isRu ? "Написать разработчику в TG —" : "Contact developer on TG —"}
+              </Text>
+              <Pressable
+                onPress={handleOpenTelegram}
+                style={({ pressed }) => [{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  opacity: pressed ? 0.6 : 1,
+                }]}
+              >
+                <Text style={{ fontSize: 16, marginRight: 6 }}>✈️</Text>
+                <Text style={{ fontSize: 15, fontWeight: "700", color: "#0088CC", textDecorationLine: "underline" }}>
+                  @MisterUtkO
+                </Text>
+              </Pressable>
+            </View>
+
+            {/* Support card */}
+            <View style={{ marginTop: 12 }}>
+              <Text className="text-muted" style={{ fontSize: 13, marginBottom: 4 }}>
+                {isRu ? "Поддержать разработчика — Т-Банк" : "Support developer — T-Bank"}
+              </Text>
+              <Pressable
+                onPress={handleCopyCard}
+                style={({ pressed }) => [{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  backgroundColor: copiedCard ? "#22C55E15" : "#F59E0B15",
+                  borderRadius: 10,
+                  paddingHorizontal: 12,
+                  paddingVertical: 8,
+                  opacity: pressed ? 0.7 : 1,
+                  borderWidth: 1,
+                  borderColor: copiedCard ? "#22C55E" : "#F59E0B40",
+                }]}
+              >
+                <Text style={{ fontSize: 15, marginRight: 8 }}>{copiedCard ? "✅" : "💳"}</Text>
+                <Text style={{
+                  fontSize: 15,
+                  fontWeight: "700",
+                  fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+                  color: copiedCard ? "#22C55E" : "#F59E0B",
+                  letterSpacing: 1,
+                }}>
+                  2200 7006 3018 0684
+                </Text>
+                <Text style={{ marginLeft: 8, fontSize: 12, color: "#9CA3AF" }}>
+                  {copiedCard ? (isRu ? "Скопировано!" : "Copied!") : (isRu ? "Нажмите для копирования" : "Tap to copy")}
+                </Text>
+              </Pressable>
+            </View>
           </View>
         </View>
       </ScrollView>
+
+      {/* Time Picker Modal */}
+      <Modal visible={showTimePicker} transparent animationType="fade">
+        <Pressable
+          onPress={() => setShowTimePicker(false)}
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <Pressable
+            onPress={() => {}}
+            style={{
+              backgroundColor: "#FFFFFF",
+              borderRadius: 20,
+              padding: 24,
+              width: 280,
+              alignItems: "center",
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.25,
+              shadowRadius: 12,
+              elevation: 10,
+            }}
+          >
+            <Text style={{ fontSize: 18, fontWeight: "700", color: "#1E293B", marginBottom: 20 }}>
+              {isRu ? "Выберите время" : "Select time"}
+            </Text>
+
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 24 }}>
+              {/* Hours */}
+              <View style={{ alignItems: "center" }}>
+                <Pressable
+                  onPress={() => setPickerHour((h) => (h + 1) % 24)}
+                  style={({ pressed }) => [{ padding: 8, opacity: pressed ? 0.5 : 1 }]}
+                >
+                  <Text style={{ fontSize: 20, color: "#6B7280" }}>▲</Text>
+                </Pressable>
+                <View style={{
+                  backgroundColor: "#F1F5F9",
+                  borderRadius: 12,
+                  width: 64,
+                  height: 56,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderWidth: 2,
+                  borderColor: "#0a7ea4",
+                }}>
+                  <Text style={{ fontSize: 28, fontWeight: "800", color: "#1E293B" }}>
+                    {String(pickerHour).padStart(2, "0")}
+                  </Text>
+                </View>
+                <Pressable
+                  onPress={() => setPickerHour((h) => (h - 1 + 24) % 24)}
+                  style={({ pressed }) => [{ padding: 8, opacity: pressed ? 0.5 : 1 }]}
+                >
+                  <Text style={{ fontSize: 20, color: "#6B7280" }}>▼</Text>
+                </Pressable>
+              </View>
+
+              <Text style={{ fontSize: 28, fontWeight: "800", color: "#1E293B" }}>:</Text>
+
+              {/* Minutes */}
+              <View style={{ alignItems: "center" }}>
+                <Pressable
+                  onPress={() => setPickerMinute((m) => (m + 5) % 60)}
+                  style={({ pressed }) => [{ padding: 8, opacity: pressed ? 0.5 : 1 }]}
+                >
+                  <Text style={{ fontSize: 20, color: "#6B7280" }}>▲</Text>
+                </Pressable>
+                <View style={{
+                  backgroundColor: "#F1F5F9",
+                  borderRadius: 12,
+                  width: 64,
+                  height: 56,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderWidth: 2,
+                  borderColor: "#0a7ea4",
+                }}>
+                  <Text style={{ fontSize: 28, fontWeight: "800", color: "#1E293B" }}>
+                    {String(pickerMinute).padStart(2, "0")}
+                  </Text>
+                </View>
+                <Pressable
+                  onPress={() => setPickerMinute((m) => (m - 5 + 60) % 60)}
+                  style={({ pressed }) => [{ padding: 8, opacity: pressed ? 0.5 : 1 }]}
+                >
+                  <Text style={{ fontSize: 20, color: "#6B7280" }}>▼</Text>
+                </Pressable>
+              </View>
+            </View>
+
+            <View style={{ flexDirection: "row", gap: 12 }}>
+              <Pressable
+                onPress={() => setShowTimePicker(false)}
+                style={({ pressed }) => [{
+                  flex: 1,
+                  backgroundColor: "#F1F5F9",
+                  borderRadius: 12,
+                  paddingVertical: 12,
+                  alignItems: "center",
+                  opacity: pressed ? 0.7 : 1,
+                }]}
+              >
+                <Text style={{ fontSize: 15, fontWeight: "600", color: "#6B7280" }}>
+                  {isRu ? "Отмена" : "Cancel"}
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={handleTimePickerConfirm}
+                style={({ pressed }) => [{
+                  flex: 1,
+                  backgroundColor: "#22C55E",
+                  borderRadius: 12,
+                  paddingVertical: 12,
+                  alignItems: "center",
+                  opacity: pressed ? 0.7 : 1,
+                }]}
+              >
+                <Text style={{ fontSize: 15, fontWeight: "700", color: "#FFFFFF" }}>
+                  {isRu ? "Готово" : "Done"}
+                </Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </ScreenContainer>
   );
 }

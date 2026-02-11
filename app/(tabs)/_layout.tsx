@@ -34,21 +34,28 @@ export default function TabLayout() {
         name="index"
         options={{
           title: t.home.title,
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          tabBarIcon: ({ color }) => <IconSymbol size={26} name="house.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="matrix"
+        options={{
+          title: isRu ? "Матрица" : "Matrix",
+          tabBarIcon: ({ color }) => <IconSymbol size={26} name="square.grid.2x2.fill" color={color} />,
         }}
       />
       <Tabs.Screen
         name="achievements"
         options={{
           title: isRu ? "Достижения" : "Achievements",
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="trophy.fill" color={color} />,
+          tabBarIcon: ({ color }) => <IconSymbol size={26} name="trophy.fill" color={color} />,
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
           title: t.settings.title,
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="gear" color={color} />,
+          tabBarIcon: ({ color }) => <IconSymbol size={26} name="gear" color={color} />,
         }}
       />
     </Tabs>

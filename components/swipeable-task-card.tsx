@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import type { Task, TaskStatus } from "@/lib/domain/types";
+import { AnimatedEmoji } from "@/components/animated-emoji";
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -295,7 +296,9 @@ export function SwipeableTaskCard({
                   </Pressable>
 
                   {task.emoji && (
-                    <Text style={{ fontSize: 18, marginRight: 6 }}>{task.emoji}</Text>
+                    <View style={{ marginRight: 6 }}>
+                      <AnimatedEmoji emoji={task.emoji} size={18} />
+                    </View>
                   )}
 
                   <Text
