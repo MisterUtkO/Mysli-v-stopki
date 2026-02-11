@@ -221,3 +221,16 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Kanban: pinch-to-zoom (zoom +/- buttons)
 - [x] Kanban: drag-and-drop sticky notes across board (long-press to move)
 - [x] Toggle between Matrix and Kanban views on same tab
+
+## Phase 14: DnD, Notifications, Themes, Fixes
+
+- [x] Fix clipboard copy for card number (web fallback with navigator.clipboard + execCommand)
+- [x] Make secret achievements non-secret (show conditions for all, removed isSecret flag)
+- [x] More visible/lively emoji animations on task cards (6 animation types: flicker, sparkle, heartbeat, float, wiggle, bounce)
+- [x] Multi-touch drag-and-drop on Matrix screen for moving tasks between quadrants
+- [x] Multi-touch drag-and-drop on Kanban board for moving stickers between columns
+- [x] Pinch-to-zoom gesture on Kanban board
+- [x] Instant data sync between all screens (Tasks, Matrix, Kanban)
+- [x] Background notifications - work even when app is closed (expo-notifications with TIME_INTERVAL + DAILY triggers)
+- [x] Color themes: AMOLED black (#000000), Pastel (#FFF8F0), Light, Dark — 4 themes in settings
+- [x] Rename kanban board columns (✏️ icon in column header, modal with text input)

@@ -96,6 +96,10 @@ export function KanbanBoard() {
   // Move sticker modal
   const [movingSticker, setMovingSticker] = useState<{ columnId: string; sticker: KanbanSticker } | null>(null);
 
+  // Rename column modal
+  const [renamingColumn, setRenamingColumn] = useState<{ id: string; title: string } | null>(null);
+  const [renameText, setRenameText] = useState("");
+
   // Load data
   React.useEffect(() => {
     const load = async () => {
@@ -141,6 +145,20 @@ export function KanbanBoard() {
     saveData({ columns: [...data.columns, newCol] });
     setNewColumnName("");
     setShowAddColumn(false);
+  };
+
+  // Rename column
+  const handleRenameColumn = () => {
+    if (!renamingColumn || !renameText.trim()) return;
+    const newColumns = data.columns.map((col) => {
+      if (col.id === renamingColumn.id) {
+        return { ...col, title: renameText.trim() };
+      }
+      return col;
+    });
+    saveData({ columns: newColumns });
+    setRenamingColumn(null);
+    setRenameText("");
   };
 
   // Delete column
@@ -290,15 +308,24 @@ export function KanbanBoard() {
                 <Text style={{ fontSize: 14, fontWeight: "800", color: colors.foreground, flex: 1 }} numberOfLines={1}>
                   {column.title}
                 </Text>
-                <View style={{ flexDirection: "row", gap: 4 }}>
+                <View style={{ flexDirection: "row", gap: 6, alignItems: "center" }}>
                   <Text style={{ fontSize: 11, color: colors.muted, fontWeight: "600" }}>
                     {column.stickers.length}
                   </Text>
                   <Pressable
+                    onPress={() => {
+                      setRenamingColumn({ id: column.id, title: column.title });
+                      setRenameText(column.title);
+                    }}
+                    style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1, padding: 2 }]}
+                  >
+                    <Text style={{ fontSize: 13 }}>✏️</Text>
+                  </Pressable>
+                  <Pressable
                     onPress={() => handleDeleteColumn(column.id)}
                     style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1, padding: 2 }]}
                   >
-                    <Text style={{ fontSize: 14 }}>🗑</Text>
+                    <Text style={{ fontSize: 13 }}>🗑</Text>
                   </Pressable>
                 </View>
               </View>
@@ -594,6 +621,50 @@ export function KanbanBoard() {
             </Pressable>
           </Pressable>
         )}
+      </Modal>
+
+      {/* Rename Column Modal */}
+      <Modal visible={!!renamingColumn} transparent animationType="fade" onRequestClose={() => setRenamingColumn(null)}>
+        <Pressable onPress={() => setRenamingColumn(null)} style={styles.modalOverlay}>
+          <Pressable onPress={() => {}} style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+            <Text style={[styles.modalTitle, { color: colors.foreground }]}>
+              {isRu ? "Переименовать столбец" : "Rename Column"}
+            </Text>
+            <TextInput
+              value={renameText}
+              onChangeText={setRenameText}
+              placeholder={isRu ? "Новое название..." : "New name..."}
+              placeholderTextColor={colors.muted}
+              autoFocus
+              returnKeyType="done"
+              onSubmitEditing={handleRenameColumn}
+              style={{
+                backgroundColor: colors.background,
+                color: colors.foreground,
+                borderRadius: 10,
+                padding: 12,
+                fontSize: 15,
+                borderWidth: 1,
+                borderColor: colors.border,
+                marginBottom: 16,
+              }}
+            />
+            <View style={{ flexDirection: "row", gap: 10 }}>
+              <Pressable
+                onPress={() => setRenamingColumn(null)}
+                style={({ pressed }) => [styles.modalBtn, { backgroundColor: colors.border, opacity: pressed ? 0.7 : 1 }]}
+              >
+                <Text style={{ color: colors.foreground, fontWeight: "600" }}>{t.common.cancel}</Text>
+              </Pressable>
+              <Pressable
+                onPress={handleRenameColumn}
+                style={({ pressed }) => [styles.modalBtn, { backgroundColor: colors.primary, flex: 1, opacity: pressed ? 0.7 : 1 }]}
+              >
+                <Text style={{ color: "#FFF", fontWeight: "700" }}>{t.common.save}</Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
       </Modal>
 
       {/* Move Sticker Modal */}

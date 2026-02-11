@@ -16,6 +16,7 @@ import { ScreenContainer } from "@/components/screen-container";
 import { useTaskContext } from "@/lib/context/task-context";
 import { useI18n } from "@/lib/context/i18n-context";
 import { useThemeContext } from "@/lib/theme-provider";
+import { useColors } from "@/hooks/use-colors";
 import { sendTestNotification } from "@/lib/services/notification-scheduler";
 import { useAchievements } from "@/lib/context/achievement-context";
 import type { MotivationalSettings } from "@/lib/domain/types";
@@ -28,6 +29,7 @@ export default function SettingsScreen() {
   const { language, setLanguage, t } = useI18n();
   const { colorScheme, setColorScheme } = useThemeContext();
   const { triggerCustomFlag } = useAchievements();
+  const colors = useColors();
   const [exporting, setExporting] = useState(false);
   const [copiedCard, setCopiedCard] = useState(false);
 
@@ -60,10 +62,16 @@ export default function SettingsScreen() {
     await updateSettings({ language: newLang });
   };
 
-  const handleThemeToggle = async () => {
-    const newTheme = colorScheme === "light" ? "dark" : "light";
-    await setColorScheme(newTheme);
-    await updateSettings({ theme: newTheme });
+  const themeOptions = [
+    { key: "light" as const, emoji: "☀️", labelEn: "Light", labelRu: "Светлая" },
+    { key: "dark" as const, emoji: "🌙", labelEn: "Dark", labelRu: "Тёмная" },
+    { key: "amoled" as const, emoji: "🖤", labelEn: "AMOLED", labelRu: "AMOLED" },
+    { key: "pastel" as const, emoji: "🌸", labelEn: "Pastel", labelRu: "Пастель" },
+  ];
+
+  const handleThemeChange = async (theme: "light" | "dark" | "amoled" | "pastel") => {
+    await setColorScheme(theme);
+    await updateSettings({ theme });
   };
 
   const handleNotificationsToggle = async () => {
@@ -152,14 +160,46 @@ export default function SettingsScreen() {
   };
 
   const handleCopyCard = async () => {
+    const cardNumber = "2200 7006 3018 0684";
+    let copied = false;
     try {
-      await Clipboard.setStringAsync("2200 7006 3018 0684");
-      setCopiedCard(true);
-      setTimeout(() => setCopiedCard(false), 2000);
-      triggerCustomFlag("copy_card", tasks);
+      // Primary: expo-clipboard
+      await Clipboard.setStringAsync(cardNumber);
+      copied = true;
     } catch {
-      // Fallback for web
-      Alert.alert(isRu ? "Номер карты" : "Card number", "2200 7006 3018 0684");
+      // Fallback 1: Web navigator.clipboard
+      if (Platform.OS === "web" && typeof navigator !== "undefined" && navigator.clipboard) {
+        try {
+          await navigator.clipboard.writeText(cardNumber);
+          copied = true;
+        } catch {
+          // Fallback 2: legacy execCommand
+          try {
+            const textArea = document.createElement("textarea");
+            textArea.value = cardNumber;
+            textArea.style.position = "fixed";
+            textArea.style.left = "-9999px";
+            textArea.style.top = "-9999px";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            copied = document.execCommand("copy");
+            document.body.removeChild(textArea);
+          } catch {
+            copied = false;
+          }
+        }
+      }
+    }
+    if (copied) {
+      setCopiedCard(true);
+      setTimeout(() => setCopiedCard(false), 2500);
+      triggerCustomFlag("copy_card", tasks);
+    } else {
+      Alert.alert(
+        isRu ? "Номер карты" : "Card number",
+        cardNumber + "\n\n" + (isRu ? "Скопируйте вручную" : "Copy manually")
+      );
     }
   };
 
@@ -210,22 +250,42 @@ export default function SettingsScreen() {
 
           {/* Theme */}
           <View className={sectionStyle}>
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-                <Text style={{ fontSize: 22 }}>{colorScheme === "light" ? "☀️" : "🌙"}</Text>
-                <Text className="text-foreground font-semibold" style={{ fontSize: 16 }}>{t.settings.theme}</Text>
-              </View>
-              <Pressable
-                onPress={handleThemeToggle}
-                style={({ pressed }) => [{
-                  backgroundColor: colorScheme === "light" ? "#1E293B" : "#F8FAFC",
-                  borderRadius: 12, paddingHorizontal: 14, paddingVertical: 7, opacity: pressed ? 0.7 : 1,
-                }]}
-              >
-                <Text style={{ color: colorScheme === "light" ? "#FFF" : "#1E293B", fontWeight: "700", fontSize: 14 }}>
-                  {colorScheme === "light" ? (isRu ? "Тёмная" : "Dark") : (isRu ? "Светлая" : "Light")}
-                </Text>
-              </Pressable>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 10 }}>
+              <Text style={{ fontSize: 22 }}>
+                {themeOptions.find(o => o.key === colorScheme)?.emoji || "🎨"}
+              </Text>
+              <Text className="text-foreground font-semibold" style={{ fontSize: 16 }}>{t.settings.theme}</Text>
+            </View>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+              {themeOptions.map((opt) => {
+                const isActive = colorScheme === opt.key;
+                return (
+                  <Pressable
+                    key={opt.key}
+                    onPress={() => handleThemeChange(opt.key)}
+                    style={({ pressed }) => [{
+                      flex: 1,
+                      minWidth: 70,
+                      backgroundColor: isActive ? colors.primary : colors.surface,
+                      borderRadius: 12,
+                      paddingVertical: 10,
+                      alignItems: "center",
+                      borderWidth: isActive ? 2 : 1,
+                      borderColor: isActive ? colors.primary : colors.border,
+                      opacity: pressed ? 0.7 : 1,
+                    }]}
+                  >
+                    <Text style={{ fontSize: 20, marginBottom: 4 }}>{opt.emoji}</Text>
+                    <Text style={{
+                      fontSize: 12,
+                      fontWeight: isActive ? "800" : "600",
+                      color: isActive ? "#FFF" : colors.foreground,
+                    }}>
+                      {isRu ? opt.labelRu : opt.labelEn}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
           </View>
 

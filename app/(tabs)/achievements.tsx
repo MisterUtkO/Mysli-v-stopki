@@ -206,9 +206,7 @@ export default function AchievementsScreen() {
 
               {/* Title */}
               <Text style={{ fontSize: 20, fontWeight: "800", color: "#FFFFFF", textAlign: "center", marginBottom: 6 }}>
-                {unlockedIds.has(selectedAchievement.id)
-                  ? (isRu ? selectedAchievement.titleRu : selectedAchievement.titleEn)
-                  : "???"}
+                {isRu ? selectedAchievement.titleRu : selectedAchievement.titleEn}
               </Text>
 
               {/* Rarity */}
@@ -221,11 +219,9 @@ export default function AchievementsScreen() {
                 </Text>
               </View>
 
-              {/* Description (condition) - hidden for secret achievements until unlocked */}
+              {/* Description (condition) - always shown */}
               <Text style={{ fontSize: 14, color: "#B0B0C0", textAlign: "center", lineHeight: 20, marginBottom: 8 }}>
-                {selectedAchievement.isSecret && !unlockedIds.has(selectedAchievement.id)
-                  ? (isRu ? "🤫 Секретное достижение" : "🤫 Secret achievement")
-                  : (isRu ? selectedAchievement.descriptionRu : selectedAchievement.descriptionEn)}
+                {isRu ? selectedAchievement.descriptionRu : selectedAchievement.descriptionEn}
               </Text>
 
               {/* Unlock date */}

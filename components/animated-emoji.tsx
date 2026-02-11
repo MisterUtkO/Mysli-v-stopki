@@ -2,12 +2,15 @@ import { useEffect, useRef } from "react";
 import { Animated, Easing, Platform } from "react-native";
 
 /**
- * AnimatedEmoji — renders an emoji with subtle looping animation.
+ * AnimatedEmoji — renders an emoji with NOTICEABLE looping animation.
+ * Enhanced for "liveliness" — bigger movements, faster cycles, more visible.
  * Different emojis get different animation styles:
- * - Fire emojis: flicker (scale pulse)
- * - Lightning/star: sparkle (opacity pulse)
- * - Heart emojis: heartbeat (scale)
- * - Default: gentle float (translateY)
+ * - Fire emojis: flicker (scale pulse + opacity)
+ * - Lightning/star: sparkle (scale + rotation)
+ * - Heart emojis: heartbeat (double-pump scale)
+ * - Default: gentle float (translateY bob)
+ * - Wiggle: rotation wiggle
+ * - Bounce: vertical bounce
  */
 
 type AnimationType = "flicker" | "sparkle" | "heartbeat" | "float" | "wiggle" | "bounce";
@@ -53,6 +56,12 @@ const EMOJI_ANIMATION_MAP: Record<string, AnimationType> = {
   "🏠": "float",
   "✈️": "float",
   "🚗": "wiggle",
+  "🐢": "float",
+  "🧊": "sparkle",
+  "🤢": "wiggle",
+  "🎨": "wiggle",
+  "🔧": "wiggle",
+  "🎪": "bounce",
 };
 
 function getAnimationType(emoji: string): AnimationType {
@@ -66,154 +75,217 @@ interface AnimatedEmojiProps {
 
 export function AnimatedEmoji({ emoji, size = 18 }: AnimatedEmojiProps) {
   const animValue = useRef(new Animated.Value(0)).current;
+  const animValue2 = useRef(new Animated.Value(0)).current;
   const animType = getAnimationType(emoji);
 
   useEffect(() => {
     // Skip animations on web for performance
     if (Platform.OS === "web") return;
 
-    let animation: Animated.CompositeAnimation;
+    const animations: Animated.CompositeAnimation[] = [];
 
     switch (animType) {
       case "flicker":
-        animation = Animated.loop(
-          Animated.sequence([
-            Animated.timing(animValue, {
-              toValue: 1,
-              duration: 600,
-              easing: Easing.inOut(Easing.sin),
-              useNativeDriver: true,
-            }),
-            Animated.timing(animValue, {
-              toValue: 0,
-              duration: 600,
-              easing: Easing.inOut(Easing.sin),
-              useNativeDriver: true,
-            }),
-          ])
+        animations.push(
+          Animated.loop(
+            Animated.sequence([
+              Animated.timing(animValue, {
+                toValue: 1,
+                duration: 400,
+                easing: Easing.inOut(Easing.sin),
+                useNativeDriver: true,
+              }),
+              Animated.timing(animValue, {
+                toValue: 0,
+                duration: 400,
+                easing: Easing.inOut(Easing.sin),
+                useNativeDriver: true,
+              }),
+            ])
+          )
+        );
+        // Second animation for rotation
+        animations.push(
+          Animated.loop(
+            Animated.sequence([
+              Animated.timing(animValue2, {
+                toValue: 1,
+                duration: 300,
+                easing: Easing.inOut(Easing.ease),
+                useNativeDriver: true,
+              }),
+              Animated.timing(animValue2, {
+                toValue: -1,
+                duration: 600,
+                easing: Easing.inOut(Easing.ease),
+                useNativeDriver: true,
+              }),
+              Animated.timing(animValue2, {
+                toValue: 0,
+                duration: 300,
+                easing: Easing.inOut(Easing.ease),
+                useNativeDriver: true,
+              }),
+            ])
+          )
         );
         break;
 
       case "sparkle":
-        animation = Animated.loop(
-          Animated.sequence([
-            Animated.timing(animValue, {
-              toValue: 1,
-              duration: 1200,
-              easing: Easing.inOut(Easing.ease),
-              useNativeDriver: true,
-            }),
-            Animated.timing(animValue, {
-              toValue: 0,
-              duration: 1200,
-              easing: Easing.inOut(Easing.ease),
-              useNativeDriver: true,
-            }),
-          ])
+        animations.push(
+          Animated.loop(
+            Animated.sequence([
+              Animated.timing(animValue, {
+                toValue: 1,
+                duration: 700,
+                easing: Easing.inOut(Easing.ease),
+                useNativeDriver: true,
+              }),
+              Animated.timing(animValue, {
+                toValue: 0,
+                duration: 700,
+                easing: Easing.inOut(Easing.ease),
+                useNativeDriver: true,
+              }),
+            ])
+          )
+        );
+        // Rotation sparkle
+        animations.push(
+          Animated.loop(
+            Animated.sequence([
+              Animated.timing(animValue2, {
+                toValue: 1,
+                duration: 1400,
+                easing: Easing.linear,
+                useNativeDriver: true,
+              }),
+            ])
+          )
         );
         break;
 
       case "heartbeat":
-        animation = Animated.loop(
-          Animated.sequence([
-            Animated.timing(animValue, {
-              toValue: 1,
-              duration: 300,
-              easing: Easing.out(Easing.ease),
-              useNativeDriver: true,
-            }),
-            Animated.timing(animValue, {
-              toValue: 0,
-              duration: 200,
-              easing: Easing.in(Easing.ease),
-              useNativeDriver: true,
-            }),
-            Animated.timing(animValue, {
-              toValue: 0.8,
-              duration: 250,
-              easing: Easing.out(Easing.ease),
-              useNativeDriver: true,
-            }),
-            Animated.timing(animValue, {
-              toValue: 0,
-              duration: 300,
-              easing: Easing.in(Easing.ease),
-              useNativeDriver: true,
-            }),
-            Animated.delay(800),
-          ])
+        animations.push(
+          Animated.loop(
+            Animated.sequence([
+              Animated.timing(animValue, {
+                toValue: 1,
+                duration: 200,
+                easing: Easing.out(Easing.ease),
+                useNativeDriver: true,
+              }),
+              Animated.timing(animValue, {
+                toValue: 0.3,
+                duration: 150,
+                easing: Easing.in(Easing.ease),
+                useNativeDriver: true,
+              }),
+              Animated.timing(animValue, {
+                toValue: 0.9,
+                duration: 180,
+                easing: Easing.out(Easing.ease),
+                useNativeDriver: true,
+              }),
+              Animated.timing(animValue, {
+                toValue: 0,
+                duration: 250,
+                easing: Easing.in(Easing.ease),
+                useNativeDriver: true,
+              }),
+              Animated.delay(600),
+            ])
+          )
         );
         break;
 
       case "wiggle":
-        animation = Animated.loop(
-          Animated.sequence([
-            Animated.timing(animValue, {
-              toValue: 1,
-              duration: 150,
-              easing: Easing.inOut(Easing.ease),
-              useNativeDriver: true,
-            }),
-            Animated.timing(animValue, {
-              toValue: -1,
-              duration: 300,
-              easing: Easing.inOut(Easing.ease),
-              useNativeDriver: true,
-            }),
-            Animated.timing(animValue, {
-              toValue: 0,
-              duration: 150,
-              easing: Easing.inOut(Easing.ease),
-              useNativeDriver: true,
-            }),
-            Animated.delay(2000),
-          ])
+        animations.push(
+          Animated.loop(
+            Animated.sequence([
+              Animated.timing(animValue, {
+                toValue: 1,
+                duration: 100,
+                easing: Easing.inOut(Easing.ease),
+                useNativeDriver: true,
+              }),
+              Animated.timing(animValue, {
+                toValue: -1,
+                duration: 200,
+                easing: Easing.inOut(Easing.ease),
+                useNativeDriver: true,
+              }),
+              Animated.timing(animValue, {
+                toValue: 0.7,
+                duration: 150,
+                easing: Easing.inOut(Easing.ease),
+                useNativeDriver: true,
+              }),
+              Animated.timing(animValue, {
+                toValue: -0.5,
+                duration: 150,
+                easing: Easing.inOut(Easing.ease),
+                useNativeDriver: true,
+              }),
+              Animated.timing(animValue, {
+                toValue: 0,
+                duration: 100,
+                easing: Easing.inOut(Easing.ease),
+                useNativeDriver: true,
+              }),
+              Animated.delay(1200),
+            ])
+          )
         );
         break;
 
       case "bounce":
-        animation = Animated.loop(
-          Animated.sequence([
-            Animated.timing(animValue, {
-              toValue: 1,
-              duration: 400,
-              easing: Easing.out(Easing.back(1.5)),
-              useNativeDriver: true,
-            }),
-            Animated.timing(animValue, {
-              toValue: 0,
-              duration: 400,
-              easing: Easing.in(Easing.ease),
-              useNativeDriver: true,
-            }),
-            Animated.delay(1500),
-          ])
+        animations.push(
+          Animated.loop(
+            Animated.sequence([
+              Animated.timing(animValue, {
+                toValue: 1,
+                duration: 300,
+                easing: Easing.out(Easing.back(2)),
+                useNativeDriver: true,
+              }),
+              Animated.timing(animValue, {
+                toValue: 0,
+                duration: 300,
+                easing: Easing.in(Easing.ease),
+                useNativeDriver: true,
+              }),
+              Animated.delay(800),
+            ])
+          )
         );
         break;
 
       case "float":
       default:
-        animation = Animated.loop(
-          Animated.sequence([
-            Animated.timing(animValue, {
-              toValue: 1,
-              duration: 1500,
-              easing: Easing.inOut(Easing.sin),
-              useNativeDriver: true,
-            }),
-            Animated.timing(animValue, {
-              toValue: 0,
-              duration: 1500,
-              easing: Easing.inOut(Easing.sin),
-              useNativeDriver: true,
-            }),
-          ])
+        animations.push(
+          Animated.loop(
+            Animated.sequence([
+              Animated.timing(animValue, {
+                toValue: 1,
+                duration: 1000,
+                easing: Easing.inOut(Easing.sin),
+                useNativeDriver: true,
+              }),
+              Animated.timing(animValue, {
+                toValue: 0,
+                duration: 1000,
+                easing: Easing.inOut(Easing.sin),
+                useNativeDriver: true,
+              }),
+            ])
+          )
         );
         break;
     }
 
-    animation.start();
-    return () => animation.stop();
+    animations.forEach((a) => a.start());
+    return () => animations.forEach((a) => a.stop());
   }, [animType]);
 
   // On web, just render static emoji
@@ -234,13 +306,19 @@ export function AnimatedEmoji({ emoji, size = 18 }: AnimatedEmojiProps) {
           {
             scale: animValue.interpolate({
               inputRange: [0, 1],
-              outputRange: [1, 1.12],
+              outputRange: [0.9, 1.2],
+            }),
+          },
+          {
+            rotate: animValue2.interpolate({
+              inputRange: [-1, 0, 1],
+              outputRange: ["-5deg", "0deg", "5deg"],
             }),
           },
         ],
         opacity: animValue.interpolate({
           inputRange: [0, 0.5, 1],
-          outputRange: [0.85, 1, 0.85],
+          outputRange: [0.75, 1, 0.75],
         }),
       };
       break;
@@ -249,13 +327,19 @@ export function AnimatedEmoji({ emoji, size = 18 }: AnimatedEmojiProps) {
       animatedStyle = {
         opacity: animValue.interpolate({
           inputRange: [0, 1],
-          outputRange: [0.7, 1],
+          outputRange: [0.6, 1],
         }),
         transform: [
           {
             scale: animValue.interpolate({
               inputRange: [0, 1],
-              outputRange: [0.95, 1.05],
+              outputRange: [0.85, 1.15],
+            }),
+          },
+          {
+            rotate: animValue2.interpolate({
+              inputRange: [0, 1],
+              outputRange: ["0deg", "15deg"],
             }),
           },
         ],
@@ -267,8 +351,8 @@ export function AnimatedEmoji({ emoji, size = 18 }: AnimatedEmojiProps) {
         transform: [
           {
             scale: animValue.interpolate({
-              inputRange: [0, 0.8, 1],
-              outputRange: [1, 1.08, 1.15],
+              inputRange: [0, 0.3, 0.9, 1],
+              outputRange: [1, 1.05, 1.18, 1.25],
             }),
           },
         ],
@@ -281,7 +365,7 @@ export function AnimatedEmoji({ emoji, size = 18 }: AnimatedEmojiProps) {
           {
             rotate: animValue.interpolate({
               inputRange: [-1, 0, 1],
-              outputRange: ["-8deg", "0deg", "8deg"],
+              outputRange: ["-15deg", "0deg", "15deg"],
             }),
           },
         ],
@@ -294,7 +378,13 @@ export function AnimatedEmoji({ emoji, size = 18 }: AnimatedEmojiProps) {
           {
             translateY: animValue.interpolate({
               inputRange: [0, 1],
-              outputRange: [0, -3],
+              outputRange: [0, -6],
+            }),
+          },
+          {
+            scale: animValue.interpolate({
+              inputRange: [0, 0.5, 1],
+              outputRange: [1, 1.1, 1.05],
             }),
           },
         ],
@@ -308,10 +398,14 @@ export function AnimatedEmoji({ emoji, size = 18 }: AnimatedEmojiProps) {
           {
             translateY: animValue.interpolate({
               inputRange: [0, 1],
-              outputRange: [0, -2.5],
+              outputRange: [0, -4],
             }),
           },
         ],
+        opacity: animValue.interpolate({
+          inputRange: [0, 0.5, 1],
+          outputRange: [0.85, 1, 0.85],
+        }),
       };
       break;
   }

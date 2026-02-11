@@ -13,7 +13,6 @@ import type { AchievementDefinition } from "@/lib/domain/types";
  *    - conditionType: one of the predefined condition types (see below)
  *    - conditionValue: numeric threshold for the condition
  *    - rarity: "common" | "rare" | "epic" | "legendary"
- *    - isSecret: (optional) if true, description hidden until unlocked
  * 
  * CONDITION TYPES:
  *   "tasks_created_day"     — Create X tasks in a single day
@@ -276,7 +275,6 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
     conditionType: "secret",
     conditionValue: 1,
     rarity: "rare",
-    isSecret: true,
   },
   {
     id: "early_bird",
@@ -288,7 +286,6 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
     conditionType: "secret",
     conditionValue: 2,
     rarity: "rare",
-    isSecret: true,
   },
   {
     id: "perfectionist",
@@ -300,7 +297,6 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
     conditionType: "secret",
     conditionValue: 3,
     rarity: "epic",
-    isSecret: true,
   },
   {
     id: "zen_master",
@@ -312,6 +308,5 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
     conditionType: "secret",
     conditionValue: 4,
     rarity: "legendary",
-    isSecret: true,
   },
 ];

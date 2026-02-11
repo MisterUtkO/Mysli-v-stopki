@@ -104,7 +104,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         setTasks(loadedTasks);
 
         const language = (await getSetting("language")) as "en" | "ru" | null;
-        const theme = (await getSetting("theme")) as "light" | "dark" | "system" | null;
+        const theme = (await getSetting("theme")) as "light" | "dark" | "amoled" | "pastel" | "system" | null;
         const impThreshold = await getSetting("importanceThreshold");
         const urgThreshold = await getSetting("urgencyThreshold");
         const notifEnabled = await getSetting("notificationsEnabled");

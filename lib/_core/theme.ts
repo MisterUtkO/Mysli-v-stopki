@@ -2,7 +2,7 @@ import { Platform } from "react-native";
 
 import themeConfig from "@/theme.config";
 
-export type ColorScheme = "light" | "dark";
+export type ColorScheme = "light" | "dark" | "amoled" | "pastel";
 
 export const ThemeColors = themeConfig.themeColors;
 
@@ -15,6 +15,8 @@ function buildSchemePalette(colors: ThemeColorTokens): SchemePalette {
   const palette: SchemePalette = {
     light: {} as SchemePalette["light"],
     dark: {} as SchemePalette["dark"],
+    amoled: {} as SchemePalette["amoled"],
+    pastel: {} as SchemePalette["pastel"],
   };
 
   (Object.keys(colors) as ThemeColorName[]).forEach((name) => {
@@ -22,6 +24,32 @@ function buildSchemePalette(colors: ThemeColorTokens): SchemePalette {
     palette.light[name] = swatch.light;
     palette.dark[name] = swatch.dark;
   });
+
+  // AMOLED Black — true black backgrounds, high contrast
+  palette.amoled = {
+    primary: "#00B4D8",
+    background: "#000000",
+    surface: "#0A0A0A",
+    foreground: "#FFFFFF",
+    muted: "#888888",
+    border: "#1A1A1A",
+    success: "#00FF7F",
+    warning: "#FFD700",
+    error: "#FF4444",
+  } as Record<ThemeColorName, string>;
+
+  // Pastel — soft, warm, calming tones
+  palette.pastel = {
+    primary: "#7C9CBF",
+    background: "#FFF8F0",
+    surface: "#FFF0E6",
+    foreground: "#4A4A4A",
+    muted: "#9B9B9B",
+    border: "#E8D5C4",
+    success: "#8BC5A3",
+    warning: "#F0C987",
+    error: "#E8A0A0",
+  } as Record<ThemeColorName, string>;
 
   return palette;
 }
@@ -55,6 +83,8 @@ function buildRuntimePalette(scheme: ColorScheme): RuntimePalette {
 export const Colors = {
   light: buildRuntimePalette("light"),
   dark: buildRuntimePalette("dark"),
+  amoled: buildRuntimePalette("amoled"),
+  pastel: buildRuntimePalette("pastel"),
 } satisfies Record<ColorScheme, RuntimePalette>;
 
 export type ThemeColorPalette = (typeof Colors)[ColorScheme];

@@ -22,7 +22,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const loadTheme = async () => {
       try {
         const saved = await AsyncStorage.getItem("app_theme");
-        if (saved === "light" || saved === "dark") {
+        if (saved === "light" || saved === "dark" || saved === "amoled" || saved === "pastel") {
           setColorSchemeState(saved);
         }
       } catch (error) {
@@ -35,12 +35,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const applyScheme = useCallback((scheme: ColorScheme) => {
-    nativewindColorScheme.set(scheme);
-    Appearance.setColorScheme?.(scheme);
+    const nativeScheme = (scheme === "amoled") ? "dark" : (scheme === "pastel") ? "light" : scheme;
+    nativewindColorScheme.set(nativeScheme);
+    Appearance.setColorScheme?.(nativeScheme);
     if (typeof document !== "undefined") {
       const root = document.documentElement;
-      root.dataset.theme = scheme;
-      root.classList.toggle("dark", scheme === "dark");
+      root.dataset.theme = nativeScheme;
+      root.classList.toggle("dark", nativeScheme === "dark");
       const palette = SchemeColors[scheme];
       Object.entries(palette).forEach(([token, value]) => {
         root.style.setProperty(`--color-${token}`, value);

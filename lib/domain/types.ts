@@ -48,7 +48,7 @@ export interface MotivationalSettings {
 
 export interface Settings {
   language: "en" | "ru";
-  theme: "light" | "dark" | "system";
+  theme: "light" | "dark" | "amoled" | "pastel" | "system";
   importanceThreshold: number; // 1-7, default 4
   urgencyThreshold: number; // 1-7, default 4
   notificationsEnabled: boolean;
@@ -65,7 +65,6 @@ export interface AchievementDefinition {
   descriptionEn: string;
   descriptionRu: string;
   conditionType: "tasks_created_day" | "tasks_completed_day" | "tasks_completed_total" | "streak_days" | "q1_completed" | "all_quadrants" | "contact_dev" | "copy_card" | "secret" | "custom";
-  isSecret?: boolean; // If true, description is hidden until unlocked
   conditionValue: number; // Threshold value for the condition
   rarity: "common" | "rare" | "epic" | "legendary";
 }
