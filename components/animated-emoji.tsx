@@ -1,67 +1,37 @@
 import { useEffect, useRef } from "react";
-import { Animated, Easing, Platform } from "react-native";
+import { Animated, Easing, Platform, View } from "react-native";
 
 /**
- * AnimatedEmoji — renders an emoji with NOTICEABLE looping animation.
- * Enhanced for "liveliness" — bigger movements, faster cycles, more visible.
- * Different emojis get different animation styles:
- * - Fire emojis: flicker (scale pulse + opacity)
- * - Lightning/star: sparkle (scale + rotation)
- * - Heart emojis: heartbeat (double-pump scale)
- * - Default: gentle float (translateY bob)
- * - Wiggle: rotation wiggle
- * - Bounce: vertical bounce
+ * AnimatedEmoji — renders an emoji with VERY ACTIVE looping animation.
+ * Includes shimmer/glow effects via pulsing shadow-like backgrounds.
+ * Animations are aggressive and noticeable.
  */
 
 type AnimationType = "flicker" | "sparkle" | "heartbeat" | "float" | "wiggle" | "bounce";
 
 const EMOJI_ANIMATION_MAP: Record<string, AnimationType> = {
-  "🔥": "flicker",
-  "⚡": "sparkle",
-  "💥": "flicker",
-  "✨": "sparkle",
-  "⭐": "sparkle",
-  "🌟": "sparkle",
-  "💫": "sparkle",
-  "❤️": "heartbeat",
-  "💖": "heartbeat",
-  "💗": "heartbeat",
-  "💪": "bounce",
-  "🎯": "wiggle",
-  "🏆": "sparkle",
-  "🚀": "float",
-  "💡": "sparkle",
-  "📌": "wiggle",
-  "🎵": "float",
-  "🎶": "float",
-  "🌊": "float",
-  "🍀": "wiggle",
-  "🎲": "wiggle",
-  "🔔": "wiggle",
-  "⏰": "wiggle",
-  "🎉": "bounce",
-  "🎊": "bounce",
-  "💎": "sparkle",
-  "🌈": "float",
-  "☀️": "flicker",
-  "🌙": "float",
-  "❄️": "float",
-  "🎁": "bounce",
-  "📚": "wiggle",
-  "✏️": "wiggle",
-  "🏃": "bounce",
-  "🧠": "sparkle",
-  "💰": "sparkle",
-  "🛒": "wiggle",
-  "🏠": "float",
-  "✈️": "float",
-  "🚗": "wiggle",
-  "🐢": "float",
-  "🧊": "sparkle",
-  "🤢": "wiggle",
-  "🎨": "wiggle",
-  "🔧": "wiggle",
-  "🎪": "bounce",
+  "🔥": "flicker", "⚡": "sparkle", "💥": "flicker", "✨": "sparkle",
+  "⭐": "sparkle", "🌟": "sparkle", "💫": "sparkle", "❤️": "heartbeat",
+  "💖": "heartbeat", "💗": "heartbeat", "💪": "bounce", "🎯": "wiggle",
+  "🏆": "sparkle", "🚀": "float", "💡": "sparkle", "📌": "wiggle",
+  "🎵": "float", "🎶": "float", "🌊": "float", "🍀": "wiggle",
+  "🎲": "wiggle", "🔔": "wiggle", "⏰": "wiggle", "🎉": "bounce",
+  "🎊": "bounce", "💎": "sparkle", "🌈": "float", "☀️": "flicker",
+  "🌙": "float", "❄️": "float", "🎁": "bounce", "📚": "wiggle",
+  "✏️": "wiggle", "🏃": "bounce", "🧠": "sparkle", "💰": "sparkle",
+  "🛒": "wiggle", "🏠": "float", "✈️": "float", "🚗": "wiggle",
+  "🐢": "float", "🧊": "sparkle", "🤢": "wiggle", "🎨": "wiggle",
+  "🔧": "wiggle", "🎪": "bounce",
+};
+
+// Glow colors for shimmer effect
+const GLOW_COLORS: Record<AnimationType, string> = {
+  flicker: "#FF6B0020",
+  sparkle: "#FFD70030",
+  heartbeat: "#FF4D6D25",
+  float: "#4FC3F720",
+  wiggle: "#A78BFA20",
+  bounce: "#34D39920",
 };
 
 function getAnimationType(emoji: string): AnimationType {
@@ -74,8 +44,9 @@ interface AnimatedEmojiProps {
 }
 
 export function AnimatedEmoji({ emoji, size = 18 }: AnimatedEmojiProps) {
-  const animValue = useRef(new Animated.Value(0)).current;
-  const animValue2 = useRef(new Animated.Value(0)).current;
+  const anim1 = useRef(new Animated.Value(0)).current;
+  const anim2 = useRef(new Animated.Value(0)).current;
+  const glowAnim = useRef(new Animated.Value(0)).current;
   const animType = getAnimationType(emoji);
 
   useEffect(() => {
@@ -84,47 +55,64 @@ export function AnimatedEmoji({ emoji, size = 18 }: AnimatedEmojiProps) {
 
     const animations: Animated.CompositeAnimation[] = [];
 
+    // Glow/shimmer pulse — always active
+    animations.push(
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(glowAnim, {
+            toValue: 1,
+            duration: 600,
+            easing: Easing.inOut(Easing.sin),
+            useNativeDriver: false, // backgroundColor can't use native driver
+          }),
+          Animated.timing(glowAnim, {
+            toValue: 0,
+            duration: 600,
+            easing: Easing.inOut(Easing.sin),
+            useNativeDriver: false,
+          }),
+        ])
+      )
+    );
+
     switch (animType) {
       case "flicker":
         animations.push(
           Animated.loop(
             Animated.sequence([
-              Animated.timing(animValue, {
-                toValue: 1,
-                duration: 400,
-                easing: Easing.inOut(Easing.sin),
-                useNativeDriver: true,
+              Animated.timing(anim1, {
+                toValue: 1, duration: 250,
+                easing: Easing.inOut(Easing.sin), useNativeDriver: true,
               }),
-              Animated.timing(animValue, {
-                toValue: 0,
-                duration: 400,
-                easing: Easing.inOut(Easing.sin),
-                useNativeDriver: true,
+              Animated.timing(anim1, {
+                toValue: 0, duration: 250,
+                easing: Easing.inOut(Easing.sin), useNativeDriver: true,
+              }),
+              Animated.timing(anim1, {
+                toValue: 0.8, duration: 200,
+                easing: Easing.inOut(Easing.sin), useNativeDriver: true,
+              }),
+              Animated.timing(anim1, {
+                toValue: 0.2, duration: 200,
+                easing: Easing.inOut(Easing.sin), useNativeDriver: true,
               }),
             ])
           )
         );
-        // Second animation for rotation
         animations.push(
           Animated.loop(
             Animated.sequence([
-              Animated.timing(animValue2, {
-                toValue: 1,
-                duration: 300,
-                easing: Easing.inOut(Easing.ease),
-                useNativeDriver: true,
+              Animated.timing(anim2, {
+                toValue: 1, duration: 200,
+                easing: Easing.inOut(Easing.ease), useNativeDriver: true,
               }),
-              Animated.timing(animValue2, {
-                toValue: -1,
-                duration: 600,
-                easing: Easing.inOut(Easing.ease),
-                useNativeDriver: true,
+              Animated.timing(anim2, {
+                toValue: -1, duration: 400,
+                easing: Easing.inOut(Easing.ease), useNativeDriver: true,
               }),
-              Animated.timing(animValue2, {
-                toValue: 0,
-                duration: 300,
-                easing: Easing.inOut(Easing.ease),
-                useNativeDriver: true,
+              Animated.timing(anim2, {
+                toValue: 0, duration: 200,
+                easing: Easing.inOut(Easing.ease), useNativeDriver: true,
               }),
             ])
           )
@@ -135,32 +123,31 @@ export function AnimatedEmoji({ emoji, size = 18 }: AnimatedEmojiProps) {
         animations.push(
           Animated.loop(
             Animated.sequence([
-              Animated.timing(animValue, {
-                toValue: 1,
-                duration: 700,
-                easing: Easing.inOut(Easing.ease),
-                useNativeDriver: true,
+              Animated.timing(anim1, {
+                toValue: 1, duration: 400,
+                easing: Easing.out(Easing.ease), useNativeDriver: true,
               }),
-              Animated.timing(animValue, {
-                toValue: 0,
-                duration: 700,
-                easing: Easing.inOut(Easing.ease),
-                useNativeDriver: true,
+              Animated.timing(anim1, {
+                toValue: 0, duration: 400,
+                easing: Easing.in(Easing.ease), useNativeDriver: true,
+              }),
+              Animated.timing(anim1, {
+                toValue: 0.7, duration: 300,
+                easing: Easing.out(Easing.ease), useNativeDriver: true,
+              }),
+              Animated.timing(anim1, {
+                toValue: 0.2, duration: 300,
+                easing: Easing.in(Easing.ease), useNativeDriver: true,
               }),
             ])
           )
         );
-        // Rotation sparkle
         animations.push(
           Animated.loop(
-            Animated.sequence([
-              Animated.timing(animValue2, {
-                toValue: 1,
-                duration: 1400,
-                easing: Easing.linear,
-                useNativeDriver: true,
-              }),
-            ])
+            Animated.timing(anim2, {
+              toValue: 1, duration: 1200,
+              easing: Easing.linear, useNativeDriver: true,
+            })
           )
         );
         break;
@@ -169,31 +156,23 @@ export function AnimatedEmoji({ emoji, size = 18 }: AnimatedEmojiProps) {
         animations.push(
           Animated.loop(
             Animated.sequence([
-              Animated.timing(animValue, {
-                toValue: 1,
-                duration: 200,
-                easing: Easing.out(Easing.ease),
-                useNativeDriver: true,
+              Animated.timing(anim1, {
+                toValue: 1, duration: 150,
+                easing: Easing.out(Easing.ease), useNativeDriver: true,
               }),
-              Animated.timing(animValue, {
-                toValue: 0.3,
-                duration: 150,
-                easing: Easing.in(Easing.ease),
-                useNativeDriver: true,
+              Animated.timing(anim1, {
+                toValue: 0.2, duration: 120,
+                easing: Easing.in(Easing.ease), useNativeDriver: true,
               }),
-              Animated.timing(animValue, {
-                toValue: 0.9,
-                duration: 180,
-                easing: Easing.out(Easing.ease),
-                useNativeDriver: true,
+              Animated.timing(anim1, {
+                toValue: 0.85, duration: 140,
+                easing: Easing.out(Easing.ease), useNativeDriver: true,
               }),
-              Animated.timing(animValue, {
-                toValue: 0,
-                duration: 250,
-                easing: Easing.in(Easing.ease),
-                useNativeDriver: true,
+              Animated.timing(anim1, {
+                toValue: 0, duration: 200,
+                easing: Easing.in(Easing.ease), useNativeDriver: true,
               }),
-              Animated.delay(600),
+              Animated.delay(400),
             ])
           )
         );
@@ -203,37 +182,31 @@ export function AnimatedEmoji({ emoji, size = 18 }: AnimatedEmojiProps) {
         animations.push(
           Animated.loop(
             Animated.sequence([
-              Animated.timing(animValue, {
-                toValue: 1,
-                duration: 100,
-                easing: Easing.inOut(Easing.ease),
-                useNativeDriver: true,
+              Animated.timing(anim1, {
+                toValue: 1, duration: 80,
+                easing: Easing.inOut(Easing.ease), useNativeDriver: true,
               }),
-              Animated.timing(animValue, {
-                toValue: -1,
-                duration: 200,
-                easing: Easing.inOut(Easing.ease),
-                useNativeDriver: true,
+              Animated.timing(anim1, {
+                toValue: -1, duration: 160,
+                easing: Easing.inOut(Easing.ease), useNativeDriver: true,
               }),
-              Animated.timing(animValue, {
-                toValue: 0.7,
-                duration: 150,
-                easing: Easing.inOut(Easing.ease),
-                useNativeDriver: true,
+              Animated.timing(anim1, {
+                toValue: 0.8, duration: 120,
+                easing: Easing.inOut(Easing.ease), useNativeDriver: true,
               }),
-              Animated.timing(animValue, {
-                toValue: -0.5,
-                duration: 150,
-                easing: Easing.inOut(Easing.ease),
-                useNativeDriver: true,
+              Animated.timing(anim1, {
+                toValue: -0.6, duration: 120,
+                easing: Easing.inOut(Easing.ease), useNativeDriver: true,
               }),
-              Animated.timing(animValue, {
-                toValue: 0,
-                duration: 100,
-                easing: Easing.inOut(Easing.ease),
-                useNativeDriver: true,
+              Animated.timing(anim1, {
+                toValue: 0.3, duration: 80,
+                easing: Easing.inOut(Easing.ease), useNativeDriver: true,
               }),
-              Animated.delay(1200),
+              Animated.timing(anim1, {
+                toValue: 0, duration: 80,
+                easing: Easing.inOut(Easing.ease), useNativeDriver: true,
+              }),
+              Animated.delay(700),
             ])
           )
         );
@@ -243,19 +216,23 @@ export function AnimatedEmoji({ emoji, size = 18 }: AnimatedEmojiProps) {
         animations.push(
           Animated.loop(
             Animated.sequence([
-              Animated.timing(animValue, {
-                toValue: 1,
-                duration: 300,
-                easing: Easing.out(Easing.back(2)),
-                useNativeDriver: true,
+              Animated.timing(anim1, {
+                toValue: 1, duration: 200,
+                easing: Easing.out(Easing.back(3)), useNativeDriver: true,
               }),
-              Animated.timing(animValue, {
-                toValue: 0,
-                duration: 300,
-                easing: Easing.in(Easing.ease),
-                useNativeDriver: true,
+              Animated.timing(anim1, {
+                toValue: 0, duration: 200,
+                easing: Easing.in(Easing.ease), useNativeDriver: true,
               }),
-              Animated.delay(800),
+              Animated.timing(anim1, {
+                toValue: 0.6, duration: 150,
+                easing: Easing.out(Easing.back(2)), useNativeDriver: true,
+              }),
+              Animated.timing(anim1, {
+                toValue: 0, duration: 150,
+                easing: Easing.in(Easing.ease), useNativeDriver: true,
+              }),
+              Animated.delay(500),
             ])
           )
         );
@@ -266,17 +243,13 @@ export function AnimatedEmoji({ emoji, size = 18 }: AnimatedEmojiProps) {
         animations.push(
           Animated.loop(
             Animated.sequence([
-              Animated.timing(animValue, {
-                toValue: 1,
-                duration: 1000,
-                easing: Easing.inOut(Easing.sin),
-                useNativeDriver: true,
+              Animated.timing(anim1, {
+                toValue: 1, duration: 800,
+                easing: Easing.inOut(Easing.sin), useNativeDriver: true,
               }),
-              Animated.timing(animValue, {
-                toValue: 0,
-                duration: 1000,
-                easing: Easing.inOut(Easing.sin),
-                useNativeDriver: true,
+              Animated.timing(anim1, {
+                toValue: 0, duration: 800,
+                easing: Easing.inOut(Easing.sin), useNativeDriver: true,
               }),
             ])
           )
@@ -304,42 +277,42 @@ export function AnimatedEmoji({ emoji, size = 18 }: AnimatedEmojiProps) {
       animatedStyle = {
         transform: [
           {
-            scale: animValue.interpolate({
-              inputRange: [0, 1],
-              outputRange: [0.9, 1.2],
+            scale: anim1.interpolate({
+              inputRange: [0, 0.5, 1],
+              outputRange: [0.85, 1.3, 0.85],
             }),
           },
           {
-            rotate: animValue2.interpolate({
+            rotate: anim2.interpolate({
               inputRange: [-1, 0, 1],
-              outputRange: ["-5deg", "0deg", "5deg"],
+              outputRange: ["-8deg", "0deg", "8deg"],
             }),
           },
         ],
-        opacity: animValue.interpolate({
-          inputRange: [0, 0.5, 1],
-          outputRange: [0.75, 1, 0.75],
+        opacity: anim1.interpolate({
+          inputRange: [0, 0.3, 0.7, 1],
+          outputRange: [0.6, 1, 1, 0.6],
         }),
       };
       break;
 
     case "sparkle":
       animatedStyle = {
-        opacity: animValue.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0.6, 1],
+        opacity: anim1.interpolate({
+          inputRange: [0, 0.5, 1],
+          outputRange: [0.5, 1, 0.5],
         }),
         transform: [
           {
-            scale: animValue.interpolate({
-              inputRange: [0, 1],
-              outputRange: [0.85, 1.15],
+            scale: anim1.interpolate({
+              inputRange: [0, 0.5, 1],
+              outputRange: [0.8, 1.25, 0.8],
             }),
           },
           {
-            rotate: animValue2.interpolate({
+            rotate: anim2.interpolate({
               inputRange: [0, 1],
-              outputRange: ["0deg", "15deg"],
+              outputRange: ["0deg", "20deg"],
             }),
           },
         ],
@@ -350,9 +323,9 @@ export function AnimatedEmoji({ emoji, size = 18 }: AnimatedEmojiProps) {
       animatedStyle = {
         transform: [
           {
-            scale: animValue.interpolate({
-              inputRange: [0, 0.3, 0.9, 1],
-              outputRange: [1, 1.05, 1.18, 1.25],
+            scale: anim1.interpolate({
+              inputRange: [0, 0.2, 0.85, 1],
+              outputRange: [1, 1.08, 1.3, 1.35],
             }),
           },
         ],
@@ -363,9 +336,15 @@ export function AnimatedEmoji({ emoji, size = 18 }: AnimatedEmojiProps) {
       animatedStyle = {
         transform: [
           {
-            rotate: animValue.interpolate({
+            rotate: anim1.interpolate({
               inputRange: [-1, 0, 1],
-              outputRange: ["-15deg", "0deg", "15deg"],
+              outputRange: ["-18deg", "0deg", "18deg"],
+            }),
+          },
+          {
+            scale: anim1.interpolate({
+              inputRange: [-1, 0, 1],
+              outputRange: [1.05, 1, 1.05],
             }),
           },
         ],
@@ -376,15 +355,15 @@ export function AnimatedEmoji({ emoji, size = 18 }: AnimatedEmojiProps) {
       animatedStyle = {
         transform: [
           {
-            translateY: animValue.interpolate({
+            translateY: anim1.interpolate({
               inputRange: [0, 1],
-              outputRange: [0, -6],
+              outputRange: [0, -8],
             }),
           },
           {
-            scale: animValue.interpolate({
+            scale: anim1.interpolate({
               inputRange: [0, 0.5, 1],
-              outputRange: [1, 1.1, 1.05],
+              outputRange: [1, 1.15, 1.08],
             }),
           },
         ],
@@ -396,23 +375,57 @@ export function AnimatedEmoji({ emoji, size = 18 }: AnimatedEmojiProps) {
       animatedStyle = {
         transform: [
           {
-            translateY: animValue.interpolate({
+            translateY: anim1.interpolate({
               inputRange: [0, 1],
-              outputRange: [0, -4],
+              outputRange: [0, -5],
+            }),
+          },
+          {
+            scale: anim1.interpolate({
+              inputRange: [0, 0.5, 1],
+              outputRange: [0.95, 1.08, 0.95],
             }),
           },
         ],
-        opacity: animValue.interpolate({
+        opacity: anim1.interpolate({
           inputRange: [0, 0.5, 1],
-          outputRange: [0.85, 1, 0.85],
+          outputRange: [0.7, 1, 0.7],
         }),
       };
       break;
   }
 
+  const glowColor = GLOW_COLORS[animType];
+
+  // Shimmer glow background
+  const glowOpacity = glowAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 0.8],
+  });
+
+  const glowScale = glowAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.8, 1.6],
+  });
+
   return (
-    <Animated.Text style={[{ fontSize: size }, animatedStyle]}>
-      {emoji}
-    </Animated.Text>
+    <View style={{ width: size + 8, height: size + 8, alignItems: "center", justifyContent: "center" }}>
+      {/* Shimmer glow layer */}
+      <Animated.View
+        style={{
+          position: "absolute",
+          width: size + 4,
+          height: size + 4,
+          borderRadius: (size + 4) / 2,
+          backgroundColor: glowColor,
+          opacity: glowOpacity,
+          transform: [{ scale: glowScale }],
+        }}
+      />
+      {/* Emoji */}
+      <Animated.Text style={[{ fontSize: size }, animatedStyle]}>
+        {emoji}
+      </Animated.Text>
+    </View>
   );
 }

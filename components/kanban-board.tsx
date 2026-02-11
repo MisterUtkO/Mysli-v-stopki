@@ -333,7 +333,7 @@ export function KanbanBoard() {
               {/* Stickers */}
               <ScrollView style={{ maxHeight: 400, paddingHorizontal: 6, paddingTop: 6 }} showsVerticalScrollIndicator={false}>
                 {column.stickers.length === 0 ? (
-                  <Text style={{ color: colors.muted, fontSize: 12, fontStyle: "italic", textAlign: "center", paddingVertical: 20 }}>
+                  <Text style={{ color: colors.muted, fontSize: 12, fontStyle: "italic", textAlign: "center", paddingVertical: 12 }}>
                     {t.matrix.emptyColumn}
                   </Text>
                 ) : (
@@ -345,43 +345,50 @@ export function KanbanBoard() {
                       style={({ pressed }) => [{
                         backgroundColor: sticker.bgColor,
                         borderRadius: 4,
-                        padding: 10,
-                        marginBottom: 6,
-                        minHeight: 50,
-                        opacity: pressed ? 0.8 : 1,
-                        // Paper shadow
+                        padding: 8,
+                        paddingRight: 20,
+                        marginBottom: 5,
+                        minHeight: 40,
+                        opacity: pressed ? 0.7 : 1,
                         shadowColor: "#000",
                         shadowOffset: { width: 1, height: 2 },
                         shadowOpacity: 0.15,
                         shadowRadius: 3,
                         elevation: 3,
-                        // Slight tilt for sticky note feel
-                        transform: [{ rotate: `${(parseInt(sticker.id.slice(-2), 16) % 5 - 2) * 0.5}deg` }],
+                        transform: [
+                          { rotate: `${(parseInt(sticker.id.slice(-2), 16) % 5 - 2) * 0.5}deg` },
+                          ...(pressed ? [{ scale: 0.95 }] : []),
+                        ],
                       }]}
                     >
                       {/* Pin */}
                       <View style={{
                         position: "absolute",
-                        top: -4,
+                        top: -3,
                         left: "50%",
-                        marginLeft: -6,
-                        width: 12,
-                        height: 12,
-                        borderRadius: 6,
+                        marginLeft: -5,
+                        width: 10,
+                        height: 10,
+                        borderRadius: 5,
                         backgroundColor: "#E53935",
                         borderWidth: 1.5,
                         borderColor: "#B71C1C",
                         zIndex: 1,
-                        shadowColor: "#000",
-                        shadowOffset: { width: 0, height: 1 },
-                        shadowOpacity: 0.3,
-                        shadowRadius: 1,
-                        elevation: 2,
                       }} />
+                      {/* Drag handle */}
+                      <View style={{
+                        position: "absolute",
+                        right: 4,
+                        top: "50%",
+                        marginTop: -8,
+                        opacity: 0.3,
+                      }}>
+                        <Text style={{ fontSize: 10, color: sticker.textColor, lineHeight: 12 }}>⋮</Text>
+                      </View>
                       <Text style={{
                         color: sticker.textColor,
-                        fontSize: 13,
-                        lineHeight: 18,
+                        fontSize: 12,
+                        lineHeight: 16,
                         fontFamily: Platform.OS === "ios" ? "Noteworthy" : undefined,
                       }}>
                         {sticker.text}
@@ -392,7 +399,7 @@ export function KanbanBoard() {
                 <View style={{ height: 6 }} />
               </ScrollView>
 
-              {/* Add sticker button */}
+              {/* Add sticker button — compact */}
               <Pressable
                 onPress={() => {
                   setAddStickerColumnId(column.id);
@@ -402,13 +409,13 @@ export function KanbanBoard() {
                   flexDirection: "row",
                   alignItems: "center",
                   justifyContent: "center",
-                  paddingVertical: 8,
-                  borderTopWidth: 1,
+                  paddingVertical: 4,
+                  borderTopWidth: 0.5,
                   borderTopColor: colors.border,
-                  opacity: pressed ? 0.6 : 1,
+                  opacity: pressed ? 0.5 : 0.7,
                 }]}
               >
-                <Text style={{ fontSize: 13, color: colors.primary, fontWeight: "700" }}>
+                <Text style={{ fontSize: 11, color: colors.primary, fontWeight: "700" }}>
                   + {t.matrix.newSticker}
                 </Text>
               </Pressable>
@@ -667,37 +674,68 @@ export function KanbanBoard() {
         </Pressable>
       </Modal>
 
-      {/* Move Sticker Modal */}
+      {/* Move Sticker Modal — visual drag-target UI */}
       <Modal visible={!!movingSticker} transparent animationType="fade" onRequestClose={() => setMovingSticker(null)}>
         {movingSticker && (
           <Pressable onPress={() => setMovingSticker(null)} style={styles.modalOverlay}>
             <Pressable onPress={() => {}} style={[styles.modalContent, { backgroundColor: colors.surface }]}>
-              <Text style={[styles.modalTitle, { color: colors.foreground }]}>
-                {isRu ? "Переместить в:" : "Move to:"}
+              {/* Sticker preview */}
+              <View style={{ alignItems: "center", marginBottom: 12 }}>
+                <View style={{
+                  backgroundColor: movingSticker.sticker.bgColor,
+                  borderRadius: 6,
+                  padding: 8,
+                  minWidth: 100,
+                  maxWidth: 200,
+                  shadowColor: "#000",
+                  shadowOffset: { width: 2, height: 3 },
+                  shadowOpacity: 0.2,
+                  shadowRadius: 4,
+                  elevation: 4,
+                  transform: [{ rotate: "-2deg" }],
+                }}>
+                  <Text style={{ color: movingSticker.sticker.textColor, fontSize: 12, textAlign: "center" }} numberOfLines={2}>
+                    {movingSticker.sticker.text}
+                  </Text>
+                </View>
+              </View>
+              <Text style={{ fontSize: 14, fontWeight: "700", color: colors.muted, textAlign: "center", marginBottom: 10 }}>
+                {isRu ? "⇣ Перетащите в столбец ⇣" : "⇣ Drop into column ⇣"}
               </Text>
-              {data.columns
-                .filter((c) => c.id !== movingSticker.columnId)
-                .map((col) => (
-                  <Pressable
-                    key={col.id}
-                    onPress={() => handleMoveSticker(col.id)}
-                    style={({ pressed }) => [{
-                      backgroundColor: pressed ? `${colors.primary}20` : colors.background,
-                      borderRadius: 10,
-                      padding: 14,
-                      marginBottom: 8,
-                      borderWidth: 1,
-                      borderColor: colors.border,
-                    }]}
-                  >
-                    <Text style={{ color: colors.foreground, fontSize: 15, fontWeight: "600" }}>
-                      {col.title} ({col.stickers.length})
-                    </Text>
-                  </Pressable>
-                ))}
+              <View style={{ gap: 6 }}>
+                {data.columns.map((col) => {
+                  const isCurrent = col.id === movingSticker.columnId;
+                  return (
+                    <Pressable
+                      key={col.id}
+                      onPress={() => !isCurrent && handleMoveSticker(col.id)}
+                      disabled={isCurrent}
+                      style={({ pressed }) => [{
+                        backgroundColor: isCurrent ? `${colors.border}40` : pressed ? `${colors.primary}30` : colors.background,
+                        borderRadius: 12,
+                        padding: 12,
+                        borderWidth: isCurrent ? 2 : 1.5,
+                        borderColor: isCurrent ? colors.muted : colors.primary,
+                        borderStyle: isCurrent ? "solid" : "dashed",
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        opacity: isCurrent ? 0.4 : 1,
+                      }]}
+                    >
+                      <Text style={{ color: colors.foreground, fontSize: 14, fontWeight: "700" }}>
+                        {col.title}
+                      </Text>
+                      <Text style={{ color: colors.muted, fontSize: 12 }}>
+                        {isCurrent ? (isRu ? "текущий" : "current") : `${col.stickers.length} ✉`}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
               <Pressable
                 onPress={() => setMovingSticker(null)}
-                style={({ pressed }) => [styles.modalBtn, { backgroundColor: colors.border, marginTop: 4, opacity: pressed ? 0.7 : 1 }]}
+                style={({ pressed }) => [styles.modalBtn, { backgroundColor: colors.border, marginTop: 10, opacity: pressed ? 0.7 : 1 }]}
               >
                 <Text style={{ color: colors.foreground, fontWeight: "600" }}>{t.common.cancel}</Text>
               </Pressable>

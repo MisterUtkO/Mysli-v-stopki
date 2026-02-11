@@ -12,6 +12,7 @@ import {
   Modal,
 } from "react-native";
 import * as Clipboard from "expo-clipboard";
+import { Image } from "expo-image";
 import { ScreenContainer } from "@/components/screen-container";
 import { useTaskContext } from "@/lib/context/task-context";
 import { useI18n } from "@/lib/context/i18n-context";
@@ -28,10 +29,14 @@ export default function SettingsScreen() {
   const { settings, updateSettings, exportTasks, clearAllData, tasks } = useTaskContext();
   const { language, setLanguage, t } = useI18n();
   const { colorScheme, setColorScheme } = useThemeContext();
-  const { triggerCustomFlag } = useAchievements();
+  const { triggerCustomFlag, unlocked } = useAchievements();
   const colors = useColors();
   const [exporting, setExporting] = useState(false);
   const [copiedCard, setCopiedCard] = useState(false);
+  const [aboutTapCount, setAboutTapCount] = useState(0);
+
+  // Check if persistent_explorer achievement is unlocked (for AMOLED)
+  const hasExplorerAchievement = unlocked.some((u) => u.achievementId === "persistent_explorer");
 
   const isRu = language === "ru";
 
@@ -70,6 +75,15 @@ export default function SettingsScreen() {
   ];
 
   const handleThemeChange = async (theme: "light" | "dark" | "amoled" | "pastel") => {
+    if (theme === "amoled" && !hasExplorerAchievement) {
+      Alert.alert(
+        isRu ? "🔒 Заблокировано" : "🔒 Locked",
+        isRu
+          ? "Получите достижение \"Упорный исследователь\" чтобы разблокировать AMOLED тему. Подсказка: изучите раздел \"О приложении\"."
+          : "Earn the \"Persistent Explorer\" achievement to unlock the AMOLED theme. Hint: explore the About section."
+      );
+      return;
+    }
     await setColorScheme(theme);
     await updateSettings({ theme });
   };
@@ -259,6 +273,7 @@ export default function SettingsScreen() {
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
               {themeOptions.map((opt) => {
                 const isActive = colorScheme === opt.key;
+                const isLocked = opt.key === "amoled" && !hasExplorerAchievement;
                 return (
                   <Pressable
                     key={opt.key}
@@ -266,20 +281,20 @@ export default function SettingsScreen() {
                     style={({ pressed }) => [{
                       flex: 1,
                       minWidth: 70,
-                      backgroundColor: isActive ? colors.primary : colors.surface,
+                      backgroundColor: isActive ? colors.primary : isLocked ? `${colors.border}80` : colors.surface,
                       borderRadius: 12,
                       paddingVertical: 10,
                       alignItems: "center",
                       borderWidth: isActive ? 2 : 1,
                       borderColor: isActive ? colors.primary : colors.border,
-                      opacity: pressed ? 0.7 : 1,
+                      opacity: pressed ? 0.7 : isLocked ? 0.5 : 1,
                     }]}
                   >
-                    <Text style={{ fontSize: 20, marginBottom: 4 }}>{opt.emoji}</Text>
+                    <Text style={{ fontSize: 20, marginBottom: 4 }}>{isLocked ? "🔒" : opt.emoji}</Text>
                     <Text style={{
                       fontSize: 12,
                       fontWeight: isActive ? "800" : "600",
-                      color: isActive ? "#FFF" : colors.foreground,
+                      color: isActive ? "#FFF" : isLocked ? colors.muted : colors.foreground,
                     }}>
                       {isRu ? opt.labelRu : opt.labelEn}
                     </Text>
@@ -494,10 +509,37 @@ export default function SettingsScreen() {
               <Text className="text-foreground font-semibold" style={{ fontSize: 16 }}>{t.settings.about}</Text>
             </View>
 
-            <Text className="text-foreground font-bold" style={{ fontSize: 18 }}>SDVGNote</Text>
-            <Text className="text-muted" style={{ fontSize: 12, marginTop: 2 }}>
-              {t.settings.version}: 1.0.1
-            </Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 4 }}>
+              <Pressable
+                onPress={() => {
+                  const newCount = aboutTapCount + 1;
+                  setAboutTapCount(newCount);
+                  if (newCount >= 10) {
+                    triggerCustomFlag("persistent_explorer", tasks);
+                    Alert.alert(
+                      isRu ? "🔍 Упорный исследователь!" : "🔍 Persistent Explorer!",
+                      isRu ? "Вы разблокировали AMOLED тему!" : "You unlocked the AMOLED theme!"
+                    );
+                    setAboutTapCount(0);
+                  }
+                }}
+                style={({ pressed }) => [{
+                  opacity: pressed ? 0.6 : 1,
+                  transform: [{ scale: pressed ? 0.9 : 1 }],
+                }]}
+              >
+                <Image
+                  source={require("@/assets/images/icon.png")}
+                  style={{ width: 52, height: 52, borderRadius: 12 }}
+                />
+              </Pressable>
+              <View>
+                <Text className="text-foreground font-bold" style={{ fontSize: 18 }}>SDVGNote</Text>
+                <Text className="text-muted" style={{ fontSize: 12, marginTop: 2 }}>
+                  {t.settings.version}: 1.0.2
+                </Text>
+              </View>
+            </View>
 
             {/* Telegram */}
             <View style={{ marginTop: 12 }}>

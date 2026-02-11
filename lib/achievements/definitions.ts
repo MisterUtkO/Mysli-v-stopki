@@ -264,7 +264,53 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
     rarity: "legendary",
   },
 
-  // --- Row 6: Secret Achievements ---
+  // --- Row 7: Functional Achievements ---
+  {
+    id: "photographer",
+    emoji: "📸",
+    titleEn: "Photographer",
+    titleRu: "Фотограф",
+    descriptionEn: "Attach a photo to a task",
+    descriptionRu: "Прикрепите фото к задаче",
+    conditionType: "custom",
+    conditionValue: 1,
+    rarity: "common",
+  },
+  {
+    id: "attachment_master",
+    emoji: "📎",
+    titleEn: "Attachment Master",
+    titleRu: "Мастер вложений",
+    descriptionEn: "Attach files to 5 different tasks",
+    descriptionRu: "Прикрепите файлы к 5 разным задачам",
+    conditionType: "custom",
+    conditionValue: 5,
+    rarity: "rare",
+  },
+  {
+    id: "persistent_explorer",
+    emoji: "🔍",
+    titleEn: "Persistent Explorer",
+    titleRu: "Упорный исследователь",
+    descriptionEn: "Tap the app icon in About section 10 times",
+    descriptionRu: "Нажмите на иконку приложения в разделе О приложении 10 раз",
+    conditionType: "custom",
+    conditionValue: 10,
+    rarity: "epic",
+  },
+  {
+    id: "emoji_master",
+    emoji: "😎",
+    titleEn: "Emoji Master",
+    titleRu: "Мастер эмодзи",
+    descriptionEn: "Add emojis to 10 different tasks",
+    descriptionRu: "Добавьте эмодзи к 10 разным задачам",
+    conditionType: "custom",
+    conditionValue: 10,
+    rarity: "rare",
+  },
+
+  // --- Row 8: Secret Achievements ---
   {
     id: "night_owl",
     emoji: "🦉",

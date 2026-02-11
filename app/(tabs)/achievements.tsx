@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import {
   View,
   Text,
   ScrollView,
   Pressable,
   Modal,
-  Dimensions,
+  useWindowDimensions,
 } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { useAchievements } from "@/lib/context/achievement-context";
@@ -14,11 +14,9 @@ import { useColors } from "@/hooks/use-colors";
 import { useRouter } from "expo-router";
 import type { AchievementDefinition } from "@/lib/domain/types";
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const GRID_PADDING = 16;
-const GRID_GAP = 10;
+const GRID_GAP = 8;
 const COLUMNS = 4;
-const ITEM_SIZE = (SCREEN_WIDTH - GRID_PADDING * 2 - GRID_GAP * (COLUMNS - 1)) / COLUMNS;
 
 const RARITY_COLORS = {
   common: "#9CA3AF",
@@ -37,17 +35,26 @@ export default function AchievementsScreen() {
   const router = useRouter();
   const isRu = language === "ru";
   const [selectedAchievement, setSelectedAchievement] = useState<AchievementDefinition | null>(null);
+  const { width: screenWidth } = useWindowDimensions();
+
+  const itemSize = Math.floor((screenWidth - GRID_PADDING * 2 - GRID_GAP * (COLUMNS - 1)) / COLUMNS);
 
   const unlockedIds = new Set(unlocked.map((u) => u.achievementId));
   const unlockedCount = unlocked.length;
   const totalCount = achievements.length;
 
-  const getUnlockDate = (id: string): string => {
+  const getUnlockDate = useCallback((id: string): string => {
     const item = unlocked.find((u) => u.achievementId === id);
     if (!item) return "";
     const d = new Date(item.unlockedAt);
     return d.toLocaleDateString(isRu ? "ru-RU" : "en-US", { day: "numeric", month: "short", year: "numeric" });
-  };
+  }, [unlocked, isRu]);
+
+  // Build rows of COLUMNS items each
+  const rows: AchievementDefinition[][] = [];
+  for (let i = 0; i < achievements.length; i += COLUMNS) {
+    rows.push(achievements.slice(i, i + COLUMNS));
+  }
 
   return (
     <ScreenContainer className="p-4">
@@ -83,7 +90,7 @@ export default function AchievementsScreen() {
             </Pressable>
           </View>
           {/* Progress bar */}
-          <View style={{ height: 6, backgroundColor: "#E5E7EB", borderRadius: 3, marginTop: 8, overflow: "hidden" }}>
+          <View style={{ height: 6, backgroundColor: colors.border, borderRadius: 3, marginTop: 8, overflow: "hidden" }}>
             <View
               style={{
                 height: 6,
@@ -95,57 +102,72 @@ export default function AchievementsScreen() {
           </View>
         </View>
 
-        {/* Sticker Grid */}
+        {/* Sticker Grid — explicit rows to prevent layout issues */}
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
-          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: GRID_GAP }}>
-            {achievements.map((achievement) => {
-              const isUnlocked = unlockedIds.has(achievement.id);
-              const rarityColor = RARITY_COLORS[achievement.rarity];
+          {rows.map((row, rowIndex) => (
+            <View key={rowIndex} style={{ flexDirection: "row", gap: GRID_GAP, marginBottom: GRID_GAP }}>
+              {row.map((achievement) => {
+                const isUnlocked = unlockedIds.has(achievement.id);
+                const rarityColor = RARITY_COLORS[achievement.rarity];
 
-              return (
-                <Pressable
-                  key={achievement.id}
-                  onPress={() => setSelectedAchievement(achievement)}
-                  style={({ pressed }) => [{
-                    width: ITEM_SIZE,
-                    height: ITEM_SIZE,
-                    borderRadius: 16,
-                    justifyContent: "center",
-                    alignItems: "center",
-                    backgroundColor: isUnlocked ? `${rarityColor}15` : "#1A1A2E",
-                    borderWidth: 2,
-                    borderColor: isUnlocked ? rarityColor : "#333",
-                    opacity: pressed ? 0.7 : 1,
-                    transform: [{ scale: pressed ? 0.95 : 1 }],
-                    // Glow effect for unlocked
-                    ...(isUnlocked ? {
-                      shadowColor: rarityColor,
-                      shadowOffset: { width: 0, height: 0 },
-                      shadowOpacity: 0.4,
-                      shadowRadius: 8,
-                      elevation: 6,
-                    } : {}),
-                  }]}
-                >
-                  {isUnlocked ? (
-                    <Text style={{ fontSize: ITEM_SIZE * 0.5 }}>{achievement.emoji}</Text>
-                  ) : (
-                    // Silhouette: dark circle with question mark
-                    <View style={{
-                      width: ITEM_SIZE * 0.6,
-                      height: ITEM_SIZE * 0.6,
-                      borderRadius: ITEM_SIZE * 0.3,
-                      backgroundColor: "#0D0D1A",
+                return (
+                  <Pressable
+                    key={achievement.id}
+                    onPress={() => setSelectedAchievement(achievement)}
+                    style={({ pressed }) => [{
+                      width: itemSize,
+                      height: itemSize,
+                      borderRadius: 14,
                       justifyContent: "center",
                       alignItems: "center",
-                    }}>
-                      <Text style={{ fontSize: ITEM_SIZE * 0.3, color: "#333" }}>?</Text>
-                    </View>
-                  )}
-                </Pressable>
-              );
-            })}
-          </View>
+                      backgroundColor: isUnlocked ? `${rarityColor}20` : colors.surface,
+                      borderWidth: 2,
+                      borderColor: isUnlocked ? rarityColor : colors.border,
+                      opacity: pressed ? 0.7 : 1,
+                      transform: [{ scale: pressed ? 0.93 : 1 }],
+                      // Glow effect for unlocked
+                      ...(isUnlocked ? {
+                        shadowColor: rarityColor,
+                        shadowOffset: { width: 0, height: 0 },
+                        shadowOpacity: 0.5,
+                        shadowRadius: 8,
+                        elevation: 6,
+                      } : {}),
+                    }]}
+                  >
+                    {isUnlocked ? (
+                      <Text style={{ fontSize: itemSize * 0.45 }}>{achievement.emoji}</Text>
+                    ) : (
+                      <View style={{
+                        width: itemSize * 0.5,
+                        height: itemSize * 0.5,
+                        borderRadius: itemSize * 0.25,
+                        backgroundColor: colors.border,
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}>
+                        <Text style={{ fontSize: itemSize * 0.22, color: colors.muted }}>?</Text>
+                      </View>
+                    )}
+                    {/* Rarity dot */}
+                    <View style={{
+                      position: "absolute",
+                      bottom: 4,
+                      right: 4,
+                      width: 8,
+                      height: 8,
+                      borderRadius: 4,
+                      backgroundColor: isUnlocked ? rarityColor : colors.border,
+                    }} />
+                  </Pressable>
+                );
+              })}
+              {/* Fill empty slots in last row */}
+              {row.length < COLUMNS && Array.from({ length: COLUMNS - row.length }).map((_, i) => (
+                <View key={`empty-${i}`} style={{ width: itemSize, height: itemSize }} />
+              ))}
+            </View>
+          ))}
         </ScrollView>
       </View>
 
@@ -167,11 +189,11 @@ export default function AchievementsScreen() {
             }}
           >
             <Pressable
-              onPress={() => {}} // Prevent closing when tapping modal content
+              onPress={() => {}}
               style={{
-                width: SCREEN_WIDTH * 0.85,
+                width: screenWidth * 0.85,
                 maxWidth: 340,
-                backgroundColor: "#1A1A2E",
+                backgroundColor: colors.surface,
                 borderRadius: 24,
                 padding: 24,
                 alignItems: "center",
@@ -187,25 +209,25 @@ export default function AchievementsScreen() {
                   borderRadius: 45,
                   backgroundColor: unlockedIds.has(selectedAchievement.id)
                     ? `${RARITY_COLORS[selectedAchievement.rarity]}25`
-                    : "#0D0D1A",
+                    : colors.border,
                   justifyContent: "center",
                   alignItems: "center",
                   borderWidth: 3,
                   borderColor: unlockedIds.has(selectedAchievement.id)
                     ? RARITY_COLORS[selectedAchievement.rarity]
-                    : "#333",
+                    : colors.border,
                   marginBottom: 16,
                 }}
               >
                 {unlockedIds.has(selectedAchievement.id) ? (
                   <Text style={{ fontSize: 48 }}>{selectedAchievement.emoji}</Text>
                 ) : (
-                  <Text style={{ fontSize: 36, color: "#333" }}>🔒</Text>
+                  <Text style={{ fontSize: 36, color: colors.muted }}>🔒</Text>
                 )}
               </View>
 
               {/* Title */}
-              <Text style={{ fontSize: 20, fontWeight: "800", color: "#FFFFFF", textAlign: "center", marginBottom: 6 }}>
+              <Text style={{ fontSize: 20, fontWeight: "800", color: colors.foreground, textAlign: "center", marginBottom: 6 }}>
                 {isRu ? selectedAchievement.titleRu : selectedAchievement.titleEn}
               </Text>
 
@@ -219,8 +241,8 @@ export default function AchievementsScreen() {
                 </Text>
               </View>
 
-              {/* Description (condition) - always shown */}
-              <Text style={{ fontSize: 14, color: "#B0B0C0", textAlign: "center", lineHeight: 20, marginBottom: 8 }}>
+              {/* Description */}
+              <Text style={{ fontSize: 14, color: colors.muted, textAlign: "center", lineHeight: 20, marginBottom: 8 }}>
                 {isRu ? selectedAchievement.descriptionRu : selectedAchievement.descriptionEn}
               </Text>
 
@@ -232,7 +254,7 @@ export default function AchievementsScreen() {
               )}
 
               {!unlockedIds.has(selectedAchievement.id) && (
-                <Text style={{ fontSize: 12, color: "#666", marginTop: 4, fontStyle: "italic" }}>
+                <Text style={{ fontSize: 12, color: colors.muted, marginTop: 4, fontStyle: "italic" }}>
                   {isRu ? "Ещё не получено" : "Not yet unlocked"}
                 </Text>
               )}
@@ -242,14 +264,14 @@ export default function AchievementsScreen() {
                 onPress={() => setSelectedAchievement(null)}
                 style={({ pressed }) => [{
                   marginTop: 16,
-                  backgroundColor: "#333",
+                  backgroundColor: colors.border,
                   paddingHorizontal: 24,
                   paddingVertical: 10,
                   borderRadius: 12,
                   opacity: pressed ? 0.7 : 1,
                 }]}
               >
-                <Text style={{ color: "#FFF", fontWeight: "600", fontSize: 14 }}>
+                <Text style={{ color: colors.foreground, fontWeight: "600", fontSize: 14 }}>
                   {isRu ? "Закрыть" : "Close"}
                 </Text>
               </Pressable>

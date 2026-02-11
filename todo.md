@@ -234,3 +234,13 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Background notifications - work even when app is closed (expo-notifications with TIME_INTERVAL + DAILY triggers)
 - [x] Color themes: AMOLED black (#000000), Pastel (#FFF8F0), Light, Dark — 4 themes in settings
 - [x] Rename kanban board columns (✏️ icon in column header, modal with text input)
+
+## Phase 15: Achievements, Animations, Kanban Fixes
+
+- [x] Fix achievements grid layout (explicit row-based grid, responsive to screen width, theme-aware colors)
+- [x] Add new achievements: Фотограф (📸), Мастер вложений (📎), Мастер эмодзи (😎), Упорный исследователь (🔍) — 28 total
+- [x] Make About section image clickable with app icon, 10-tap counter triggers persistent_explorer achievement
+- [x] Lock AMOLED theme by default, unlock only when "Упорный исследователь" achievement is earned (🔒 visual)
+- [x] More active emoji animations: faster cycles, shimmer glow background, double-pulse heartbeat, aggressive wiggle
+- [x] Compact kanban add-sticker button (paddingVertical: 4, fontSize: 11, subtle opacity)
+- [x] Drag-and-drop stickers: long-press opens visual drop-zone modal with sticker preview and dashed column targets

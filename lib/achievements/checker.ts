@@ -102,8 +102,30 @@ function checkCondition(achievement: AchievementDefinition, ctx: CheckContext): 
       }
     }
 
-    case "custom":
-      return false;
+    case "custom": {
+      switch (achievement.id) {
+        case "photographer": {
+          // Has at least 1 task with attachments
+          return tasks.some((t) => t.attachments && t.attachments.length > 0);
+        }
+        case "attachment_master": {
+          // 5 tasks with attachments
+          const tasksWithAttachments = tasks.filter((t) => t.attachments && t.attachments.length > 0);
+          return tasksWithAttachments.length >= 5;
+        }
+        case "emoji_master": {
+          // 10 tasks with emoji set
+          const tasksWithEmoji = tasks.filter((t) => t.emoji && t.emoji.trim() !== "");
+          return tasksWithEmoji.length >= 10;
+        }
+        case "persistent_explorer": {
+          // Triggered via custom flag
+          return ctx.customFlags?.["persistent_explorer"] === true;
+        }
+        default:
+          return false;
+      }
+    }
 
     default:
       return false;
