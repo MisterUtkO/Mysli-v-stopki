@@ -90,6 +90,18 @@ export interface Translations {
     schedule: string;
     delegate: string;
     delete: string;
+    kanbanView: string;
+    matrixView: string;
+    addColumn: string;
+    columnName: string;
+    addSticker: string;
+    stickerColor: string;
+    textColor: string;
+    dragToMove: string;
+    pinchToZoom: string;
+    deleteColumn: string;
+    emptyColumn: string;
+    newSticker: string;
   };
 
   // Statistics Screen
@@ -245,6 +257,18 @@ const EN: Translations = {
     schedule: "Schedule",
     delegate: "Delegate",
     delete: "Delete",
+    kanbanView: "Kanban Board",
+    matrixView: "Matrix View",
+    addColumn: "Add Column",
+    columnName: "Column name",
+    addSticker: "Add Sticker",
+    stickerColor: "Sticker color",
+    textColor: "Text color",
+    dragToMove: "Hold & drag to move",
+    pinchToZoom: "Pinch to zoom",
+    deleteColumn: "Delete column",
+    emptyColumn: "No stickers yet",
+    newSticker: "New sticker",
   },
 
   statistics: {
@@ -395,6 +419,18 @@ const RU: Translations = {
     schedule: "Планировать",
     delegate: "Делегировать",
     delete: "Удалить",
+    kanbanView: "Канбан-доска",
+    matrixView: "Вид матрицы",
+    addColumn: "Добавить столбец",
+    columnName: "Название столбца",
+    addSticker: "Добавить стикер",
+    stickerColor: "Цвет стикера",
+    textColor: "Цвет текста",
+    dragToMove: "Удерживайте для перемещения",
+    pinchToZoom: "Щипок для масштаба",
+    deleteColumn: "Удалить столбец",
+    emptyColumn: "Пока пусто",
+    newSticker: "Новый стикер",
   },
 
   statistics: {

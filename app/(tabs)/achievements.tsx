@@ -10,6 +10,8 @@ import {
 import { ScreenContainer } from "@/components/screen-container";
 import { useAchievements } from "@/lib/context/achievement-context";
 import { useI18n } from "@/lib/context/i18n-context";
+import { useColors } from "@/hooks/use-colors";
+import { useRouter } from "expo-router";
 import type { AchievementDefinition } from "@/lib/domain/types";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -31,6 +33,8 @@ const RARITY_LABELS_RU = { common: "Обычное", rare: "Редкое", epic:
 export default function AchievementsScreen() {
   const { achievements, unlocked } = useAchievements();
   const { language } = useI18n();
+  const colors = useColors();
+  const router = useRouter();
   const isRu = language === "ru";
   const [selectedAchievement, setSelectedAchievement] = useState<AchievementDefinition | null>(null);
 
@@ -53,11 +57,31 @@ export default function AchievementsScreen() {
           <Text className="text-foreground font-bold" style={{ fontSize: 28, lineHeight: 34 }}>
             {isRu ? "Достижения" : "Achievements"}
           </Text>
-          <Text className="text-muted" style={{ fontSize: 14, marginTop: 4 }}>
-            {isRu
-              ? `Открыто: ${unlockedCount} из ${totalCount}`
-              : `Unlocked: ${unlockedCount} of ${totalCount}`}
-          </Text>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+            <Text className="text-muted" style={{ fontSize: 14, marginTop: 4 }}>
+              {isRu
+                ? `Открыто: ${unlockedCount} из ${totalCount}`
+                : `Unlocked: ${unlockedCount} of ${totalCount}`}
+            </Text>
+            <Pressable
+              onPress={() => router.push("/statistics")}
+              style={({ pressed }) => [{
+                flexDirection: "row",
+                alignItems: "center",
+                backgroundColor: colors.primary,
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                borderRadius: 10,
+                opacity: pressed ? 0.7 : 1,
+                gap: 4,
+              }]}
+            >
+              <Text style={{ fontSize: 14 }}>📊</Text>
+              <Text style={{ fontSize: 12, fontWeight: "700", color: "#FFF" }}>
+                {isRu ? "Статистика" : "Stats"}
+              </Text>
+            </Pressable>
+          </View>
           {/* Progress bar */}
           <View style={{ height: 6, backgroundColor: "#E5E7EB", borderRadius: 3, marginTop: 8, overflow: "hidden" }}>
             <View
@@ -197,9 +221,11 @@ export default function AchievementsScreen() {
                 </Text>
               </View>
 
-              {/* Description (condition) - always visible */}
+              {/* Description (condition) - hidden for secret achievements until unlocked */}
               <Text style={{ fontSize: 14, color: "#B0B0C0", textAlign: "center", lineHeight: 20, marginBottom: 8 }}>
-                {isRu ? selectedAchievement.descriptionRu : selectedAchievement.descriptionEn}
+                {selectedAchievement.isSecret && !unlockedIds.has(selectedAchievement.id)
+                  ? (isRu ? "🤫 Секретное достижение" : "🤫 Secret achievement")
+                  : (isRu ? selectedAchievement.descriptionRu : selectedAchievement.descriptionEn)}
               </Text>
 
               {/* Unlock date */}

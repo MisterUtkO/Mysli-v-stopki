@@ -5,6 +5,7 @@ import { ACHIEVEMENTS } from "@/lib/achievements/definitions";
 import { checkAchievements } from "@/lib/achievements/checker";
 
 const STORAGE_KEY = "@sdvgnote_achievements";
+const FLAGS_KEY = "@sdvgnote_achievement_flags";
 
 interface AchievementContextType {
   achievements: AchievementDefinition[];
@@ -12,6 +13,7 @@ interface AchievementContextType {
   newlyUnlocked: AchievementDefinition | null;
   dismissNewAchievement: () => void;
   checkAndUnlock: (tasks: Task[]) => void;
+  triggerCustomFlag: (flag: string, tasks: Task[]) => void;
 }
 
 const AchievementContext = createContext<AchievementContextType | undefined>(undefined);
@@ -20,15 +22,30 @@ export function AchievementProvider({ children }: { children: React.ReactNode })
   const [unlocked, setUnlocked] = useState<UnlockedAchievement[]>([]);
   const [newlyUnlocked, setNewlyUnlocked] = useState<AchievementDefinition | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [customFlags, setCustomFlags] = useState<Record<string, boolean>>({});
   const queueRef = useRef<AchievementDefinition[]>([]);
+  const unlockedRef = useRef<UnlockedAchievement[]>([]);
 
-  // Load unlocked achievements from storage
+  // Keep ref in sync
+  useEffect(() => {
+    unlockedRef.current = unlocked;
+  }, [unlocked]);
+
+  // Load unlocked achievements and flags from storage
   useEffect(() => {
     const load = async () => {
       try {
-        const stored = await AsyncStorage.getItem(STORAGE_KEY);
+        const [stored, flags] = await Promise.all([
+          AsyncStorage.getItem(STORAGE_KEY),
+          AsyncStorage.getItem(FLAGS_KEY),
+        ]);
         if (stored) {
-          setUnlocked(JSON.parse(stored));
+          const parsed = JSON.parse(stored);
+          setUnlocked(parsed);
+          unlockedRef.current = parsed;
+        }
+        if (flags) {
+          setCustomFlags(JSON.parse(flags));
         }
       } catch (e) {
         console.log("Failed to load achievements:", e);
@@ -46,6 +63,14 @@ export function AchievementProvider({ children }: { children: React.ReactNode })
     }
   }, []);
 
+  const saveFlags = useCallback(async (flags: Record<string, boolean>) => {
+    try {
+      await AsyncStorage.setItem(FLAGS_KEY, JSON.stringify(flags));
+    } catch (e) {
+      console.log("Failed to save flags:", e);
+    }
+  }, []);
+
   const showNextFromQueue = useCallback(() => {
     if (queueRef.current.length > 0) {
       const next = queueRef.current.shift()!;
@@ -55,14 +80,10 @@ export function AchievementProvider({ children }: { children: React.ReactNode })
 
   const dismissNewAchievement = useCallback(() => {
     setNewlyUnlocked(null);
-    // Show next in queue after a short delay
     setTimeout(() => showNextFromQueue(), 300);
   }, [showNextFromQueue]);
 
-  const checkAndUnlock = useCallback((tasks: Task[]) => {
-    if (!loaded) return;
-
-    const newAchievements = checkAchievements(tasks, unlocked);
+  const processNewAchievements = useCallback((newAchievements: AchievementDefinition[], currentUnlocked: UnlockedAchievement[]) => {
     if (newAchievements.length === 0) return;
 
     const now = Date.now();
@@ -71,16 +92,35 @@ export function AchievementProvider({ children }: { children: React.ReactNode })
       unlockedAt: now,
     }));
 
-    const updatedUnlocked = [...unlocked, ...newUnlockedItems];
+    const updatedUnlocked = [...currentUnlocked, ...newUnlockedItems];
     setUnlocked(updatedUnlocked);
+    unlockedRef.current = updatedUnlocked;
     saveUnlocked(updatedUnlocked);
 
-    // Queue celebration notifications
     queueRef.current.push(...newAchievements);
     if (!newlyUnlocked) {
       showNextFromQueue();
     }
-  }, [loaded, unlocked, newlyUnlocked, saveUnlocked, showNextFromQueue]);
+  }, [newlyUnlocked, saveUnlocked, showNextFromQueue]);
+
+  const checkAndUnlock = useCallback((tasks: Task[]) => {
+    if (!loaded) return;
+
+    const newAchievements = checkAchievements(tasks, unlockedRef.current, customFlags);
+    processNewAchievements(newAchievements, unlockedRef.current);
+  }, [loaded, customFlags, processNewAchievements]);
+
+  const triggerCustomFlag = useCallback((flag: string, tasks: Task[]) => {
+    const updatedFlags = { ...customFlags, [flag]: true };
+    setCustomFlags(updatedFlags);
+    saveFlags(updatedFlags);
+
+    // Immediately check with the new flag
+    if (loaded) {
+      const newAchievements = checkAchievements(tasks, unlockedRef.current, updatedFlags);
+      processNewAchievements(newAchievements, unlockedRef.current);
+    }
+  }, [loaded, customFlags, saveFlags, processNewAchievements]);
 
   return (
     <AchievementContext.Provider
@@ -90,6 +130,7 @@ export function AchievementProvider({ children }: { children: React.ReactNode })
         newlyUnlocked,
         dismissNewAchievement,
         checkAndUnlock,
+        triggerCustomFlag,
       }}
     >
       {children}

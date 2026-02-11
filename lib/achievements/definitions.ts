@@ -13,6 +13,7 @@ import type { AchievementDefinition } from "@/lib/domain/types";
  *    - conditionType: one of the predefined condition types (see below)
  *    - conditionValue: numeric threshold for the condition
  *    - rarity: "common" | "rare" | "epic" | "legendary"
+ *    - isSecret: (optional) if true, description hidden until unlocked
  * 
  * CONDITION TYPES:
  *   "tasks_created_day"     — Create X tasks in a single day
@@ -21,6 +22,9 @@ import type { AchievementDefinition } from "@/lib/domain/types";
  *   "streak_days"           — Use the app X days in a row
  *   "q1_completed"          — Complete X Q1 (urgent+important) tasks
  *   "all_quadrants"         — Have tasks in all 4 quadrants at once
+ *   "contact_dev"           — User tapped "Contact developer" in settings
+ *   "copy_card"             — User copied the donation card number
+ *   "secret"                — Secret condition checked in checker.ts
  *   "custom"                — Custom logic (requires code change in checker.ts)
  * 
  * RARITY affects the border glow color when unlocked:
@@ -40,7 +44,7 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
     descriptionEn: "Create your first task",
     descriptionRu: "Создайте первую задачу",
     conditionType: "tasks_completed_total",
-    conditionValue: 0, // Special: checked as tasks_created >= 1
+    conditionValue: 0,
     rarity: "common",
   },
   {
@@ -213,5 +217,101 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
     conditionType: "tasks_completed_total",
     conditionValue: 200,
     rarity: "legendary",
+  },
+
+  // --- Row 5: Social & Support ---
+  {
+    id: "contact_dev",
+    emoji: "✉️",
+    titleEn: "Pen Pal",
+    titleRu: "Написать разработчику",
+    descriptionEn: "Contact the developer via Telegram",
+    descriptionRu: "Написать разработчику в Telegram",
+    conditionType: "contact_dev",
+    conditionValue: 1,
+    rarity: "rare",
+  },
+  {
+    id: "patron",
+    emoji: "🤝",
+    titleEn: "Patron",
+    titleRu: "Стал Меценатом!",
+    descriptionEn: "Copy the developer's card number to support the project",
+    descriptionRu: "Скопировать номер карты разработчика для поддержки проекта",
+    conditionType: "copy_card",
+    conditionValue: 1,
+    rarity: "epic",
+  },
+  {
+    id: "twenty_created_day",
+    emoji: "🏭",
+    titleEn: "Task Factory",
+    titleRu: "Фабрика задач",
+    descriptionEn: "Create 20 tasks in one day",
+    descriptionRu: "Создайте 20 задач за один день",
+    conditionType: "tasks_created_day",
+    conditionValue: 20,
+    rarity: "epic",
+  },
+  {
+    id: "five_hundred_done",
+    emoji: "🦅",
+    titleEn: "Eagle",
+    titleRu: "Орёл",
+    descriptionEn: "Complete 500 tasks",
+    descriptionRu: "Выполните 500 задач",
+    conditionType: "tasks_completed_total",
+    conditionValue: 500,
+    rarity: "legendary",
+  },
+
+  // --- Row 6: Secret Achievements ---
+  {
+    id: "night_owl",
+    emoji: "🦉",
+    titleEn: "Night Owl",
+    titleRu: "Ночная сова",
+    descriptionEn: "Create a task between 2 AM and 5 AM",
+    descriptionRu: "Создайте задачу между 2 и 5 часами ночи",
+    conditionType: "secret",
+    conditionValue: 1,
+    rarity: "rare",
+    isSecret: true,
+  },
+  {
+    id: "early_bird",
+    emoji: "🐦",
+    titleEn: "Early Bird",
+    titleRu: "Ранняя пташка",
+    descriptionEn: "Create a task between 5 AM and 6 AM",
+    descriptionRu: "Создайте задачу между 5 и 6 часами утра",
+    conditionType: "secret",
+    conditionValue: 2,
+    rarity: "rare",
+    isSecret: true,
+  },
+  {
+    id: "perfectionist",
+    emoji: "✨",
+    titleEn: "Perfectionist",
+    titleRu: "Перфекционист",
+    descriptionEn: "Create a task with max importance and urgency (7/7)",
+    descriptionRu: "Создайте задачу с максимальной важностью и срочностью (7/7)",
+    conditionType: "secret",
+    conditionValue: 3,
+    rarity: "epic",
+    isSecret: true,
+  },
+  {
+    id: "zen_master",
+    emoji: "🧘",
+    titleEn: "Zen Master",
+    titleRu: "Мастер Дзен",
+    descriptionEn: "Complete all your tasks (have 0 active tasks after having at least 5)",
+    descriptionRu: "Выполните все задачи (0 активных после минимум 5)",
+    conditionType: "secret",
+    conditionValue: 4,
+    rarity: "legendary",
+    isSecret: true,
   },
 ];

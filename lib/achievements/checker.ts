@@ -21,6 +21,7 @@ interface CheckContext {
   tasks: Task[];
   allUnlocked: Set<string>;
   streakDays: number;
+  customFlags?: Record<string, boolean>; // For contact_dev, copy_card etc.
 }
 
 function checkCondition(achievement: AchievementDefinition, ctx: CheckContext): boolean {
@@ -30,7 +31,6 @@ function checkCondition(achievement: AchievementDefinition, ctx: CheckContext): 
   switch (achievement.conditionType) {
     case "tasks_completed_total": {
       if (achievement.id === "first_task") {
-        // Special: first task created
         return tasks.length >= 1;
       }
       const completedCount = tasks.filter((t) => t.status === "completed").length;
@@ -43,7 +43,6 @@ function checkCondition(achievement: AchievementDefinition, ctx: CheckContext): 
     }
 
     case "tasks_completed_day": {
-      // Count tasks completed today (updatedAt is when status changed)
       const todayCompleted = tasks.filter(
         (t) => t.status === "completed" && getStartOfDay(t.updatedAt) === todayStart
       );
@@ -64,8 +63,47 @@ function checkCondition(achievement: AchievementDefinition, ctx: CheckContext): 
       return quadrants.size >= 4;
     }
 
+    case "contact_dev": {
+      return ctx.customFlags?.["contact_dev"] === true;
+    }
+
+    case "copy_card": {
+      return ctx.customFlags?.["copy_card"] === true;
+    }
+
+    case "secret": {
+      // Secret achievements with custom logic based on conditionValue
+      switch (achievement.conditionValue) {
+        case 1: {
+          // Night Owl: task created between 2-5 AM
+          return tasks.some((t) => {
+            const hour = new Date(t.createdAt).getHours();
+            return hour >= 2 && hour < 5;
+          });
+        }
+        case 2: {
+          // Early Bird: task created between 5-6 AM
+          return tasks.some((t) => {
+            const hour = new Date(t.createdAt).getHours();
+            return hour >= 5 && hour < 6;
+          });
+        }
+        case 3: {
+          // Perfectionist: task with 7/7 importance and urgency
+          return tasks.some((t) => t.importance === 7 && t.urgency === 7);
+        }
+        case 4: {
+          // Zen Master: 0 active tasks after having at least 5 total
+          const activeTasks = tasks.filter((t) => t.status !== "completed");
+          return tasks.length >= 5 && activeTasks.length === 0;
+        }
+        default:
+          return false;
+      }
+    }
+
     case "custom":
-      return false; // Custom achievements require manual implementation
+      return false;
 
     default:
       return false;
@@ -78,7 +116,6 @@ function checkCondition(achievement: AchievementDefinition, ctx: CheckContext): 
 export function calculateStreakDays(tasks: Task[]): number {
   if (tasks.length === 0) return 0;
 
-  // Get unique days with activity (created or updated)
   const activityDays = new Set<number>();
   for (const task of tasks) {
     activityDays.add(getStartOfDay(task.createdAt));
@@ -89,7 +126,6 @@ export function calculateStreakDays(tasks: Task[]): number {
   const today = getTodayStart();
   const oneDayMs = 86400000;
 
-  // Check if today or yesterday has activity
   if (sortedDays[0] < today - oneDayMs) return 0;
 
   let streak = 1;
@@ -112,7 +148,8 @@ export function calculateStreakDays(tasks: Task[]): number {
  */
 export function checkAchievements(
   tasks: Task[],
-  alreadyUnlocked: UnlockedAchievement[]
+  alreadyUnlocked: UnlockedAchievement[],
+  customFlags?: Record<string, boolean>
 ): AchievementDefinition[] {
   const unlockedIds = new Set(alreadyUnlocked.map((u) => u.achievementId));
   const streakDays = calculateStreakDays(tasks);
@@ -121,6 +158,7 @@ export function checkAchievements(
     tasks,
     allUnlocked: unlockedIds,
     streakDays,
+    customFlags,
   };
 
   const newlyUnlocked: AchievementDefinition[] = [];

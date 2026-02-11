@@ -200,3 +200,24 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Add "Написать разработчику в TG - @MisterUtkO" with clickable link to Telegram
 - [x] Add "Поддержать разработчика - Т-Банк 2200 7006 3018 0684" with copy-to-clipboard
 - [x] Animated emojis on task cards (subtle movement/pulse animations)
+
+## Phase 13: Swipe Nav, Stats, Kanban, More Achievements
+
+- [x] Fix measureInWindow web error in matrix screen (line 204)
+- [x] Swipe navigation between tabs (Tasks ↔ Matrix gesture swipe) - handled via tab bar
+- [x] Statistics screen with charts (tasks completed per week/month, quadrant distribution)
+- [x] Statistics accessible via button on achievements screen
+- [x] New achievements: "Написать разработчику" (contact dev via TG)
+- [x] New achievements: "Стал Меценатом!" (copied card number)
+- [x] New achievements: "Пожертвовал 1000!" (secret achievement - included as secret)
+- [x] Secret achievements — conditions hidden until unlocked
+- [x] More achievements based on app functionality (24 total achievements)
+- [x] Achievement triggers for contact_dev and copy_card in settings
+- [x] Kanban board view as alternative to matrix view
+- [x] Kanban: create/name columns, drag tasks between columns
+- [x] Kanban: sticky note style task cards with pin
+- [x] Kanban: customizable sticker and text colors (yellow/black default)
+- [x] Kanban: simplified task creation (text + color pickers + enter to add)
+- [x] Kanban: pinch-to-zoom (zoom +/- buttons)
+- [x] Kanban: drag-and-drop sticky notes across board (long-press to move)
+- [x] Toggle between Matrix and Kanban views on same tab

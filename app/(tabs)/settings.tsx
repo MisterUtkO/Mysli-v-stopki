@@ -17,15 +17,17 @@ import { useTaskContext } from "@/lib/context/task-context";
 import { useI18n } from "@/lib/context/i18n-context";
 import { useThemeContext } from "@/lib/theme-provider";
 import { sendTestNotification } from "@/lib/services/notification-scheduler";
+import { useAchievements } from "@/lib/context/achievement-context";
 import type { MotivationalSettings } from "@/lib/domain/types";
 
 type NotifFrequency = "never" | "hourly" | "daily" | "weekly" | "always";
 type MotivFrequency = "never" | "10min" | "30min" | "hourly" | "daily" | "weekly";
 
 export default function SettingsScreen() {
-  const { settings, updateSettings, exportTasks, clearAllData } = useTaskContext();
+  const { settings, updateSettings, exportTasks, clearAllData, tasks } = useTaskContext();
   const { language, setLanguage, t } = useI18n();
   const { colorScheme, setColorScheme } = useThemeContext();
+  const { triggerCustomFlag } = useAchievements();
   const [exporting, setExporting] = useState(false);
   const [copiedCard, setCopiedCard] = useState(false);
 
@@ -146,6 +148,7 @@ export default function SettingsScreen() {
 
   const handleOpenTelegram = () => {
     Linking.openURL("https://t.me/MisterUtkO");
+    triggerCustomFlag("contact_dev", tasks);
   };
 
   const handleCopyCard = async () => {
@@ -153,6 +156,7 @@ export default function SettingsScreen() {
       await Clipboard.setStringAsync("2200 7006 3018 0684");
       setCopiedCard(true);
       setTimeout(() => setCopiedCard(false), 2000);
+      triggerCustomFlag("copy_card", tasks);
     } catch {
       // Fallback for web
       Alert.alert(isRu ? "Номер карты" : "Card number", "2200 7006 3018 0684");

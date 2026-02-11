@@ -64,7 +64,8 @@ export interface AchievementDefinition {
   titleRu: string;
   descriptionEn: string;
   descriptionRu: string;
-  conditionType: "tasks_created_day" | "tasks_completed_day" | "tasks_completed_total" | "streak_days" | "q1_completed" | "all_quadrants" | "custom";
+  conditionType: "tasks_created_day" | "tasks_completed_day" | "tasks_completed_total" | "streak_days" | "q1_completed" | "all_quadrants" | "contact_dev" | "copy_card" | "secret" | "custom";
+  isSecret?: boolean; // If true, description is hidden until unlocked
   conditionValue: number; // Threshold value for the condition
   rarity: "common" | "rare" | "epic" | "legendary";
 }
