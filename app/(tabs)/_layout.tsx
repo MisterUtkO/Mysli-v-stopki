@@ -5,14 +5,28 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Platform } from "react-native";
 import { useColors } from "@/hooks/use-colors";
 import { useI18n } from "@/lib/context/i18n-context";
+import { useTaskContext } from "@/lib/context/task-context";
 
 export default function TabLayout() {
   const colors = useColors();
   const { t, language } = useI18n();
+  const { settings } = useTaskContext();
   const isRu = language === "ru";
   const insets = useSafeAreaInsets();
   const bottomPadding = Platform.OS === "web" ? 12 : Math.max(insets.bottom, 8);
   const tabBarHeight = 56 + bottomPadding;
+  
+  // Map startScreen setting to tab name
+  const getInitialRouteName = (): string => {
+    const screenMap: Record<string, string> = {
+      index: "index",
+      matrix: "matrix",
+      achievements: "achievements",
+      settings: "settings",
+      statistics: "index", // statistics is not a tab, default to index
+    };
+    return screenMap[settings.startScreen || "index"] || "index";
+  };
 
   return (
     <Tabs
@@ -29,6 +43,12 @@ export default function TabLayout() {
           borderTopWidth: 0.5,
         },
       }}
+      screenListeners={{
+        tabPress: () => {
+          // Allow normal tab navigation
+        },
+      }}
+      initialRouteName={getInitialRouteName()}
     >
       <Tabs.Screen
         name="index"

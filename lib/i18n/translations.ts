@@ -49,6 +49,7 @@ export interface Translations {
     completed: string;
     delete: string;
     deleteConfirm: string;
+    today: string;
   };
 
   // Task Detail Screen
@@ -218,6 +219,7 @@ const EN: Translations = {
     completed: "Completed",
     delete: "Delete",
     deleteConfirm: "Delete task?",
+    today: "Today",
   },
 
   taskDetail: {
@@ -380,6 +382,7 @@ const RU: Translations = {
     completed: "Выполнено",
     delete: "Удалить",
     deleteConfirm: "Удалить задачу?",
+    today: "Сегодня",
   },
 
   taskDetail: {

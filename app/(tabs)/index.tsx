@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import {
   View,
   Text,
@@ -28,6 +28,15 @@ const STATUS_ICONS: Record<string, string> = {
   completed: "●",
 };
 
+/** Check if a task is relevant for "Today" filter */
+function isTaskForToday(task: Task): boolean {
+  // Tasks with no due date are always shown in Today
+  if (!task.dueDate) return true;
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  return task.dueDate <= todayStr;
+}
+
 export default function HomeScreen() {
   const router = useRouter();
   const { tasks, deleteTask, updateTask } = useTaskContext();
@@ -35,13 +44,38 @@ export default function HomeScreen() {
   const isRu = language === "ru";
   const [search, setSearch] = useState("");
   const [searchVisible, setSearchVisible] = useState(false);
-  const [filteredTasks, setFilteredTasks] = useState<Task[]>(tasks);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+  const [showToday, setShowToday] = useState(false);
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
   const searchInputRef = useRef<TextInput>(null);
 
-  useEffect(() => {
+  // Compute task counts for each filter
+  const taskCounts = useMemo(() => {
+    let base = [...tasks];
+    if (showToday) {
+      base = base.filter(isTaskForToday);
+    }
+    if (search.trim()) {
+      base = base.filter(
+        (task) =>
+          task.title.toLowerCase().includes(search.toLowerCase()) ||
+          task.description.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+    return {
+      all: base.length,
+      not_started: base.filter((t) => t.status === "not_started").length,
+      in_progress: base.filter((t) => t.status === "in_progress").length,
+      completed: base.filter((t) => t.status === "completed").length,
+      today: tasks.filter(isTaskForToday).length,
+    };
+  }, [tasks, search, showToday]);
+
+  const filteredTasks = useMemo(() => {
     let filtered = [...tasks];
+    if (showToday) {
+      filtered = filtered.filter(isTaskForToday);
+    }
     if (search.trim()) {
       filtered = filtered.filter(
         (task) =>
@@ -53,8 +87,8 @@ export default function HomeScreen() {
       filtered = filtered.filter((task) => task.status === selectedStatus);
     }
     filtered.sort((a, b) => b.priorityScore - a.priorityScore);
-    setFilteredTasks(filtered);
-  }, [tasks, search, selectedStatus]);
+    return filtered;
+  }, [tasks, search, selectedStatus, showToday]);
 
   const handleStatusChange = async (taskId: string, currentStatus: TaskStatus) => {
     const statusCycle: TaskStatus[] = ["not_started", "in_progress", "completed"];
@@ -174,48 +208,137 @@ export default function HomeScreen() {
           />
         )}
 
-        {/* Compact status filters */}
-        <View style={{ flexDirection: "row", gap: 6, marginBottom: 8, flexWrap: "wrap" }}>
+        {/* Today toggle */}
+        <View style={{ flexDirection: "row", gap: 6, marginBottom: 6 }}>
           <Pressable
-            onPress={() => setSelectedStatus(null)}
+            onPress={() => { setShowToday(false); }}
             style={({ pressed }) => [
               {
-                paddingHorizontal: 10,
-                paddingVertical: 5,
-                borderRadius: 12,
-                backgroundColor: selectedStatus === null ? "#0a7ea4" : "transparent",
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                borderRadius: 14,
+                backgroundColor: !showToday ? "#0a7ea4" : "transparent",
                 borderWidth: 1,
-                borderColor: selectedStatus === null ? "#0a7ea4" : "#9CA3AF",
+                borderColor: !showToday ? "#0a7ea4" : "#9CA3AF",
                 opacity: pressed ? 0.7 : 1,
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 4,
               },
             ]}
           >
-            <Text style={{ fontSize: 12, fontWeight: "600", color: selectedStatus === null ? "#FFFFFF" : "#9CA3AF" }}>
-              {isRu ? "Все" : "All"}
+            <Text style={{ fontSize: 13, fontWeight: "700", color: !showToday ? "#FFFFFF" : "#9CA3AF" }}>
+              📋 {isRu ? "Все" : "All"}
             </Text>
+            <View style={{
+              backgroundColor: !showToday ? "rgba(255,255,255,0.3)" : "rgba(156,163,175,0.2)",
+              borderRadius: 8, paddingHorizontal: 5, paddingVertical: 1, minWidth: 20, alignItems: "center",
+            }}>
+              <Text style={{ fontSize: 11, fontWeight: "700", color: !showToday ? "#FFFFFF" : "#9CA3AF" }}>
+                {tasks.length}
+              </Text>
+            </View>
           </Pressable>
-          {(["not_started", "in_progress", "completed"] as TaskStatus[]).map((status) => (
+          <Pressable
+            onPress={() => { setShowToday(true); }}
+            style={({ pressed }) => [
+              {
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                borderRadius: 14,
+                backgroundColor: showToday ? "#F59E0B" : "transparent",
+                borderWidth: 1,
+                borderColor: showToday ? "#F59E0B" : "#9CA3AF",
+                opacity: pressed ? 0.7 : 1,
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 4,
+              },
+            ]}
+          >
+            <Text style={{ fontSize: 13, fontWeight: "700", color: showToday ? "#FFFFFF" : "#9CA3AF" }}>
+              ☀️ {t.home.today}
+            </Text>
+            <View style={{
+              backgroundColor: showToday ? "rgba(255,255,255,0.3)" : "rgba(156,163,175,0.2)",
+              borderRadius: 8, paddingHorizontal: 5, paddingVertical: 1, minWidth: 20, alignItems: "center",
+            }}>
+              <Text style={{ fontSize: 11, fontWeight: "700", color: showToday ? "#FFFFFF" : "#9CA3AF" }}>
+                {taskCounts.today}
+              </Text>
+            </View>
+          </Pressable>
+        </View>
+
+        {/* Compact status filters with counts */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8, maxHeight: 36 }}>
+          <View style={{ flexDirection: "row", gap: 6 }}>
             <Pressable
-              key={status}
-              onPress={() => setSelectedStatus(selectedStatus === status ? null : status)}
+              onPress={() => setSelectedStatus(null)}
               style={({ pressed }) => [
                 {
                   paddingHorizontal: 10,
                   paddingVertical: 5,
                   borderRadius: 12,
-                  backgroundColor: selectedStatus === status ? getStatusColor(status) : "transparent",
+                  backgroundColor: selectedStatus === null ? "#0a7ea4" : "transparent",
                   borderWidth: 1,
-                  borderColor: selectedStatus === status ? getStatusColor(status) : "#9CA3AF",
+                  borderColor: selectedStatus === null ? "#0a7ea4" : "#9CA3AF",
                   opacity: pressed ? 0.7 : 1,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 4,
                 },
               ]}
             >
-              <Text style={{ fontSize: 12, fontWeight: "600", color: selectedStatus === status ? "#FFFFFF" : "#9CA3AF" }}>
-                {STATUS_ICONS[status]} {getStatusLabel(status)}
+              <Text style={{ fontSize: 12, fontWeight: "600", color: selectedStatus === null ? "#FFFFFF" : "#9CA3AF" }}>
+                {isRu ? "Все" : "All"}
               </Text>
+              <View style={{
+                backgroundColor: selectedStatus === null ? "rgba(255,255,255,0.3)" : "rgba(156,163,175,0.2)",
+                borderRadius: 7, paddingHorizontal: 4, paddingVertical: 0, minWidth: 18, alignItems: "center",
+              }}>
+                <Text style={{ fontSize: 10, fontWeight: "700", color: selectedStatus === null ? "#FFFFFF" : "#9CA3AF" }}>
+                  {taskCounts.all}
+                </Text>
+              </View>
             </Pressable>
-          ))}
-        </View>
+            {(["not_started", "in_progress", "completed"] as TaskStatus[]).map((status) => {
+              const count = taskCounts[status];
+              return (
+                <Pressable
+                  key={status}
+                  onPress={() => setSelectedStatus(selectedStatus === status ? null : status)}
+                  style={({ pressed }) => [
+                    {
+                      paddingHorizontal: 10,
+                      paddingVertical: 5,
+                      borderRadius: 12,
+                      backgroundColor: selectedStatus === status ? getStatusColor(status) : "transparent",
+                      borderWidth: 1,
+                      borderColor: selectedStatus === status ? getStatusColor(status) : "#9CA3AF",
+                      opacity: pressed ? 0.7 : 1,
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 4,
+                    },
+                  ]}
+                >
+                  <Text style={{ fontSize: 12, fontWeight: "600", color: selectedStatus === status ? "#FFFFFF" : "#9CA3AF" }}>
+                    {STATUS_ICONS[status]} {getStatusLabel(status)}
+                  </Text>
+                  <View style={{
+                    backgroundColor: selectedStatus === status ? "rgba(255,255,255,0.3)" : "rgba(156,163,175,0.2)",
+                    borderRadius: 7, paddingHorizontal: 4, paddingVertical: 0, minWidth: 18, alignItems: "center",
+                  }}>
+                    <Text style={{ fontSize: 10, fontWeight: "700", color: selectedStatus === status ? "#FFFFFF" : "#9CA3AF" }}>
+                      {count}
+                    </Text>
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
+        </ScrollView>
 
         {/* Swipe hint */}
         {filteredTasks.length > 0 && (

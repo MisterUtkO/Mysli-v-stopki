@@ -252,3 +252,15 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Matrix: ScrollView pagination in quadrants with fade overlay + "ещё N" indicator
 - [x] Kanban: real drag-and-drop stickers via measure() + PanResponder + visual drag overlay
 - [x] Kanban: arrow buttons (← →) on each sticker + fallback modal preserved for long-press
+
+## Phase 17: Revert D&D, Swipe Fixes, Today Filter, Start Screen
+
+- [x] Revert all drag-and-drop changes on Matrix screen
+- [x] Revert all drag-and-drop changes on Kanban board
+- [x] Fix swipe-to-change-status on main task list (threshold 50px)
+- [x] Add Today filter tab showing tasks due today + tasks without deadlines
+- [x] Add task count badges on each filter tab with visual counters
+- [x] Add swipe-to-move on Matrix (tap task to modal with quadrant zones)
+- [x] Add swipe-to-move on Kanban (arrow buttons + long-press modal)
+- [x] Add start screen setting in Settings (5-option grid, saved to startScreen)
+- [x] Remove trash/delete quadrant from Matrix screen

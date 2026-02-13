@@ -25,7 +25,7 @@ const STATUS_ICONS: Record<string, string> = {
   completed: "●",
 };
 
-const SWIPE_THRESHOLD = 80;
+const SWIPE_THRESHOLD = 50;
 
 /**
  * Returns a gradient color based on the combined priority score (importance + urgency).
@@ -131,8 +131,10 @@ export function SwipeableTaskCard({
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, gestureState) => {
-        return Math.abs(gestureState.dx) > 10 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.5;
+        // Lower threshold for easier swipe detection
+        return Math.abs(gestureState.dx) > 8 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
       },
+      onStartShouldSetPanResponder: () => false,
       onPanResponderGrant: () => {
         isSwipingRef.current = true;
       },

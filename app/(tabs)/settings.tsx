@@ -469,6 +469,56 @@ export default function SettingsScreen() {
             )}
           </View>
 
+          {/* Start Screen */}
+          <View className={sectionStyle}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 10 }}>
+              <Text style={{ fontSize: 22 }}>🚀</Text>
+              <Text className="text-foreground font-semibold" style={{ fontSize: 16 }}>
+                {isRu ? "Начальный экран" : "Start Screen"}
+              </Text>
+            </View>
+            <Text className="text-muted" style={{ fontSize: 13, marginBottom: 8 }}>
+              {isRu ? "Какой экран открывается при запуске:" : "Which screen opens on app launch:"}
+            </Text>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+              {[
+                { key: "index" as const, emoji: "📋", labelEn: "Tasks", labelRu: "Задачи" },
+                { key: "matrix" as const, emoji: "📊", labelEn: "Matrix", labelRu: "Матрица" },
+                { key: "statistics" as const, emoji: "📈", labelEn: "Stats", labelRu: "Статистика" },
+                { key: "achievements" as const, emoji: "🏆", labelEn: "Achievements", labelRu: "Достижения" },
+                { key: "settings" as const, emoji: "⚙️", labelEn: "Settings", labelRu: "Настройки" },
+              ].map((opt) => {
+                const isActive = settings.startScreen === opt.key;
+                return (
+                  <Pressable
+                    key={opt.key}
+                    onPress={() => updateSettings({ startScreen: opt.key })}
+                    style={({ pressed }) => [{
+                      flex: 1,
+                      minWidth: 60,
+                      backgroundColor: isActive ? colors.primary : colors.surface,
+                      borderRadius: 12,
+                      paddingVertical: 10,
+                      alignItems: "center",
+                      borderWidth: isActive ? 2 : 1,
+                      borderColor: isActive ? colors.primary : colors.border,
+                      opacity: pressed ? 0.7 : 1,
+                    }]}
+                  >
+                    <Text style={{ fontSize: 18, marginBottom: 2 }}>{opt.emoji}</Text>
+                    <Text style={{
+                      fontSize: 11,
+                      fontWeight: isActive ? "800" : "600",
+                      color: isActive ? "#FFF" : colors.foreground,
+                    }}>
+                      {isRu ? opt.labelRu : opt.labelEn}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+
           {/* Data Management */}
           <View className={sectionStyle}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 10 }}>
