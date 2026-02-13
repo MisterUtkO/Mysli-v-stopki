@@ -264,3 +264,12 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Add swipe-to-move on Kanban (arrow buttons + long-press modal)
 - [x] Add start screen setting in Settings (5-option grid, saved to startScreen)
 - [x] Remove trash/delete quadrant from Matrix screen
+
+## Phase 18: Kanban as Separate Tab
+
+- [x] Create kanban.tsx screen as separate tab (KanbanBoard component wrapped in ScreenContainer)
+- [x] Add Kanban to tabs layout with icon (square.grid.3x3.fill) and title
+- [x] Update start screen setting to include kanban option (6 choices: Tasks/Matrix/Kanban/Stats/Achievements/Settings)
+- [x] Update tabs layout initialRouteName to support kanban as start screen
+- [x] Update Settings type to include kanban in startScreen union
+- [x] Test that start screen setting persists and app opens correct screen after restart (54 tests pass)

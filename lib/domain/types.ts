@@ -54,7 +54,7 @@ export interface Settings {
   notificationsEnabled: boolean;
   notificationFrequency: "never" | "hourly" | "daily" | "weekly" | "always";
   motivational?: MotivationalSettings;
-  startScreen?: "index" | "matrix" | "statistics" | "achievements" | "settings";
+  startScreen?: "index" | "matrix" | "kanban" | "statistics" | "achievements" | "settings";
 }
 
 // Achievement system types

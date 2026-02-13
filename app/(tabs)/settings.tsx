@@ -484,6 +484,7 @@ export default function SettingsScreen() {
               {[
                 { key: "index" as const, emoji: "📋", labelEn: "Tasks", labelRu: "Задачи" },
                 { key: "matrix" as const, emoji: "📊", labelEn: "Matrix", labelRu: "Матрица" },
+                { key: "kanban" as const, emoji: "🎯", labelEn: "Kanban", labelRu: "Канбан" },
                 { key: "statistics" as const, emoji: "📈", labelEn: "Stats", labelRu: "Статистика" },
                 { key: "achievements" as const, emoji: "🏆", labelEn: "Achievements", labelRu: "Достижения" },
                 { key: "settings" as const, emoji: "⚙️", labelEn: "Settings", labelRu: "Настройки" },

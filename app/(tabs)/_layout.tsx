@@ -21,6 +21,7 @@ export default function TabLayout() {
     const screenMap: Record<string, string> = {
       index: "index",
       matrix: "matrix",
+      kanban: "kanban",
       achievements: "achievements",
       settings: "settings",
       statistics: "index", // statistics is not a tab, default to index
@@ -62,6 +63,13 @@ export default function TabLayout() {
         options={{
           title: isRu ? "Матрица" : "Matrix",
           tabBarIcon: ({ color }) => <IconSymbol size={26} name="square.grid.2x2.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="kanban"
+        options={{
+          title: isRu ? "Канбан" : "Kanban",
+          tabBarIcon: ({ color }) => <IconSymbol size={26} name="square.grid.3x3.fill" color={color} />,
         }}
       />
       <Tabs.Screen
