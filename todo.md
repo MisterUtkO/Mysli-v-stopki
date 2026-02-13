@@ -273,3 +273,9 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Update tabs layout initialRouteName to support kanban as start screen
 - [x] Update Settings type to include kanban in startScreen union
 - [x] Test that start screen setting persists and app opens correct screen after restart (54 tests pass)
+
+## Phase 19: Fix Start Screen Autosave
+
+- [x] Add startScreen loading in TaskContext initialization (getSetting + loadedSettings)
+- [x] Add startScreen saving in updateSettings function (setSetting when startScreen changes)
+- [x] Verify that start screen setting persists after app restart (54 tests pass)
