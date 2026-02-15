@@ -2,32 +2,43 @@ import { Tabs } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { HapticTab } from "@/components/haptic-tab";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { Platform } from "react-native";
+import { Platform, View } from "react-native";
 import { useColors } from "@/hooks/use-colors";
 import { useI18n } from "@/lib/context/i18n-context";
 import { useTaskContext } from "@/lib/context/task-context";
+import { useEffect, useState } from "react";
 
 export default function TabLayout() {
   const colors = useColors();
   const { t, language } = useI18n();
-  const { settings } = useTaskContext();
+  const { settings, loading } = useTaskContext();
   const isRu = language === "ru";
   const insets = useSafeAreaInsets();
   const bottomPadding = Platform.OS === "web" ? 12 : Math.max(insets.bottom, 8);
   const tabBarHeight = 56 + bottomPadding;
+  const [initialRoute, setInitialRoute] = useState<string>("index");
   
-  // Map startScreen setting to tab name
-  const getInitialRouteName = (): string => {
-    const screenMap: Record<string, string> = {
-      index: "index",
-      matrix: "matrix",
-      kanban: "kanban",
-      achievements: "achievements",
-      settings: "settings",
-      statistics: "index", // statistics is not a tab, default to index
-    };
-    return screenMap[settings.startScreen || "index"] || "index";
-  };
+  // Update initialRoute when settings are loaded
+  useEffect(() => {
+    if (!loading && settings.startScreen) {
+      const screenMap: Record<string, string> = {
+        index: "index",
+        matrix: "matrix",
+        kanban: "kanban",
+        achievements: "achievements",
+        settings: "settings",
+        statistics: "index",
+      };
+      setInitialRoute(screenMap[settings.startScreen] || "index");
+    }
+  }, [loading, settings.startScreen]);
+
+  // Show loading state while settings are being loaded
+  if (loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.background }} />
+    );
+  }
 
   return (
     <Tabs
@@ -49,7 +60,7 @@ export default function TabLayout() {
           // Allow normal tab navigation
         },
       }}
-      initialRouteName={getInitialRouteName()}
+      initialRouteName={initialRoute}
     >
       <Tabs.Screen
         name="index"

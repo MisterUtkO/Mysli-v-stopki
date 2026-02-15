@@ -279,3 +279,10 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Add startScreen loading in TaskContext initialization (getSetting + loadedSettings)
 - [x] Add startScreen saving in updateSettings function (setSetting when startScreen changes)
 - [x] Verify that start screen setting persists after app restart (54 tests pass)
+
+## Phase 20: Fix Start Screen Persistence on App Restart
+
+- [x] Add loading state check in TabLayout (wait for settings to load before rendering tabs)
+- [x] Use useEffect to update initialRoute when settings.startScreen changes
+- [x] Show loading screen while settings are being loaded to prevent race condition
+- [x] Verify that start screen persists after app restart (54 tests pass)
