@@ -111,6 +111,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         const notifFreq = await getSetting("notificationFrequency");
         const motivationalJson = await getSetting("motivational");
         const startScreen = (await getSetting("startScreen")) as "index" | "matrix" | "kanban" | "statistics" | "achievements" | "settings" | null;
+        console.log("[TaskContext] Loaded startScreen:", startScreen);
 
         let motivational = DEFAULT_MOTIVATIONAL;
         if (motivationalJson) {
@@ -198,7 +199,10 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     if (newSettings.notificationsEnabled !== undefined) await setSetting("notificationsEnabled", String(newSettings.notificationsEnabled));
     if (newSettings.notificationFrequency !== undefined) await setSetting("notificationFrequency", newSettings.notificationFrequency);
     if (newSettings.motivational !== undefined) await setSetting("motivational", JSON.stringify(newSettings.motivational));
-    if (newSettings.startScreen !== undefined) await setSetting("startScreen", newSettings.startScreen);
+    if (newSettings.startScreen !== undefined) {
+      console.log("[TaskContext] Saving startScreen:", newSettings.startScreen);
+      await setSetting("startScreen", newSettings.startScreen);
+    }
 
     // Reschedule notifications with updated settings
     await rescheduleNotifications(tasks, updated);
