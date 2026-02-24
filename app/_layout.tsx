@@ -26,9 +26,20 @@ import { useTaskContext } from "@/lib/context/task-context";
 import { useI18n } from "@/lib/context/i18n-context";
 import { initializeNotifications } from "@/lib/services/notification-scheduler";
 import { Alert } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+
+// Global navigation ref for reliable navigation from anywhere in the app
+export const navigationRef = React.createRef<any>();
 
 const DEFAULT_WEB_INSETS: EdgeInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 const DEFAULT_WEB_FRAME: Rect = { x: 0, y: 0, width: 0, height: 0 };
+
+// Helper function for navigation from root
+export function navigateToScreen(screenName: string) {
+  if (navigationRef.current) {
+    navigationRef.current.navigate(screenName);
+  }
+}
 
 export const unstable_settings = {
   anchor: "(tabs)",

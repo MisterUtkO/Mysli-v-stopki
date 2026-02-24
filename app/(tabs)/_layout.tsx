@@ -1,4 +1,5 @@
-import { Tabs, useNavigation } from "expo-router";
+import { Tabs, useRouter } from "expo-router";
+import type { RelativePathString } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { HapticTab } from "@/components/haptic-tab";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -12,16 +13,15 @@ export default function TabLayout() {
   const colors = useColors();
   const { t, language } = useI18n();
   const { settings, loading } = useTaskContext();
-  const navigation = useNavigation();
+  const router = useRouter();
   const isRu = language === "ru";
   const insets = useSafeAreaInsets();
   const bottomPadding = Platform.OS === "web" ? 12 : Math.max(insets.bottom, 8);
   const tabBarHeight = 56 + bottomPadding;
   const [hasNavigated, setHasNavigated] = useState(false);
-  
+
   // Navigate to start screen after settings are loaded
   useEffect(() => {
-    console.log("[TabLayout] loading:", loading, "startScreen:", settings.startScreen);
     if (!loading && !hasNavigated && settings.startScreen) {
       const screenMap: Record<string, string> = {
         index: "index",
@@ -32,14 +32,29 @@ export default function TabLayout() {
         statistics: "index",
       };
       const targetScreen = screenMap[settings.startScreen] || "index";
-      console.log("[TabLayout] Navigating to:", targetScreen);
+      
+      console.log("[TabLayout] Attempting navigation to:", targetScreen);
+      
       // Use setTimeout to ensure navigation stack is ready
       setTimeout(() => {
-        (navigation as any).navigate(targetScreen);
-        setHasNavigated(true);
-      }, 100);
+        try {
+          // Use router.replace to navigate within the tabs
+          const paths: Record<string, any> = {
+            index: "/(tabs)/",
+            matrix: "/(tabs)/matrix",
+            kanban: "/(tabs)/kanban",
+            achievements: "/(tabs)/achievements",
+            settings: "/(tabs)/settings",
+          };
+          router.replace(paths[targetScreen] || "/(tabs)/");
+          setHasNavigated(true);
+          console.log("[TabLayout] Navigation successful to:", targetScreen);
+        } catch (error) {
+          console.error("[TabLayout] Navigation error:", error);
+        }
+      }, 200);
     }
-  }, [loading, settings.startScreen, hasNavigated, navigation]);
+  }, [loading, settings.startScreen, hasNavigated, router]);
 
   // Show loading state while settings are being loaded
   if (loading) {
