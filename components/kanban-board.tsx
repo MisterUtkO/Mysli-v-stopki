@@ -263,8 +263,8 @@ export function KanbanBoard() {
       </View>
 
       {/* Board */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 8, paddingBottom: 20 }}>
-        <View style={{ flexDirection: "row", gap: 10, transform: [{ scale }] }}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 8, paddingBottom: 8 }} style={{ flex: 1 }}>
+        <View style={{ flexDirection: "row", gap: 10, transform: [{ scale }], flex: 1 }}>
           {data.columns.map((column, colIndex) => (
             <View
               key={column.id}
@@ -275,6 +275,8 @@ export function KanbanBoard() {
                 borderWidth: 1,
                 borderColor: colors.border,
                 overflow: "hidden",
+                flex: 1,
+                minHeight: 300,
               }}
             >
               {/* Column header */}
@@ -307,7 +309,7 @@ export function KanbanBoard() {
               </View>
 
               {/* Stickers */}
-              <ScrollView style={{ maxHeight: 400, paddingHorizontal: 6, paddingTop: 6 }} showsVerticalScrollIndicator={false}>
+              <ScrollView style={{ flex: 1, paddingHorizontal: 6, paddingTop: 6 }} showsVerticalScrollIndicator={false}>
                 {column.stickers.length === 0 ? (
                   <Text style={{ color: colors.muted, fontSize: 12, fontStyle: "italic", textAlign: "center", paddingVertical: 12 }}>
                     {t.matrix.emptyColumn}
@@ -405,16 +407,17 @@ export function KanbanBoard() {
                 <View style={{ height: 6 }} />
               </ScrollView>
 
-              {/* Add sticker button — compact */}
+              {/* Add sticker button — prominent */}
               <Pressable
                 onPress={() => { setAddStickerColumnId(column.id); setShowAddSticker(true); }}
                 style={({ pressed }) => [{
                   flexDirection: "row", alignItems: "center", justifyContent: "center",
-                  paddingVertical: 4, borderTopWidth: 0.5, borderTopColor: colors.border,
-                  opacity: pressed ? 0.5 : 0.7,
+                  paddingVertical: 10, borderTopWidth: 1, borderTopColor: colors.border,
+                  backgroundColor: `${colors.primary}15`,
+                  opacity: pressed ? 0.6 : 1,
                 }]}
               >
-                <Text style={{ fontSize: 11, color: colors.primary, fontWeight: "700" }}>
+                <Text style={{ fontSize: 14, color: colors.primary, fontWeight: "800" }}>
                   + {t.matrix.newSticker}
                 </Text>
               </Pressable>

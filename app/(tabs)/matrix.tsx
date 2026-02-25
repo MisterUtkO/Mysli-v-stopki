@@ -63,20 +63,20 @@ export default function MatrixScreen() {
     const hiddenCount = taskList.length - MAX_VISIBLE_TASKS;
 
     return (
-      <View style={{ flex: 1, margin: 2 }}>
+      <View style={{ flex: 1, margin: 1 }}>
         <View style={{
           backgroundColor: config.bgColor,
-          borderRadius: 12,
-          padding: 6,
+          borderRadius: 8,
+          padding: 8,
           flex: 1,
-          minHeight: 100,
+          minHeight: 80,
         }}>
           {/* Header */}
-          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-            <Text style={{ color: "rgba(255,255,255,0.95)", fontSize: 11, fontWeight: "800" }}>
-              {quadrant} {getQuadrantLabel(quadrant)}
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+            <Text style={{ color: "rgba(255,255,255,0.95)", fontSize: 12, fontWeight: "800" }}>
+              {quadrant}
             </Text>
-            <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 9, fontWeight: "600" }}>
+            <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 10, fontWeight: "600" }}>
               {taskList.length}
             </Text>
           </View>
@@ -89,7 +89,7 @@ export default function MatrixScreen() {
           ) : (
             <View>
               <ScrollView
-                style={{ maxHeight: 120 }}
+                style={{ flex: 1 }}
                 showsVerticalScrollIndicator={false}
                 nestedScrollEnabled
               >
@@ -135,96 +135,54 @@ export default function MatrixScreen() {
   };
 
   return (
-    <ScreenContainer className="p-2">
-      {/* View Mode Toggle */}
-      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", paddingVertical: 6, gap: 4 }}>
-        <Pressable
-          onPress={() => setViewMode("matrix")}
-          style={({ pressed }) => [{
-            paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20,
-            backgroundColor: viewMode === "matrix" ? colors.primary : colors.surface,
-            opacity: pressed ? 0.7 : 1,
-          }]}
-        >
-          <Text style={{
-            fontSize: 13, fontWeight: "700",
-            color: viewMode === "matrix" ? "#FFF" : colors.muted,
-          }}>
-            📊 {t.matrix.matrixView}
+    <ScreenContainer className="p-1">
+      {/* Matrix only - no view mode toggle */}
+      <View style={{ flex: 1 }}>
+        {/* Axis labels */}
+        <View style={{ flexDirection: "row", justifyContent: "center", marginBottom: 1 }}>
+          <Text style={{ fontSize: 9, color: colors.muted, fontWeight: "600" }}>
+            ← {isRu ? "НЕ СРОЧНО" : "NOT URGENT"}  |  {isRu ? "СРОЧНО" : "URGENT"} →
           </Text>
-        </Pressable>
-        <Pressable
-          onPress={() => setViewMode("kanban")}
-          style={({ pressed }) => [{
-            paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20,
-            backgroundColor: viewMode === "kanban" ? colors.primary : colors.surface,
-            opacity: pressed ? 0.7 : 1,
-          }]}
-        >
-          <Text style={{
-            fontSize: 13, fontWeight: "700",
-            color: viewMode === "kanban" ? "#FFF" : colors.muted,
-          }}>
-            📋 {t.matrix.kanbanView}
-          </Text>
-        </Pressable>
-      </View>
+        </View>
 
-      {viewMode === "kanban" ? (
-        <KanbanBoard />
-      ) : (
+        {/* Matrix Grid */}
         <View style={{ flex: 1 }}>
-          {/* Axis labels */}
-          <View style={{ flexDirection: "row", justifyContent: "center", marginBottom: 2 }}>
-            <Text style={{ fontSize: 10, color: colors.muted, fontWeight: "600" }}>
-              ← {isRu ? "НЕ СРОЧНО" : "NOT URGENT"}  |  {isRu ? "СРОЧНО" : "URGENT"} →
-            </Text>
-          </View>
-
-          {/* Matrix Grid */}
-          <View style={{ flex: 1 }}>
-            {/* Top row */}
-            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 2, flex: 1 }}>
-              <View style={{ width: 14, alignItems: "center" }}>
-                <Text style={{ fontSize: 8, color: colors.muted, fontWeight: "600", transform: [{ rotate: "-90deg" }], width: 60 }}>
-                  {isRu ? "ВАЖНО ↑" : "IMPORTANT ↑"}
-                </Text>
-              </View>
-              <View style={{ flex: 1, flexDirection: "row" }}>
-                {renderQuadrant("Q2", q2Tasks)}
-                {renderQuadrant("Q1", q1Tasks)}
-              </View>
+          {/* Top row */}
+          <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 1, flex: 1 }}>
+            <View style={{ width: 12, alignItems: "center" }}>
+              <Text style={{ fontSize: 7, color: colors.muted, fontWeight: "600", transform: [{ rotate: "-90deg" }], width: 50 }}>
+                {isRu ? "ВАЖНО ↑" : "IMPORTANT ↑"}
+              </Text>
             </View>
-
-            {/* Bottom row */}
-            <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
-              <View style={{ width: 14, alignItems: "center" }}>
-                <Text style={{ fontSize: 8, color: colors.muted, fontWeight: "600", transform: [{ rotate: "-90deg" }], width: 60 }}>
-                  {isRu ? "НЕ ВАЖНО ↓" : "NOT IMP ↓"}
-                </Text>
-              </View>
-              <View style={{ flex: 1, flexDirection: "row" }}>
-                {renderQuadrant("Q4", q4Tasks)}
-                {renderQuadrant("Q3", q3Tasks)}
-              </View>
+            <View style={{ flex: 1, flexDirection: "row" }}>
+              {renderQuadrant("Q2", q2Tasks)}
+              {renderQuadrant("Q1", q1Tasks)}
             </View>
           </View>
 
-          {/* Hint */}
-          <Text style={{ fontSize: 10, color: colors.muted, textAlign: "center", marginTop: 4, fontStyle: "italic" }}>
-            {isRu ? "Нажмите на задачу для перемещения" : "Tap a task to move it"}
-          </Text>
-
-          {/* Summary */}
-          <View style={{ flexDirection: "row", justifyContent: "space-around", paddingVertical: 4 }}>
-            <Text style={{ fontSize: 10, color: colors.muted }}>{isRu ? "Всего" : "Total"}: {activeTasks.length}</Text>
-            <Text style={{ fontSize: 10, color: "#EF4444" }}>Q1: {q1Tasks.length}</Text>
-            <Text style={{ fontSize: 10, color: "#F59E0B" }}>Q2: {q2Tasks.length}</Text>
-            <Text style={{ fontSize: 10, color: "#3B82F6" }}>Q3: {q3Tasks.length}</Text>
-            <Text style={{ fontSize: 10, color: "#22C55E" }}>Q4: {q4Tasks.length}</Text>
+          {/* Bottom row */}
+          <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
+            <View style={{ width: 12, alignItems: "center" }}>
+              <Text style={{ fontSize: 7, color: colors.muted, fontWeight: "600", transform: [{ rotate: "-90deg" }], width: 50 }}>
+                {isRu ? "НЕ ВАЖНО ↓" : "NOT IMP ↓"}
+              </Text>
+            </View>
+            <View style={{ flex: 1, flexDirection: "row" }}>
+              {renderQuadrant("Q4", q4Tasks)}
+              {renderQuadrant("Q3", q3Tasks)}
+            </View>
           </View>
         </View>
-      )}
+
+        {/* Summary */}
+        <View style={{ flexDirection: "row", justifyContent: "space-around", paddingVertical: 3 }}>
+          <Text style={{ fontSize: 9, color: colors.muted }}>{isRu ? "Всего" : "Total"}: {activeTasks.length}</Text>
+          <Text style={{ fontSize: 9, color: "#EF4444" }}>Q1: {q1Tasks.length}</Text>
+          <Text style={{ fontSize: 9, color: "#F59E0B" }}>Q2: {q2Tasks.length}</Text>
+          <Text style={{ fontSize: 9, color: "#3B82F6" }}>Q3: {q3Tasks.length}</Text>
+          <Text style={{ fontSize: 9, color: "#22C55E" }}>Q4: {q4Tasks.length}</Text>
+        </View>
+      </View>
 
       {/* Move Modal */}
       <Modal visible={!!moveModalTask} transparent animationType="fade" onRequestClose={() => setMoveModalTask(null)}>
