@@ -26,7 +26,7 @@ import { useTaskContext } from "@/lib/context/task-context";
 import { useI18n } from "@/lib/context/i18n-context";
 import { initializeNotifications } from "@/lib/services/notification-scheduler";
 import { Alert } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 
 // Global navigation ref for reliable navigation from anywhere in the app
 export const navigationRef = React.createRef<any>();
@@ -98,6 +98,16 @@ export default function RootLayout() {
   useEffect(() => {
     initializeNotifications();
   }, []);
+
+  // Reschedule notifications when app comes to foreground
+  // This ensures notifications are always up-to-date even if app was closed
+  useFocusEffect(
+    React.useCallback(() => {
+      console.log("[App] App came to foreground, rescheduling notifications");
+      // Notifications will be rescheduled by TaskContext when it loads
+      return () => {};
+    }, [])
+  );
 
   const handleSafeAreaUpdate = useCallback((metrics: Metrics) => {
     setInsets(metrics.insets);

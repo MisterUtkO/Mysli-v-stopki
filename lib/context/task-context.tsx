@@ -82,15 +82,23 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   // Schedule notifications whenever tasks or settings change
   const rescheduleNotifications = useCallback(async (currentTasks: Task[], currentSettings: Settings) => {
     try {
+      console.log("[TaskContext] Rescheduling notifications...");
+      console.log("[TaskContext] Active tasks:", currentTasks.filter(t => t.status !== "completed").length);
+      console.log("[TaskContext] Notifications enabled:", currentSettings.notificationsEnabled);
+      console.log("[TaskContext] Global frequency:", currentSettings.notificationFrequency);
+      
       await scheduleTaskNotifications(currentTasks, currentSettings);
+      
       // Also reschedule motivational if enabled
       if (currentSettings.motivational?.enabled && currentSettings.motivational.text) {
+        console.log("[TaskContext] Scheduling motivational:", currentSettings.motivational.frequency);
         await scheduleMotivationalNotification(
           currentSettings.motivational.text,
           currentSettings.motivational.frequency,
           currentSettings.motivational.exactTime
         );
       }
+      console.log("[TaskContext] Notifications rescheduled successfully");
     } catch (e) {
       console.log("Failed to reschedule notifications:", e);
     }
@@ -132,6 +140,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         setSettings(loadedSettings);
 
         // Schedule notifications on startup
+        console.log("[TaskContext] Initializing notifications on startup");
         await rescheduleNotifications(loadedTasks, loadedSettings);
       } catch (error) {
         console.error("Failed to initialize database:", error);
@@ -167,6 +176,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     const updatedTasks = await getAllTasks();
     setTasks(updatedTasks);
     // Reschedule notifications with new task
+    console.log("[TaskContext] Task created, rescheduling notifications");
     await rescheduleNotifications(updatedTasks, settings);
     return newTask;
   };
@@ -177,6 +187,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     setTasks(updatedTasks);
     // Reschedule if status or notification frequency changed
     if (updates.status || updates.notificationFrequency) {
+      console.log("[TaskContext] Task updated, rescheduling notifications");
       await rescheduleNotifications(updatedTasks, settings);
     }
   };
@@ -185,6 +196,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     await dbDeleteTask(id);
     const updatedTasks = tasks.filter((task) => task.id !== id);
     setTasks(updatedTasks);
+    console.log("[TaskContext] Task deleted, rescheduling notifications");
     await rescheduleNotifications(updatedTasks, settings);
   };
 
@@ -205,6 +217,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     }
 
     // Reschedule notifications with updated settings
+    console.log("[TaskContext] Settings updated, rescheduling notifications");
     await rescheduleNotifications(tasks, updated);
 
     // Handle motivational separately

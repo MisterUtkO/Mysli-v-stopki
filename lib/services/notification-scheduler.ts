@@ -141,6 +141,54 @@ async function cancelMotivationalNotifications(): Promise<void> {
 }
 
 /**
+ * Get the appropriate trigger based on frequency
+ * Uses DAILY/WEEKLY for better background support, TIME_INTERVAL for shorter intervals
+ */
+function getTriggerForFrequency(frequency: string): Notifications.NotificationTriggerInput | null {
+  switch (frequency) {
+    case "daily":
+      // Daily at 9:00 AM
+      return {
+        type: Notifications.SchedulableTriggerInputTypes.DAILY,
+        hour: 9,
+        minute: 0,
+      };
+    case "weekly":
+      // Every Monday at 9:00 AM
+      return {
+        type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
+        weekday: 1, // Monday
+        hour: 9,
+        minute: 0,
+      };
+    case "hourly":
+      // Every hour
+      return {
+        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+        seconds: 3600,
+        repeats: true,
+      };
+    case "always":
+    case "30min":
+      // Every 30 minutes
+      return {
+        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+        seconds: 1800,
+        repeats: true,
+      };
+    case "10min":
+      // Every 10 minutes
+      return {
+        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+        seconds: 600,
+        repeats: true,
+      };
+    default:
+      return null;
+  }
+}
+
+/**
  * Schedule per-task notifications based on task frequency or global setting.
  * Cancels existing task notifications first, then reschedules all active tasks.
  */
@@ -163,23 +211,23 @@ export async function scheduleTaskNotifications(
   for (const task of activeTasks) {
     // Determine frequency: per-task override or global
     const taskFreq = task.notificationFrequency;
-    let intervalSeconds: number | null = null;
+    let frequency: string | null = null;
 
     if (taskFreq && taskFreq !== "global" && taskFreq !== "never") {
-      intervalSeconds = FREQUENCY_SECONDS[taskFreq] || null;
+      frequency = taskFreq;
     } else if (taskFreq === "never") {
       continue; // Skip this task
     } else {
       // Use global setting
       const globalFreq = settings.notificationFrequency;
       if (globalFreq === "never") continue;
-      intervalSeconds = GLOBAL_FREQUENCY_SECONDS[globalFreq] || null;
+      frequency = globalFreq;
     }
 
-    if (!intervalSeconds) continue;
+    if (!frequency) continue;
 
-    // Minimum interval is 60 seconds on iOS
-    if (intervalSeconds < 60) intervalSeconds = 60;
+    const trigger = getTriggerForFrequency(frequency);
+    if (!trigger) continue;
 
     try {
       const emoji = task.emoji ? `${task.emoji} ` : "";
@@ -195,19 +243,16 @@ export async function scheduleTaskNotifications(
           data: { taskId: task.id, type: "task_reminder" },
           ...(Platform.OS === "android" ? { channelId: "task-reminders" } : {}),
         },
-        trigger: {
-          type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-          seconds: intervalSeconds,
-          repeats: true,
-        },
+        trigger,
       });
       scheduledCount++;
+      console.log(`[Notifications] Scheduled task "${task.title}" with frequency: ${frequency}`);
     } catch (e) {
       console.log(`Failed to schedule notification for task ${task.id}:`, e);
     }
   }
 
-  console.log(`Scheduled ${scheduledCount} task notifications`);
+  console.log(`[Notifications] Scheduled ${scheduledCount} task notifications`);
 }
 
 /**
@@ -247,14 +292,11 @@ export async function scheduleMotivationalNotification(
           minute: minutes,
         },
       });
-      console.log(`Motivational notification scheduled daily at ${hours}:${minutes}`);
+      console.log(`[Notifications] Motivational notification scheduled daily at ${hours}:${minutes}`);
     } else {
       // Schedule at interval
-      const intervalSeconds = FREQUENCY_SECONDS[frequency] || GLOBAL_FREQUENCY_SECONDS[frequency];
-      if (!intervalSeconds) return;
-
-      // Minimum 60 seconds
-      const safeInterval = Math.max(intervalSeconds, 60);
+      const trigger = getTriggerForFrequency(frequency);
+      if (!trigger) return;
 
       await Notifications.scheduleNotificationAsync({
         content: {
@@ -264,13 +306,9 @@ export async function scheduleMotivationalNotification(
           data: { type: "motivational" },
           ...(Platform.OS === "android" ? { channelId: "motivational" } : {}),
         },
-        trigger: {
-          type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-          seconds: safeInterval,
-          repeats: true,
-        },
+        trigger,
       });
-      console.log(`Motivational notification scheduled every ${safeInterval}s`);
+      console.log(`[Notifications] Motivational notification scheduled with frequency: ${frequency}`);
     }
   } catch (e) {
     console.log("Failed to schedule motivational notification:", e);
@@ -297,7 +335,7 @@ export async function sendTestNotification(isRu: boolean): Promise<void> {
       },
       trigger: null, // null = immediate
     });
-    console.log("Test notification sent");
+    console.log("[Notifications] Test notification sent");
   } catch (e) {
     console.log("Failed to send test notification:", e);
   }
@@ -310,7 +348,7 @@ export async function listScheduledNotifications(): Promise<void> {
   if (Platform.OS === "web") return;
   try {
     const scheduled = await Notifications.getAllScheduledNotificationsAsync();
-    console.log(`Currently scheduled: ${scheduled.length} notifications`);
+    console.log(`[Notifications] Currently scheduled: ${scheduled.length} notifications`);
     for (const n of scheduled) {
       console.log(`  - ${n.content.title} (type: ${n.content.data?.type})`);
     }

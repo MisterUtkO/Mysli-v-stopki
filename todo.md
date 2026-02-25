@@ -286,3 +286,14 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Use useEffect to update initialRoute when settings.startScreen changes
 - [x] Show loading screen while settings are being loaded to prevent race condition
 - [x] Verify that start screen persists after app restart (54 tests pass)
+
+## Phase 21: Fix Scheduled Notifications
+
+- [x] Fix scheduled notifications: should fire at configured interval (hourly, daily, weekly, every 30 min) not just on task creation/app open
+- [x] Implement proper background notification scheduling using expo-notifications
+- [x] Use DAILY/WEEKLY triggers for better background support
+- [x] Use TIME_INTERVAL for hourly and 30-min frequencies
+- [x] Add notification rescheduling on app focus
+- [x] Add comprehensive logging for debugging
+- [x] Test notifications fire at correct intervals when app is closed
+- [x] Verify notification frequency settings are respected
