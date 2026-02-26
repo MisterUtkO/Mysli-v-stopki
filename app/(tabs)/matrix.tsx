@@ -55,79 +55,66 @@ export default function MatrixScreen() {
     setMoveModalTask(null);
   };
 
-  const MAX_VISIBLE_TASKS = 4;
-
   const renderQuadrant = (quadrant: Quadrant, taskList: Task[]) => {
     const config = QUADRANT_CONFIG[quadrant];
-    const visibleTasks = taskList.slice(0, MAX_VISIBLE_TASKS);
-    const hiddenCount = taskList.length - MAX_VISIBLE_TASKS;
 
     return (
       <View style={{ flex: 1, margin: 1 }}>
         <View style={{
           backgroundColor: config.bgColor,
           borderRadius: 8,
-          padding: 8,
+          padding: 10,
           flex: 1,
-          minHeight: 80,
+          minHeight: 100,
         }}>
-          {/* Header */}
-          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-            <Text style={{ color: "rgba(255,255,255,0.95)", fontSize: 12, fontWeight: "800" }}>
-              {quadrant}
-            </Text>
-            <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 10, fontWeight: "600" }}>
-              {taskList.length}
-            </Text>
+          {/* Header with label and count */}
+          <View style={{ marginBottom: 8 }}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 4 }}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: "rgba(255,255,255,0.95)", fontSize: 13, fontWeight: "800" }}>
+                  {getQuadrantLabel(quadrant)}
+                </Text>
+                <Text style={{ color: "rgba(255,255,255,0.75)", fontSize: 9, fontWeight: "600", marginTop: 2 }}>
+                  {getQuadrantSubLabel(quadrant)}
+                </Text>
+              </View>
+              <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 11, fontWeight: "700", marginLeft: 6 }}>
+                {taskList.length}
+              </Text>
+            </View>
           </View>
 
-          {/* Tasks */}
+          {/* Tasks - scrollable */}
           {taskList.length === 0 ? (
-            <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, fontStyle: "italic", textAlign: "center", paddingVertical: 8 }}>
+            <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, fontStyle: "italic", textAlign: "center", paddingVertical: 12 }}>
               {isRu ? "Пусто" : "Empty"}
             </Text>
           ) : (
-            <View>
-              <ScrollView
-                style={{ flex: 1 }}
-                showsVerticalScrollIndicator={false}
-                nestedScrollEnabled
-              >
-                {visibleTasks.map((task) => (
-                  <Pressable
-                    key={task.id}
-                    onPress={() => setMoveModalTask(task)}
-                    style={({ pressed }) => [{
-                      backgroundColor: "rgba(255,255,255,0.2)",
-                      borderRadius: 6,
-                      paddingHorizontal: 6,
-                      paddingVertical: 3,
-                      marginBottom: 2,
-                      opacity: pressed ? 0.6 : 1,
-                    }]}
-                  >
-                    <Text style={{ color: "#FFF", fontSize: 10, fontWeight: "600" }} numberOfLines={1}>
-                      {task.emoji ? `${task.emoji} ` : ""}{task.title}
-                    </Text>
-                  </Pressable>
-                ))}
-              </ScrollView>
-
-              {/* Scroll indicator */}
-              {hiddenCount > 0 && (
-                <View style={{
-                  backgroundColor: "rgba(0,0,0,0.25)",
-                  borderRadius: 8,
-                  paddingVertical: 2,
-                  alignItems: "center",
-                  marginTop: 2,
-                }}>
-                  <Text style={{ color: "rgba(255,255,255,0.9)", fontSize: 9, fontWeight: "700" }}>
-                    ↓ {isRu ? "ещё" : "more"} {hiddenCount} ↓
+            <ScrollView
+              style={{ flex: 1 }}
+              showsVerticalScrollIndicator={true}
+              scrollIndicatorInsets={{ right: 2 }}
+              nestedScrollEnabled
+            >
+              {taskList.map((task) => (
+                <Pressable
+                  key={task.id}
+                  onPress={() => setMoveModalTask(task)}
+                  style={({ pressed }) => [{
+                    backgroundColor: "rgba(255,255,255,0.2)",
+                    borderRadius: 6,
+                    paddingHorizontal: 8,
+                    paddingVertical: 6,
+                    marginBottom: 4,
+                    opacity: pressed ? 0.6 : 1,
+                  }]}
+                >
+                  <Text style={{ color: "#FFF", fontSize: 11, fontWeight: "600" }} numberOfLines={2}>
+                    {task.emoji ? `${task.emoji} ` : ""}{task.title}
                   </Text>
-                </View>
-              )}
-            </View>
+                </Pressable>
+              ))}
+            </ScrollView>
           )}
         </View>
       </View>
