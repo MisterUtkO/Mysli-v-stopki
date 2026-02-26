@@ -306,3 +306,10 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Kanban: Make add button more prominent and visible
 - [x] Test layouts on different screen sizes
 - [x] Verify no elements are cut off or overlapped
+
+## Phase 23: Task Detail and Status Marker Improvements
+
+- [x] Make status markers (circles) larger and more prominent on task items (increased from 16px to 28px in collapsed, 18px in expanded)
+- [x] Update status marker styling in task cards and modals (added background color, increased padding)
+- [x] Ensure status indicators are visible and clickable on all screen sizes
+- [x] Test status markers on different screen sizes

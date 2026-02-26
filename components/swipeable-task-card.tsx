@@ -290,9 +290,9 @@ export function SwipeableTaskCard({
                 <View style={{ flexDirection: "row", alignItems: "center", flex: 1, marginRight: 8 }}>
                   <Pressable
                     onPress={() => onStatusChange(task.id, task.status)}
-                    style={({ pressed }) => [{ marginRight: 8, opacity: pressed ? 0.5 : 1 }]}
+                    style={({ pressed }) => [{ marginRight: 10, opacity: pressed ? 0.6 : 1 }]}
                   >
-                    <Text style={{ fontSize: 16, color: getStatusColor(task.status) }}>
+                    <Text style={{ fontSize: 28, color: getStatusColor(task.status), lineHeight: 32 }}>
                       {STATUS_ICONS[task.status]}
                     </Text>
                   </Pressable>
@@ -451,20 +451,21 @@ export function SwipeableTaskCard({
                 <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 10 }}>
                   <Pressable
                     onPress={() => onStatusChange(task.id, task.status)}
-                    style={({ pressed }) => [
-                      {
-                        flexDirection: "row",
-                        alignItems: "center",
-                        backgroundColor: getStatusColor(task.status) + "20",
-                        paddingHorizontal: 10,
-                        paddingVertical: 4,
-                        borderRadius: 10,
-                        opacity: pressed ? 0.7 : 1,
-                      },
-                    ]}
+                    style={({ pressed }) => [{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      backgroundColor: getStatusColor(task.status) + "30",
+                      paddingHorizontal: 12,
+                      paddingVertical: 8,
+                      borderRadius: 12,
+                      opacity: pressed ? 0.7 : 1,
+                    }]}
                   >
-                    <Text style={{ color: getStatusColor(task.status), fontSize: 12, fontWeight: "600" }}>
-                      {STATUS_ICONS[task.status]} {getStatusLabel(task.status)}
+                    <Text style={{ color: getStatusColor(task.status), fontSize: 18, fontWeight: "700", lineHeight: 22 }}>
+                      {STATUS_ICONS[task.status]}
+                    </Text>
+                    <Text style={{ color: getStatusColor(task.status), fontSize: 13, fontWeight: "600", marginLeft: 6 }}>
+                      {getStatusLabel(task.status)}
                     </Text>
                   </Pressable>
 
