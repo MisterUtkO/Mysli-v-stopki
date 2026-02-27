@@ -321,3 +321,12 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Optimize task card size to fit more items in each quadrant
 - [x] Test scrolling with many tasks (10+ per quadrant)
 - [x] Verify labels are clear and visible
+
+## Phase 25: Mobile Matrix Optimization
+
+- [x] Increase quadrant size to ~50% screen height each on mobile
+- [x] Add scroll indicator arrows on the side when tasks overflow (▲ and ▼ symbols)
+- [x] Ensure quadrants don't overlap with notch/camera blocks
+- [x] Optimize quadrant layout for portrait orientation
+- [x] Test on various mobile screen sizes
+- [x] Verify scroll indicators appear/disappear correctly (dynamic based on scroll state)

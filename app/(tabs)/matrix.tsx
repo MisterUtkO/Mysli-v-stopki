@@ -1,16 +1,18 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import {
   View,
   Text,
   Pressable,
   ScrollView,
   Modal,
+  Dimensions,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { useTaskContext } from "@/lib/context/task-context";
 import { useI18n } from "@/lib/context/i18n-context";
 import { useColors } from "@/hooks/use-colors";
-import { KanbanBoard } from "@/components/kanban-board";
 import type { Task, Quadrant } from "@/lib/domain/types";
 
 const QUADRANT_CONFIG: Record<Quadrant, { bgColor: string; label: { en: string; ru: string }; subLabel: { en: string; ru: string } }> = {
@@ -22,6 +24,13 @@ const QUADRANT_CONFIG: Record<Quadrant, { bgColor: string; label: { en: string; 
 
 type ViewMode = "matrix" | "kanban";
 
+interface ScrollState {
+  Q1: { canScrollUp: boolean; canScrollDown: boolean };
+  Q2: { canScrollUp: boolean; canScrollDown: boolean };
+  Q3: { canScrollUp: boolean; canScrollDown: boolean };
+  Q4: { canScrollUp: boolean; canScrollDown: boolean };
+}
+
 export default function MatrixScreen() {
   const { tasks, updateTask } = useTaskContext();
   const { t, language } = useI18n();
@@ -30,6 +39,19 @@ export default function MatrixScreen() {
 
   const [viewMode, setViewMode] = useState<ViewMode>("matrix");
   const [moveModalTask, setMoveModalTask] = useState<Task | null>(null);
+  const [scrollState, setScrollState] = useState<ScrollState>({
+    Q1: { canScrollUp: false, canScrollDown: false },
+    Q2: { canScrollUp: false, canScrollDown: false },
+    Q3: { canScrollUp: false, canScrollDown: false },
+    Q4: { canScrollUp: false, canScrollDown: false },
+  });
+
+  const scrollRefs = useRef({
+    Q1: null as ScrollView | null,
+    Q2: null as ScrollView | null,
+    Q3: null as ScrollView | null,
+    Q4: null as ScrollView | null,
+  });
 
   const activeTasks = useMemo(() => tasks.filter((t) => t.status !== "completed"), [tasks]);
 
@@ -43,7 +65,6 @@ export default function MatrixScreen() {
 
   const handleMoveViaModal = async (task: Task, targetQuadrant: Quadrant) => {
     if (task.quadrant === targetQuadrant) return;
-    // Determine new importance/urgency based on target quadrant
     let newImportance = task.importance;
     let newUrgency = task.urgency;
     const threshold = 4;
@@ -55,17 +76,54 @@ export default function MatrixScreen() {
     setMoveModalTask(null);
   };
 
+  const handleScroll = (quadrant: Quadrant, event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+    const canScrollUp = contentOffset.y > 0;
+    const canScrollDown = contentOffset.y < contentSize.height - layoutMeasurement.height - 5;
+    
+    setScrollState((prev) => ({
+      ...prev,
+      [quadrant]: { canScrollUp, canScrollDown },
+    }));
+  };
+
+  const renderScrollIndicator = (quadrant: Quadrant) => {
+    const state = scrollState[quadrant];
+    if (!state.canScrollUp && !state.canScrollDown) return null;
+
+    return (
+      <View style={{
+        position: "absolute",
+        right: 2,
+        top: 0,
+        bottom: 0,
+        width: 6,
+        justifyContent: "center",
+        alignItems: "center",
+        gap: 4,
+      }}>
+        {state.canScrollUp && (
+          <Text style={{ fontSize: 10, color: "rgba(255,255,255,0.6)", fontWeight: "800" }}>▲</Text>
+        )}
+        {state.canScrollDown && (
+          <Text style={{ fontSize: 10, color: "rgba(255,255,255,0.6)", fontWeight: "800" }}>▼</Text>
+        )}
+      </View>
+    );
+  };
+
   const renderQuadrant = (quadrant: Quadrant, taskList: Task[]) => {
     const config = QUADRANT_CONFIG[quadrant];
 
     return (
-      <View style={{ flex: 1, margin: 1 }}>
+      <View style={{ flex: 1, margin: 1, position: "relative" }}>
         <View style={{
           backgroundColor: config.bgColor,
           borderRadius: 8,
           padding: 10,
           flex: 1,
-          minHeight: 100,
+          minHeight: 120,
+          position: "relative",
         }}>
           {/* Header with label and count */}
           <View style={{ marginBottom: 8 }}>
@@ -90,31 +148,37 @@ export default function MatrixScreen() {
               {isRu ? "Пусто" : "Empty"}
             </Text>
           ) : (
-            <ScrollView
-              style={{ flex: 1 }}
-              showsVerticalScrollIndicator={true}
-              scrollIndicatorInsets={{ right: 2 }}
-              nestedScrollEnabled
-            >
-              {taskList.map((task) => (
-                <Pressable
-                  key={task.id}
-                  onPress={() => setMoveModalTask(task)}
-                  style={({ pressed }) => [{
-                    backgroundColor: "rgba(255,255,255,0.2)",
-                    borderRadius: 6,
-                    paddingHorizontal: 8,
-                    paddingVertical: 6,
-                    marginBottom: 4,
-                    opacity: pressed ? 0.6 : 1,
-                  }]}
-                >
-                  <Text style={{ color: "#FFF", fontSize: 11, fontWeight: "600" }} numberOfLines={2}>
-                    {task.emoji ? `${task.emoji} ` : ""}{task.title}
-                  </Text>
-                </Pressable>
-              ))}
-            </ScrollView>
+            <View style={{ flex: 1, position: "relative" }}>
+              <ScrollView
+                ref={(ref) => { scrollRefs.current[quadrant] = ref; }}
+                style={{ flex: 1 }}
+                showsVerticalScrollIndicator={false}
+                scrollIndicatorInsets={{ right: 8 }}
+                nestedScrollEnabled
+                onScroll={(e) => handleScroll(quadrant, e)}
+                scrollEventThrottle={16}
+              >
+                {taskList.map((task) => (
+                  <Pressable
+                    key={task.id}
+                    onPress={() => setMoveModalTask(task)}
+                    style={({ pressed }) => [{
+                      backgroundColor: "rgba(255,255,255,0.2)",
+                      borderRadius: 6,
+                      paddingHorizontal: 8,
+                      paddingVertical: 6,
+                      marginBottom: 4,
+                      opacity: pressed ? 0.6 : 1,
+                    }]}
+                  >
+                    <Text style={{ color: "#FFF", fontSize: 11, fontWeight: "600" }} numberOfLines={2}>
+                      {task.emoji ? `${task.emoji} ` : ""}{task.title}
+                    </Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+              {renderScrollIndicator(quadrant)}
+            </View>
           )}
         </View>
       </View>
@@ -123,7 +187,6 @@ export default function MatrixScreen() {
 
   return (
     <ScreenContainer className="p-1">
-      {/* Matrix only - no view mode toggle */}
       <View style={{ flex: 1 }}>
         {/* Axis labels */}
         <View style={{ flexDirection: "row", justifyContent: "center", marginBottom: 1 }}>
@@ -132,10 +195,10 @@ export default function MatrixScreen() {
           </Text>
         </View>
 
-        {/* Matrix Grid */}
+        {/* Matrix Grid - vertical layout for mobile */}
         <View style={{ flex: 1 }}>
-          {/* Top row */}
-          <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 1, flex: 1 }}>
+          {/* Row 1: Q2 and Q1 */}
+          <View style={{ flexDirection: "row", alignItems: "center", flex: 1, marginBottom: 1 }}>
             <View style={{ width: 12, alignItems: "center" }}>
               <Text style={{ fontSize: 7, color: colors.muted, fontWeight: "600", transform: [{ rotate: "-90deg" }], width: 50 }}>
                 {isRu ? "ВАЖНО ↑" : "IMPORTANT ↑"}
@@ -147,7 +210,7 @@ export default function MatrixScreen() {
             </View>
           </View>
 
-          {/* Bottom row */}
+          {/* Row 2: Q4 and Q3 */}
           <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
             <View style={{ width: 12, alignItems: "center" }}>
               <Text style={{ fontSize: 7, color: colors.muted, fontWeight: "600", transform: [{ rotate: "-90deg" }], width: 50 }}>
