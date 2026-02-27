@@ -1,11 +1,10 @@
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef } from "react";
 import {
   View,
   Text,
   Pressable,
   ScrollView,
   Modal,
-  Dimensions,
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from "react-native";
@@ -22,8 +21,6 @@ const QUADRANT_CONFIG: Record<Quadrant, { bgColor: string; label: { en: string; 
   Q4: { bgColor: "#22C55E", label: { en: "Eliminate", ru: "Исключить" }, subLabel: { en: "Not Urgent & Not Important", ru: "Не срочно, Не важно" } },
 };
 
-type ViewMode = "matrix" | "kanban";
-
 interface ScrollState {
   Q1: { canScrollUp: boolean; canScrollDown: boolean };
   Q2: { canScrollUp: boolean; canScrollDown: boolean };
@@ -37,7 +34,6 @@ export default function MatrixScreen() {
   const colors = useColors();
   const isRu = language === "ru";
 
-  const [viewMode, setViewMode] = useState<ViewMode>("matrix");
   const [moveModalTask, setMoveModalTask] = useState<Task | null>(null);
   const [scrollState, setScrollState] = useState<ScrollState>({
     Q1: { canScrollUp: false, canScrollDown: false },
@@ -97,16 +93,16 @@ export default function MatrixScreen() {
         right: 2,
         top: 0,
         bottom: 0,
-        width: 6,
+        width: 5,
         justifyContent: "center",
         alignItems: "center",
-        gap: 4,
+        gap: 2,
       }}>
         {state.canScrollUp && (
-          <Text style={{ fontSize: 10, color: "rgba(255,255,255,0.6)", fontWeight: "800" }}>▲</Text>
+          <Text style={{ fontSize: 8, color: "rgba(255,255,255,0.6)", fontWeight: "800" }}>▲</Text>
         )}
         {state.canScrollDown && (
-          <Text style={{ fontSize: 10, color: "rgba(255,255,255,0.6)", fontWeight: "800" }}>▼</Text>
+          <Text style={{ fontSize: 8, color: "rgba(255,255,255,0.6)", fontWeight: "800" }}>▼</Text>
         )}
       </View>
     );
@@ -116,27 +112,27 @@ export default function MatrixScreen() {
     const config = QUADRANT_CONFIG[quadrant];
 
     return (
-      <View style={{ flex: 1, margin: 1, position: "relative" }}>
+      <View style={{ flex: 1, margin: 0.5, position: "relative" }}>
         <View style={{
           backgroundColor: config.bgColor,
-          borderRadius: 8,
-          padding: 10,
+          borderRadius: 6,
+          padding: 6,
           flex: 1,
-          minHeight: 120,
+          minHeight: 80,
           position: "relative",
         }}>
           {/* Header with label and count */}
-          <View style={{ marginBottom: 8 }}>
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 4 }}>
+          <View style={{ marginBottom: 4 }}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 2 }}>
               <View style={{ flex: 1 }}>
-                <Text style={{ color: "rgba(255,255,255,0.95)", fontSize: 13, fontWeight: "800" }}>
+                <Text style={{ color: "rgba(255,255,255,0.95)", fontSize: 11, fontWeight: "800" }}>
                   {getQuadrantLabel(quadrant)}
                 </Text>
-                <Text style={{ color: "rgba(255,255,255,0.75)", fontSize: 9, fontWeight: "600", marginTop: 2 }}>
+                <Text style={{ color: "rgba(255,255,255,0.75)", fontSize: 7, fontWeight: "600", marginTop: 1 }}>
                   {getQuadrantSubLabel(quadrant)}
                 </Text>
               </View>
-              <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 11, fontWeight: "700", marginLeft: 6 }}>
+              <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 9, fontWeight: "700", marginLeft: 4 }}>
                 {taskList.length}
               </Text>
             </View>
@@ -144,7 +140,7 @@ export default function MatrixScreen() {
 
           {/* Tasks - scrollable */}
           {taskList.length === 0 ? (
-            <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, fontStyle: "italic", textAlign: "center", paddingVertical: 12 }}>
+            <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 9, fontStyle: "italic", textAlign: "center", paddingVertical: 8 }}>
               {isRu ? "Пусто" : "Empty"}
             </Text>
           ) : (
@@ -153,7 +149,7 @@ export default function MatrixScreen() {
                 ref={(ref) => { scrollRefs.current[quadrant] = ref; }}
                 style={{ flex: 1 }}
                 showsVerticalScrollIndicator={false}
-                scrollIndicatorInsets={{ right: 8 }}
+                scrollIndicatorInsets={{ right: 6 }}
                 nestedScrollEnabled
                 onScroll={(e) => handleScroll(quadrant, e)}
                 scrollEventThrottle={16}
@@ -164,14 +160,14 @@ export default function MatrixScreen() {
                     onPress={() => setMoveModalTask(task)}
                     style={({ pressed }) => [{
                       backgroundColor: "rgba(255,255,255,0.2)",
-                      borderRadius: 6,
-                      paddingHorizontal: 8,
-                      paddingVertical: 6,
-                      marginBottom: 4,
+                      borderRadius: 4,
+                      paddingHorizontal: 6,
+                      paddingVertical: 4,
+                      marginBottom: 3,
                       opacity: pressed ? 0.6 : 1,
                     }]}
                   >
-                    <Text style={{ color: "#FFF", fontSize: 11, fontWeight: "600" }} numberOfLines={2}>
+                    <Text style={{ color: "#FFF", fontSize: 10, fontWeight: "600" }} numberOfLines={2}>
                       {task.emoji ? `${task.emoji} ` : ""}{task.title}
                     </Text>
                   </Pressable>
@@ -186,11 +182,11 @@ export default function MatrixScreen() {
   };
 
   return (
-    <ScreenContainer className="p-1">
-      <View style={{ flex: 1 }}>
-        {/* Axis labels */}
-        <View style={{ flexDirection: "row", justifyContent: "center", marginBottom: 1 }}>
-          <Text style={{ fontSize: 9, color: colors.muted, fontWeight: "600" }}>
+    <ScreenContainer className="p-0">
+      <View style={{ flex: 1, paddingHorizontal: 2, paddingVertical: 2 }}>
+        {/* Axis labels - minimal */}
+        <View style={{ flexDirection: "row", justifyContent: "center", marginBottom: 0.5 }}>
+          <Text style={{ fontSize: 8, color: colors.muted, fontWeight: "600" }}>
             ← {isRu ? "НЕ СРОЧНО" : "NOT URGENT"}  |  {isRu ? "СРОЧНО" : "URGENT"} →
           </Text>
         </View>
@@ -198,10 +194,10 @@ export default function MatrixScreen() {
         {/* Matrix Grid - vertical layout for mobile */}
         <View style={{ flex: 1 }}>
           {/* Row 1: Q2 and Q1 */}
-          <View style={{ flexDirection: "row", alignItems: "center", flex: 1, marginBottom: 1 }}>
-            <View style={{ width: 12, alignItems: "center" }}>
-              <Text style={{ fontSize: 7, color: colors.muted, fontWeight: "600", transform: [{ rotate: "-90deg" }], width: 50 }}>
-                {isRu ? "ВАЖНО ↑" : "IMPORTANT ↑"}
+          <View style={{ flexDirection: "row", alignItems: "center", flex: 1, marginBottom: 0.5 }}>
+            <View style={{ width: 10, alignItems: "center" }}>
+              <Text style={{ fontSize: 6, color: colors.muted, fontWeight: "600", transform: [{ rotate: "-90deg" }], width: 40 }}>
+                {isRu ? "ВАЖНО ↑" : "IMP ↑"}
               </Text>
             </View>
             <View style={{ flex: 1, flexDirection: "row" }}>
@@ -212,8 +208,8 @@ export default function MatrixScreen() {
 
           {/* Row 2: Q4 and Q3 */}
           <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
-            <View style={{ width: 12, alignItems: "center" }}>
-              <Text style={{ fontSize: 7, color: colors.muted, fontWeight: "600", transform: [{ rotate: "-90deg" }], width: 50 }}>
+            <View style={{ width: 10, alignItems: "center" }}>
+              <Text style={{ fontSize: 6, color: colors.muted, fontWeight: "600", transform: [{ rotate: "-90deg" }], width: 40 }}>
                 {isRu ? "НЕ ВАЖНО ↓" : "NOT IMP ↓"}
               </Text>
             </View>
@@ -224,13 +220,13 @@ export default function MatrixScreen() {
           </View>
         </View>
 
-        {/* Summary */}
-        <View style={{ flexDirection: "row", justifyContent: "space-around", paddingVertical: 3 }}>
-          <Text style={{ fontSize: 9, color: colors.muted }}>{isRu ? "Всего" : "Total"}: {activeTasks.length}</Text>
-          <Text style={{ fontSize: 9, color: "#EF4444" }}>Q1: {q1Tasks.length}</Text>
-          <Text style={{ fontSize: 9, color: "#F59E0B" }}>Q2: {q2Tasks.length}</Text>
-          <Text style={{ fontSize: 9, color: "#3B82F6" }}>Q3: {q3Tasks.length}</Text>
-          <Text style={{ fontSize: 9, color: "#22C55E" }}>Q4: {q4Tasks.length}</Text>
+        {/* Summary - minimal */}
+        <View style={{ flexDirection: "row", justifyContent: "space-around", paddingVertical: 1.5 }}>
+          <Text style={{ fontSize: 7, color: colors.muted }}>{isRu ? "Всего" : "T"}: {activeTasks.length}</Text>
+          <Text style={{ fontSize: 7, color: "#EF4444" }}>Q1: {q1Tasks.length}</Text>
+          <Text style={{ fontSize: 7, color: "#F59E0B" }}>Q2: {q2Tasks.length}</Text>
+          <Text style={{ fontSize: 7, color: "#3B82F6" }}>Q3: {q3Tasks.length}</Text>
+          <Text style={{ fontSize: 7, color: "#22C55E" }}>Q4: {q4Tasks.length}</Text>
         </View>
       </View>
 

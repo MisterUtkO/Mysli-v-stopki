@@ -330,3 +330,10 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Optimize quadrant layout for portrait orientation
 - [x] Test on various mobile screen sizes
 - [x] Verify scroll indicators appear/disappear correctly (dynamic based on scroll state)
+
+## Phase 26: Further Quadrant Size Increase
+
+- [x] Increase quadrants to occupy ~85% of screen height
+- [x] Reduce padding and margins to maximize quadrant space
+- [x] Keep summary and headers minimal
+- [x] Test on mobile devices
