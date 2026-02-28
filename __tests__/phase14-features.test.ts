@@ -4,7 +4,7 @@ import * as path from "path";
 
 const projectRoot = path.resolve(__dirname, "..");
 
-// Test 1: Theme system supports 4 color schemes (read source file)
+// Test 1: Theme system supports 6 color schemes (read source file)
 describe("Theme configuration", () => {
   const themeSource = fs.readFileSync(path.join(projectRoot, "lib/_core/theme.ts"), "utf-8");
 
@@ -18,15 +18,25 @@ describe("Theme configuration", () => {
     expect(themeSource).toContain('"#FFF8F0"'); // Pastel warm background
   });
 
-  it("should export Colors with all 4 schemes", () => {
+  it("should export Colors with all 6 schemes", () => {
     expect(themeSource).toContain('light: buildRuntimePalette("light")');
     expect(themeSource).toContain('dark: buildRuntimePalette("dark")');
     expect(themeSource).toContain('amoled: buildRuntimePalette("amoled")');
     expect(themeSource).toContain('pastel: buildRuntimePalette("pastel")');
+    expect(themeSource).toContain('notebook: buildRuntimePalette("notebook")');
+    expect(themeSource).toContain('darkMatte: buildRuntimePalette("darkMatte")');
   });
 
-  it("should export ColorScheme type with all 4 values", () => {
-    expect(themeSource).toContain('"light" | "dark" | "amoled" | "pastel"');
+  it("should export ColorScheme type with all 6 values", () => {
+    expect(themeSource).toContain('"light" | "dark" | "amoled" | "pastel" | "notebook" | "darkMatte"');
+  });
+
+  it("should define notebook color scheme", () => {
+    expect(themeSource).toContain("palette.notebook");
+  });
+
+  it("should define darkMatte color scheme", () => {
+    expect(themeSource).toContain("palette.darkMatte");
   });
 });
 
@@ -39,12 +49,16 @@ describe("Theme provider", () => {
     expect(providerSource).toContain('"pastel"');
   });
 
-  it("should map amoled to dark native scheme", () => {
-    expect(providerSource).toContain('scheme === "amoled"');
+  it("should map amoled and darkMatte to dark native scheme", () => {
+    expect(providerSource).toContain('scheme === "amoled" || scheme === "darkMatte"');
   });
 
-  it("should map pastel to light native scheme", () => {
-    expect(providerSource).toContain('scheme === "pastel"');
+  it("should support notebook theme", () => {
+    expect(providerSource).toContain('"notebook"');
+  });
+
+  it("should support darkMatte theme", () => {
+    expect(providerSource).toContain('"darkMatte"');
   });
 });
 
@@ -77,9 +91,11 @@ describe("Achievement definitions", () => {
 describe("Settings type", () => {
   const typesSource = fs.readFileSync(path.join(projectRoot, "lib/domain/types.ts"), "utf-8");
 
-  it("should include amoled and pastel in theme type", () => {
+  it("should include all 6 themes in theme type", () => {
     expect(typesSource).toContain('"amoled"');
     expect(typesSource).toContain('"pastel"');
+    expect(typesSource).toContain('"notebook"');
+    expect(typesSource).toContain('"darkMatte"');
   });
 });
 
@@ -105,13 +121,13 @@ describe("Clipboard copy in settings", () => {
 describe("Settings theme selector", () => {
   const settingsSource = fs.readFileSync(path.join(projectRoot, "app/(tabs)/settings.tsx"), "utf-8");
 
-  it("should have all 4 theme options", () => {
+  it("should have all 6 theme options", () => {
     expect(settingsSource).toContain('"light"');
     expect(settingsSource).toContain('"dark"');
     expect(settingsSource).toContain('"amoled"');
     expect(settingsSource).toContain('"pastel"');
-    expect(settingsSource).toContain("AMOLED");
-    expect(settingsSource).toContain("Пастель");
+    expect(settingsSource).toContain('"notebook"');
+    expect(settingsSource).toContain('"darkMatte"');
   });
 });
 

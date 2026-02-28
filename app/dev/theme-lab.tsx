@@ -53,6 +53,8 @@ export default function ThemeLabScreen() {
       dark: build("dark"),
       amoled: build("amoled"),
       pastel: build("pastel"),
+      notebook: build("notebook"),
+      darkMatte: build("darkMatte"),
     };
   }, []);
 
@@ -61,7 +63,7 @@ export default function ThemeLabScreen() {
       <ScrollView className="flex-1">
         <View className="gap-4 pb-8">
           <View className="flex-row flex-wrap gap-2">
-            {(["light", "dark", "amoled", "pastel"] as ColorScheme[]).map((scheme) => (
+            {(["light", "dark", "amoled", "pastel", "notebook", "darkMatte"] as ColorScheme[]).map((scheme) => (
               <Pressable
                 key={scheme}
                 style={[

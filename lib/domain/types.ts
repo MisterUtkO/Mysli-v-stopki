@@ -48,7 +48,7 @@ export interface MotivationalSettings {
 
 export interface Settings {
   language: "en" | "ru";
-  theme: "light" | "dark" | "amoled" | "pastel" | "system";
+  theme: "light" | "dark" | "amoled" | "pastel" | "notebook" | "darkMatte" | "system";
   importanceThreshold: number; // 1-7, default 4
   urgencyThreshold: number; // 1-7, default 4
   notificationsEnabled: boolean;

@@ -3,7 +3,8 @@ import { Appearance, View, useColorScheme as useSystemColorScheme } from "react-
 import { colorScheme as nativewindColorScheme, vars } from "nativewind";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import { SchemeColors, type ColorScheme } from "@/constants/theme";
+import { SchemeColors } from "@/constants/theme";
+import type { ColorScheme } from "@/lib/_core/theme";
 
 type ThemeContextValue = {
   colorScheme: ColorScheme;
@@ -14,7 +15,7 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const systemScheme = useSystemColorScheme() ?? "light";
-  const [colorScheme, setColorSchemeState] = useState<ColorScheme>(systemScheme);
+  const [colorScheme, setColorSchemeState] = useState<ColorScheme>(systemScheme as ColorScheme);
   const [isLoading, setIsLoading] = useState(true);
 
   // Load saved theme on mount
@@ -22,8 +23,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const loadTheme = async () => {
       try {
         const saved = await AsyncStorage.getItem("app_theme");
-        if (saved === "light" || saved === "dark" || saved === "amoled" || saved === "pastel") {
-          setColorSchemeState(saved);
+        const validThemes: ColorScheme[] = ["light", "dark", "amoled", "pastel", "notebook", "darkMatte"];
+        if (saved && validThemes.includes(saved as ColorScheme)) {
+          setColorSchemeState(saved as ColorScheme);
         }
       } catch (error) {
         console.warn("Failed to load theme:", error);
@@ -35,12 +37,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const applyScheme = useCallback((scheme: ColorScheme) => {
-    const nativeScheme = (scheme === "amoled") ? "dark" : (scheme === "pastel") ? "light" : scheme;
+    const nativeScheme = (scheme === "amoled" || scheme === "darkMatte") ? "dark" : "light";
     nativewindColorScheme.set(nativeScheme);
     Appearance.setColorScheme?.(nativeScheme);
     if (typeof document !== "undefined") {
       const root = document.documentElement;
-      root.dataset.theme = nativeScheme;
+      root.dataset.theme = scheme;
       root.classList.toggle("dark", nativeScheme === "dark");
       const palette = SchemeColors[scheme];
       Object.entries(palette).forEach(([token, value]) => {

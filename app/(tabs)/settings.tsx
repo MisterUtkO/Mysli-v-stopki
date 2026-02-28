@@ -72,9 +72,11 @@ export default function SettingsScreen() {
     { key: "dark" as const, emoji: "🌙", labelEn: "Dark", labelRu: "Тёмная" },
     { key: "amoled" as const, emoji: "🖤", labelEn: "AMOLED", labelRu: "AMOLED" },
     { key: "pastel" as const, emoji: "🌸", labelEn: "Pastel", labelRu: "Пастель" },
+    { key: "notebook" as const, emoji: "📓", labelEn: "Notebook", labelRu: "Тетрадь" },
+    { key: "darkMatte" as const, emoji: "🎨", labelEn: "Dark Matte", labelRu: "Матовая" },
   ];
 
-  const handleThemeChange = async (theme: "light" | "dark" | "amoled" | "pastel") => {
+  const handleThemeChange = async (theme: "light" | "dark" | "amoled" | "pastel" | "notebook" | "darkMatte") => {
     if (theme === "amoled" && !hasExplorerAchievement) {
       Alert.alert(
         isRu ? "🔒 Заблокировано" : "🔒 Locked",

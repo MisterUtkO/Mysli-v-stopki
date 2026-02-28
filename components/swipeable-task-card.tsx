@@ -25,7 +25,8 @@ const STATUS_ICONS: Record<string, string> = {
   completed: "●",
 };
 
-const SWIPE_THRESHOLD = 50;
+const SWIPE_THRESHOLD = 40; // Reduced threshold for easier swipe detection
+const MIN_SWIPE_DISTANCE = 5; // Minimum distance to start detecting swipe
 
 /**
  * Returns a gradient color based on the combined priority score (importance + urgency).
@@ -131,21 +132,36 @@ export function SwipeableTaskCard({
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, gestureState) => {
-        // Lower threshold for easier swipe detection
-        return Math.abs(gestureState.dx) > 8 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
+        // Detect horizontal swipe: must move more horizontally than vertically
+        const isHorizontalSwipe = Math.abs(gestureState.dx) > MIN_SWIPE_DISTANCE && 
+                                  Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.5;
+        return isHorizontalSwipe;
       },
-      onStartShouldSetPanResponder: () => false,
+      onStartShouldSetPanResponder: (_, gestureState) => {
+        // Also accept swipe on start if it's clearly horizontal
+        return Math.abs(gestureState.dx) > 10 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 2;
+      },
       onPanResponderGrant: () => {
         isSwipingRef.current = true;
       },
       onPanResponderMove: (_, gestureState) => {
-        const clampedDx = Math.max(-120, Math.min(120, gestureState.dx));
-        translateX.setValue(clampedDx);
+        // Only allow horizontal movement if swiping
+        if (isSwipingRef.current) {
+          const clampedDx = Math.max(-120, Math.min(120, gestureState.dx));
+          translateX.setValue(clampedDx);
+        }
       },
       onPanResponderRelease: (_, gestureState) => {
         isSwipingRef.current = false;
         
-        if (gestureState.dx < -SWIPE_THRESHOLD) {
+        // Use velocity for faster swipes, or distance for slower swipes
+        const velocityThreshold = 0.5;
+        const isQuickSwipeLeft = gestureState.vx < -velocityThreshold;
+        const isQuickSwipeRight = gestureState.vx > velocityThreshold;
+        const isSlowSwipeLeft = gestureState.dx < -SWIPE_THRESHOLD;
+        const isSlowSwipeRight = gestureState.dx > SWIPE_THRESHOLD;
+        
+        if (isQuickSwipeLeft || isSlowSwipeLeft) {
           // Swipe left → Delete
           Animated.timing(translateX, {
             toValue: -120,
@@ -160,7 +176,7 @@ export function SwipeableTaskCard({
               friction: 8,
             }).start();
           });
-        } else if (gestureState.dx > SWIPE_THRESHOLD) {
+        } else if (isQuickSwipeRight || isSlowSwipeRight) {
           // Swipe right → Change status
           Animated.timing(translateX, {
             toValue: 120,

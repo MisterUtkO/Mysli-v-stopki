@@ -337,3 +337,44 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Reduce padding and margins to maximize quadrant space
 - [x] Keep summary and headers minimal
 - [x] Test on mobile devices
+
+## Phase 27: Add New Themes
+
+- [ ] Add "Notebook" theme (checkered paper background with blue text)
+- [ ] Add "Dark Matte" theme (black matte background with light text)
+- [ ] Update theme config with new color palettes
+- [ ] Test themes on all screens
+
+## Phase 28: Fix Matrix Quadrant Layout
+
+- [ ] Redesign quadrants to match 2x2 grid layout from design image
+- [ ] Add black border/divider between quadrants
+- [ ] Maximize quadrant size (minimal padding)
+- [ ] Remove axis labels and summary section
+- [ ] Ensure quadrants are equal size
+- [ ] Test on mobile and web
+
+## Phase 29: Fix Swipe Gesture for Task Movement
+
+- [ ] Debug swipe gesture detection on Tasks screen
+- [ ] Ensure swipe right consistently triggers task movement
+- [ ] Test on different devices and screen sizes
+- [ ] Add visual feedback during swipe
+- [ ] Verify no conflicts with scroll gestures
+
+## Phase 27: Add New Themes
+
+- [x] Add notebook theme (grid paper with blue text)
+- [x] Add darkMatte theme (dark matte paper with light text)
+- [x] Update theme selector in Settings
+- [x] Test theme switching
+- [x] Verify colors are correct for new themes
+
+## Phase 28: Fix Matrix Layout and Swipe Gestures
+
+- [x] Redesign Matrix screen with 2x2 grid layout matching design
+- [x] Add black borders between quadrants
+- [x] Improve swipe gesture detection for task movement
+- [x] Add velocity-based swipe detection for faster response
+- [x] Reduce swipe threshold for easier activation
+- [x] Test swipe left (delete) and swipe right (status change)

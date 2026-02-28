@@ -2,7 +2,7 @@ import { Platform } from "react-native";
 
 import themeConfig from "@/theme.config";
 
-export type ColorScheme = "light" | "dark" | "amoled" | "pastel";
+export type ColorScheme = "light" | "dark" | "amoled" | "pastel" | "notebook" | "darkMatte";
 
 export const ThemeColors = themeConfig.themeColors;
 
@@ -17,6 +17,8 @@ function buildSchemePalette(colors: ThemeColorTokens): SchemePalette {
     dark: {} as SchemePalette["dark"],
     amoled: {} as SchemePalette["amoled"],
     pastel: {} as SchemePalette["pastel"],
+    notebook: {} as SchemePalette["notebook"],
+    darkMatte: {} as SchemePalette["darkMatte"],
   };
 
   (Object.keys(colors) as ThemeColorName[]).forEach((name) => {
@@ -51,7 +53,33 @@ function buildSchemePalette(colors: ThemeColorTokens): SchemePalette {
     error: "#E8A0A0",
   } as Record<ThemeColorName, string>;
 
-  return palette;
+  // Notebook — checkered paper with blue text (school notebook style)
+  palette.notebook = {
+    primary: "#1E3A8A",
+    background: "#F5F5DC",
+    surface: "#FFFAF0",
+    foreground: "#1E3A8A",
+    muted: "#4B5563",
+    border: "#E0E0E0",
+    success: "#059669",
+    warning: "#D97706",
+    error: "#DC2626",
+  } as Record<ThemeColorName, string>;
+
+  // Dark Matte — black matte paper with light text
+  palette.darkMatte = {
+    primary: "#60A5FA",
+    background: "#1A1A1A",
+    surface: "#242424",
+    foreground: "#E5E7EB",
+    muted: "#9CA3AF",
+    border: "#3F3F3F",
+    success: "#10B981",
+    warning: "#F59E0B",
+    error: "#EF4444",
+  } as Record<ThemeColorName, string>;
+
+  return palette as SchemePalette;
 }
 
 export const SchemeColors = buildSchemePalette(ThemeColors);
@@ -85,6 +113,8 @@ export const Colors = {
   dark: buildRuntimePalette("dark"),
   amoled: buildRuntimePalette("amoled"),
   pastel: buildRuntimePalette("pastel"),
+  notebook: buildRuntimePalette("notebook"),
+  darkMatte: buildRuntimePalette("darkMatte"),
 } satisfies Record<ColorScheme, RuntimePalette>;
 
 export type ThemeColorPalette = (typeof Colors)[ColorScheme];
