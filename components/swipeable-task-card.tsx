@@ -25,8 +25,9 @@ const STATUS_ICONS: Record<string, string> = {
   completed: "●",
 };
 
-const SWIPE_THRESHOLD = 40; // Reduced threshold for easier swipe detection
-const MIN_SWIPE_DISTANCE = 5; // Minimum distance to start detecting swipe
+// Simplified thresholds for more reliable swipe detection
+const SWIPE_THRESHOLD = 30; // Distance to trigger swipe action
+const MIN_HORIZONTAL_MOVEMENT = 3; // Minimum horizontal movement to start detecting
 
 /**
  * Returns a gradient color based on the combined priority score (importance + urgency).
@@ -78,6 +79,7 @@ interface SwipeableTaskCardProps {
   onToggleExpand: (taskId: string) => void;
   onStatusChange: (taskId: string, currentStatus: TaskStatus) => void;
   onDelete: (taskId: string, taskTitle: string) => void;
+  isMatrixView?: boolean; // If true, show minimal info (text only)
 }
 
 export function SwipeableTaskCard({
@@ -87,10 +89,12 @@ export function SwipeableTaskCard({
   onToggleExpand,
   onStatusChange,
   onDelete,
+  isMatrixView = false,
 }: SwipeableTaskCardProps) {
   const router = useRouter();
   const translateX = useRef(new Animated.Value(0)).current;
   const isSwipingRef = useRef(false);
+  const startXRef = useRef(0);
 
   const getStatusLabel = (status: TaskStatus): string => {
     switch (status) {
@@ -131,40 +135,37 @@ export function SwipeableTaskCard({
 
   const panResponder = useRef(
     PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
       onMoveShouldSetPanResponder: (_, gestureState) => {
-        // Detect horizontal swipe: must move more horizontally than vertically
-        const isHorizontalSwipe = Math.abs(gestureState.dx) > MIN_SWIPE_DISTANCE && 
-                                  Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.5;
-        return isHorizontalSwipe;
-      },
-      onStartShouldSetPanResponder: (_, gestureState) => {
-        // Also accept swipe on start if it's clearly horizontal
-        return Math.abs(gestureState.dx) > 10 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 2;
-      },
-      onPanResponderGrant: () => {
-        isSwipingRef.current = true;
+        // Only detect horizontal swipes: significant horizontal movement, minimal vertical
+        const isHorizontal = 
+          Math.abs(gestureState.dx) > MIN_HORIZONTAL_MOVEMENT &&
+          Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 2;
+        
+        if (isHorizontal) {
+          startXRef.current = gestureState.x0;
+          isSwipingRef.current = true;
+        }
+        return isHorizontal;
       },
       onPanResponderMove: (_, gestureState) => {
-        // Only allow horizontal movement if swiping
         if (isSwipingRef.current) {
-          const clampedDx = Math.max(-120, Math.min(120, gestureState.dx));
+          // Clamp movement to prevent over-swiping
+          const clampedDx = Math.max(-100, Math.min(100, gestureState.dx));
           translateX.setValue(clampedDx);
         }
       },
       onPanResponderRelease: (_, gestureState) => {
         isSwipingRef.current = false;
         
-        // Use velocity for faster swipes, or distance for slower swipes
-        const velocityThreshold = 0.5;
-        const isQuickSwipeLeft = gestureState.vx < -velocityThreshold;
-        const isQuickSwipeRight = gestureState.vx > velocityThreshold;
-        const isSlowSwipeLeft = gestureState.dx < -SWIPE_THRESHOLD;
-        const isSlowSwipeRight = gestureState.dx > SWIPE_THRESHOLD;
+        // Simple distance-based detection (no velocity)
+        const isSwipeLeft = gestureState.dx < -SWIPE_THRESHOLD;
+        const isSwipeRight = gestureState.dx > SWIPE_THRESHOLD;
         
-        if (isQuickSwipeLeft || isSlowSwipeLeft) {
+        if (isSwipeLeft) {
           // Swipe left → Delete
           Animated.timing(translateX, {
-            toValue: -120,
+            toValue: -100,
             duration: 150,
             useNativeDriver: true,
           }).start(() => {
@@ -176,10 +177,10 @@ export function SwipeableTaskCard({
               friction: 8,
             }).start();
           });
-        } else if (isQuickSwipeRight || isSlowSwipeRight) {
+        } else if (isSwipeRight) {
           // Swipe right → Change status
           Animated.timing(translateX, {
-            toValue: 120,
+            toValue: 100,
             duration: 150,
             useNativeDriver: true,
           }).start(() => {
@@ -192,6 +193,7 @@ export function SwipeableTaskCard({
             }).start();
           });
         } else {
+          // Snap back to original position
           Animated.spring(translateX, {
             toValue: 0,
             useNativeDriver: true,
@@ -228,6 +230,120 @@ export function SwipeableTaskCard({
     extrapolate: "clamp",
   });
 
+  // MATRIX VIEW: Minimal display (text only)
+  if (isMatrixView) {
+    return (
+      <View style={{ marginBottom: 6, borderRadius: 8, overflow: "hidden" }}>
+        {/* Background swipe actions */}
+        <View
+          style={{
+            position: "absolute",
+            top: 0,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            flexDirection: "row",
+            borderRadius: 8,
+            overflow: "hidden",
+          }}
+        >
+          {/* Right swipe background (status change) */}
+          <Animated.View
+            style={{
+              flex: 1,
+              backgroundColor: "#22C55E",
+              justifyContent: "center",
+              paddingLeft: 12,
+              opacity: leftActionOpacity,
+            }}
+          >
+            <Text style={{ color: "#FFFFFF", fontWeight: "700", fontSize: 11 }}>
+              {getNextStatusLabel(task.status)}
+            </Text>
+          </Animated.View>
+
+          {/* Left swipe background (delete) */}
+          <Animated.View
+            style={{
+              flex: 1,
+              backgroundColor: "#EF4444",
+              justifyContent: "center",
+              alignItems: "flex-end",
+              paddingRight: 12,
+              opacity: rightActionOpacity,
+            }}
+          >
+            <Text style={{ color: "#FFFFFF", fontWeight: "700", fontSize: 11 }}>
+              {isRu ? "Удалить" : "Delete"}
+            </Text>
+          </Animated.View>
+        </View>
+
+        {/* Swipeable card */}
+        <Animated.View
+          style={{ transform: [{ translateX }] }}
+          {...panResponder.panHandlers}
+        >
+          <Pressable
+            onPress={() => {
+              if (!isSwipingRef.current) {
+                onToggleExpand(task.id);
+              }
+            }}
+            style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1, borderRadius: 8 }]}
+          >
+            <View
+              style={{
+                borderLeftWidth: 3,
+                borderLeftColor: priorityColor,
+                borderRadius: 8,
+                overflow: "hidden",
+                backgroundColor: bgTint,
+                paddingHorizontal: 10,
+                paddingVertical: 8,
+              }}
+              className="bg-surface border border-border"
+            >
+              {/* Minimal view: only text + status */}
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                <Pressable
+                  onPress={() => onStatusChange(task.id, task.status)}
+                  style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}
+                >
+                  <Text style={{ fontSize: 20, color: getStatusColor(task.status), lineHeight: 24 }}>
+                    {STATUS_ICONS[task.status]}
+                  </Text>
+                </Pressable>
+
+                {task.emoji && (
+                  <Text style={{ fontSize: 14 }}>
+                    {task.emoji}
+                  </Text>
+                )}
+
+                <Text
+                  style={{
+                    fontSize: 13,
+                    lineHeight: 18,
+                    fontWeight: "500",
+                    flex: 1,
+                    textDecorationLine: task.status === "completed" ? "line-through" : "none",
+                    opacity: task.status === "completed" ? 0.5 : 1,
+                  }}
+                  className="text-foreground"
+                  numberOfLines={1}
+                >
+                  {task.title}
+                </Text>
+              </View>
+            </View>
+          </Pressable>
+        </Animated.View>
+      </View>
+    );
+  }
+
+  // REGULAR VIEW: Full details
   return (
     <View style={{ marginBottom: 8, borderRadius: 14, overflow: "hidden" }}>
       {/* Background swipe actions */}
