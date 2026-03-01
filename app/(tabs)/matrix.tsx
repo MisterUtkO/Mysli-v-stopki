@@ -5,6 +5,7 @@ import { useTaskContext } from "@/lib/context/task-context";
 import { useColors } from "@/hooks/use-colors";
 import { useI18n } from "@/lib/context/i18n-context";
 import { SwipeableTaskCard } from "@/components/swipeable-task-card";
+import { TaskPopupBubble } from "@/components/task-popup-bubble";
 import { cn } from "@/lib/utils";
 
 const QUADRANT_CONFIG = {
@@ -52,8 +53,9 @@ export default function MatrixScreen() {
     Q3: false,
     Q4: false,
   });
-  const [detailModalVisible, setDetailModalVisible] = useState(false);
+  const [popupVisible, setPopupVisible] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [popupPosition, setPopupPosition] = useState({ top: 100, left: 20 });
 
   const screenWidth = Dimensions.get("window").width;
   const screenHeight = Dimensions.get("window").height;
@@ -89,7 +91,7 @@ export default function MatrixScreen() {
   );
 
   const handleToggleExpand = useCallback((taskId: string) => {
-    setDetailModalVisible(true);
+    setPopupVisible(true);
     setSelectedTaskId(taskId);
   }, []);
 
@@ -192,99 +194,26 @@ export default function MatrixScreen() {
         </View>
       </View>
 
-      {/* Task Detail Modal */}
-      <Modal
-        visible={detailModalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setDetailModalVisible(false)}
-      >
-        <View className="flex-1 bg-black/50">
-          <Pressable
-            className="flex-1"
-            onPress={() => setDetailModalVisible(false)}
+      {/* Task Detail Popup Bubble */}
+      {popupVisible && selectedTask && (
+        <Pressable
+          className="absolute inset-0 z-40"
+          onPress={() => setPopupVisible(false)}
+        >
+          <TaskPopupBubble
+            title={selectedTask.title}
+            description={selectedTask.description}
+            importance={selectedTask.importance}
+            urgency={selectedTask.urgency}
+            dueDate={selectedTask.dueDate}
+            dueTime={selectedTask.dueTime}
+            status={selectedTask.status}
+            isRu={isRu}
+            position={popupPosition}
+            onClose={() => setPopupVisible(false)}
           />
-          {selectedTask && (
-            <View className="bg-surface rounded-t-3xl p-6 max-h-4/5">
-              <View className="flex-row items-center justify-between mb-4">
-                <Text className="text-xl font-bold text-foreground flex-1">
-                  {selectedTask.title}
-                </Text>
-                <Pressable onPress={() => setDetailModalVisible(false)}>
-                  <Text className="text-2xl text-muted">✕</Text>
-                </Pressable>
-              </View>
-
-              <ScrollView showsVerticalScrollIndicator={false}>
-                {selectedTask.description && selectedTask.description !== selectedTask.title && (
-                  <View className="mb-4">
-                    <Text className="text-sm font-semibold text-muted mb-1">
-                      {isRu ? "Описание" : "Description"}
-                    </Text>
-                    <Text className="text-base text-foreground">
-                      {selectedTask.description}
-                    </Text>
-                  </View>
-                )}
-
-                <View className="flex-row gap-4 mb-4">
-                  <View className="flex-1">
-                    <Text className="text-xs font-semibold text-muted mb-1">
-                      {isRu ? "Важность" : "Importance"}
-                    </Text>
-                    <Text className="text-lg font-bold text-red-500">
-                      {selectedTask.importance}/7
-                    </Text>
-                  </View>
-                  <View className="flex-1">
-                    <Text className="text-xs font-semibold text-muted mb-1">
-                      {isRu ? "Срочность" : "Urgency"}
-                    </Text>
-                    <Text className="text-lg font-bold text-orange-500">
-                      {selectedTask.urgency}/7
-                    </Text>
-                  </View>
-                  <View className="flex-1">
-                    <Text className="text-xs font-semibold text-muted mb-1">
-                      {isRu ? "Квадрант" : "Quadrant"}
-                    </Text>
-                    <Text className="text-lg font-bold text-blue-500">
-                      {selectedTask.quadrant}
-                    </Text>
-                  </View>
-                </View>
-
-                {selectedTask.dueDate && (
-                  <View className="mb-4">
-                    <Text className="text-xs font-semibold text-muted mb-1">
-                      {isRu ? "Срок" : "Due Date"}
-                    </Text>
-                    <Text className="text-base text-foreground">
-                      📅 {selectedTask.dueDate}{selectedTask.dueTime ? ` ${selectedTask.dueTime}` : ""}
-                    </Text>
-                  </View>
-                )}
-
-                <View className="mb-4">
-                  <Text className="text-xs font-semibold text-muted mb-1">
-                    {isRu ? "Статус" : "Status"}
-                  </Text>
-                  <Pressable
-                    onPress={() => handleStatusChange(selectedTask.id, selectedTask.status)}
-                    className="bg-blue-500/20 px-3 py-2 rounded-lg"
-                  >
-                    <Text className="text-base font-semibold text-blue-500">
-                      {selectedTask.status === "not_started" && (isRu ? "Не начато" : "Not started")}
-                      {selectedTask.status === "in_progress" && (isRu ? "В процессе" : "In progress")}
-                      {selectedTask.status === "completed" && (isRu ? "Выполнено" : "Completed")}
-                    </Text>
-                  </Pressable>
-                </View>
-              </ScrollView>
-            </View>
-          )}
-        </View>
-      </Modal>
+        </Pressable>
+      )}
     </ScreenContainer>
   );
 }
