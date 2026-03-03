@@ -41,11 +41,19 @@ const QUADRANT_CONFIG = {
 
 type QuadrantKey = "Q1" | "Q2" | "Q3" | "Q4";
 
+const getQuadrantConfig = (isRu: boolean) => ({
+  Q1: { label: isRu ? "Делай сейчас" : "Do Now", description: isRu ? "Срочно и важно" : "Urgent & Important", color: "#EF4444", importance: [4, 5, 6, 7], urgency: [4, 5, 6, 7] },
+  Q2: { label: isRu ? "Запланируй" : "Schedule", description: isRu ? "Важно, но не срочно" : "Important, Not Urgent", color: "#F97316", importance: [4, 5, 6, 7], urgency: [1, 2, 3] },
+  Q3: { label: isRu ? "Делегируй" : "Delegate", description: isRu ? "Срочно, но не важно" : "Urgent, Not Important", color: "#3B82F6", importance: [1, 2, 3], urgency: [4, 5, 6, 7] },
+  Q4: { label: isRu ? "Исключи" : "Eliminate", description: isRu ? "Не срочно и не важно" : "Not Urgent & Not Important", color: "#22C55E", importance: [1, 2, 3], urgency: [1, 2, 3] },
+});
+
 export default function MatrixScreen() {
   const { tasks, updateTask, deleteTask } = useTaskContext();
   const colors = useColors();
   const { t, language } = useI18n();
   const isRu = language === "ru";
+  const QUADRANT_CONFIG = getQuadrantConfig(isRu);
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
   const [scrollStates, setScrollStates] = useState<Record<QuadrantKey, boolean>>({
     Q1: false,

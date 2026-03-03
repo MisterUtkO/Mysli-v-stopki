@@ -21,6 +21,7 @@ const MAPPING = {
   "gear": "settings",
   "trophy.fill": "emoji-events",
   "square.grid.2x2.fill": "grid-view",
+  "square.grid.3x3.fill": "dashboard",
   "trash.fill": "delete",
 } as IconMapping;
 
