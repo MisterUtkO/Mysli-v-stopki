@@ -76,7 +76,7 @@ interface SwipeableTaskCardProps {
   task: Task;
   isExpanded: boolean;
   isRu: boolean;
-  onToggleExpand: (taskId: string) => void;
+  onToggleExpand: (taskId: string, position?: { x: number; y: number }) => void;
   onStatusChange: (taskId: string, currentStatus: TaskStatus) => void;
   onDelete: (taskId: string, taskTitle: string) => void;
   onExportToCalendar?: (task: Task) => void; // Manual export to calendar
@@ -287,9 +287,10 @@ export function SwipeableTaskCard({
           {...panResponder.panHandlers}
         >
           <Pressable
-            onPress={() => {
+            onPress={(e) => {
               if (!isSwipingRef.current) {
-                onToggleExpand(task.id);
+                const { pageX, pageY } = e.nativeEvent;
+                onToggleExpand(task.id, isMatrixView ? { x: pageX, y: pageY } : undefined);
               }
             }}
             style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1, borderRadius: 8 }]}

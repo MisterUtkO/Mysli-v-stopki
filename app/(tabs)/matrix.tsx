@@ -98,10 +98,26 @@ export default function MatrixScreen() {
     []
   );
 
-  const handleToggleExpand = useCallback((taskId: string) => {
+  const handleToggleExpand = useCallback((taskId: string, position?: { x: number; y: number }) => {
     setPopupVisible(true);
     setSelectedTaskId(taskId);
-  }, []);
+    
+    if (position) {
+      // Position popup near the task, but keep it within screen bounds
+      const maxWidth = 280; // popup max width
+      const maxHeight = 300; // approximate popup height
+      
+      let top = position.y - maxHeight - 10; // above the task
+      let left = position.x - maxWidth / 2; // centered on task
+      
+      // Keep popup within screen bounds
+      if (top < 20) top = position.y + 40; // move below if too high
+      if (left < 10) left = 10;
+      if (left + maxWidth > screenWidth - 10) left = screenWidth - maxWidth - 10;
+      
+      setPopupPosition({ top, left });
+    }
+  }, [screenWidth]);
 
   const handleStatusChange = useCallback(
     async (taskId: string, currentStatus: string) => {
