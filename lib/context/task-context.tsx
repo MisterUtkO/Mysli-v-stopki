@@ -18,6 +18,11 @@ import {
   scheduleMotivationalNotification,
   cancelAllScheduledNotifications,
 } from "@/lib/services/notification-scheduler";
+import {
+  syncTaskToCalendar,
+  formatTaskForCalendar,
+  deleteCalendarEventByTaskId,
+} from "@/lib/calendar-sync";
 
 interface CreateTaskInput {
   title: string;
@@ -178,6 +183,18 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     // Reschedule notifications with new task
     console.log("[TaskContext] Task created, rescheduling notifications");
     await rescheduleNotifications(updatedTasks, settings);
+    
+    // Sync to calendar if task has a due date
+    const calendarEvent = formatTaskForCalendar(newTask);
+    if (calendarEvent) {
+      try {
+        await syncTaskToCalendar(calendarEvent);
+        console.log("[TaskContext] Task synced to calendar");
+      } catch (error) {
+        console.error("[TaskContext] Failed to sync task to calendar:", error);
+      }
+    }
+    
     return newTask;
   };
 
@@ -190,6 +207,22 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       console.log("[TaskContext] Task updated, rescheduling notifications");
       await rescheduleNotifications(updatedTasks, settings);
     }
+    
+    // Sync to calendar if due date or time changed
+    if (updates.dueDate || updates.dueTime) {
+      const updatedTask = updatedTasks.find(t => t.id === id);
+      if (updatedTask) {
+        const calendarEvent = formatTaskForCalendar(updatedTask);
+        if (calendarEvent) {
+          try {
+            await syncTaskToCalendar(calendarEvent);
+            console.log("[TaskContext] Task updated in calendar");
+          } catch (error) {
+            console.error("[TaskContext] Failed to sync task to calendar:", error);
+          }
+        }
+      }
+    }
   };
 
   const deleteTask = async (id: string): Promise<void> => {
@@ -198,6 +231,14 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     setTasks(updatedTasks);
     console.log("[TaskContext] Task deleted, rescheduling notifications");
     await rescheduleNotifications(updatedTasks, settings);
+    
+    // Remove from calendar
+    try {
+      await deleteCalendarEventByTaskId(id);
+      console.log("[TaskContext] Task removed from calendar");
+    } catch (error) {
+      console.error("[TaskContext] Failed to remove task from calendar:", error);
+    }
   };
 
   const updateSettings = async (newSettings: Partial<Settings>): Promise<void> => {

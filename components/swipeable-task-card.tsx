@@ -79,6 +79,7 @@ interface SwipeableTaskCardProps {
   onToggleExpand: (taskId: string) => void;
   onStatusChange: (taskId: string, currentStatus: TaskStatus) => void;
   onDelete: (taskId: string, taskTitle: string) => void;
+  onExportToCalendar?: (task: Task) => void; // Manual export to calendar
   isMatrixView?: boolean; // If true, show minimal info (text only)
 }
 
@@ -89,6 +90,7 @@ export function SwipeableTaskCard({
   onToggleExpand,
   onStatusChange,
   onDelete,
+  onExportToCalendar,
   isMatrixView = false,
 }: SwipeableTaskCardProps) {
   const router = useRouter();
@@ -580,7 +582,7 @@ export function SwipeableTaskCard({
                   </View>
                 )}
 
-                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 10 }}>
+                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 10, gap: 8 }}>
                   <Pressable
                     onPress={() => onStatusChange(task.id, task.status)}
                     style={({ pressed }) => [{
@@ -600,6 +602,23 @@ export function SwipeableTaskCard({
                       {getStatusLabel(task.status)}
                     </Text>
                   </Pressable>
+
+                  {!task.dueDate && onExportToCalendar && (
+                    <Pressable
+                      onPress={() => onExportToCalendar(task)}
+                      style={({ pressed }) => [{
+                        paddingHorizontal: 10,
+                        paddingVertical: 6,
+                        borderRadius: 8,
+                        backgroundColor: "#3B82F6" + (pressed ? "99" : "33"),
+                        opacity: pressed ? 0.7 : 1,
+                      }]}
+                    >
+                      <Text style={{ fontSize: 13, fontWeight: "600", color: "#3B82F6" }}>
+                        Cal
+                      </Text>
+                    </Pressable>
+                  )}
 
                   <Pressable
                     onPress={() => router.push(`/task-detail/${task.id}`)}

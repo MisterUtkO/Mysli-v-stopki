@@ -16,6 +16,7 @@ import { ScreenContainer } from "@/components/screen-container";
 import { useTaskContext } from "@/lib/context/task-context";
 import { useI18n } from "@/lib/context/i18n-context";
 import { SwipeableTaskCard } from "@/components/swipeable-task-card";
+import { syncTaskToCalendar, formatTaskForCalendar } from "@/lib/calendar-sync";
 import type { Task, TaskStatus } from "@/lib/domain/types";
 
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -125,6 +126,38 @@ export default function HomeScreen() {
     } else {
       setSearchVisible(true);
       setTimeout(() => searchInputRef.current?.focus(), 100);
+    }
+  };
+
+  const handleExportToCalendar = async (task: Task) => {
+    try {
+      const calendarEvent = formatTaskForCalendar(task);
+      if (!calendarEvent) {
+        Alert.alert(
+          isRu ? "Ошибка" : "Error",
+          isRu ? "Задача должна иметь дату" : "Task must have a due date"
+        );
+        return;
+      }
+      
+      const eventId = await syncTaskToCalendar(calendarEvent);
+      if (eventId) {
+        Alert.alert(
+          isRu ? "Успешно" : "Success",
+          isRu ? "Задача добавлена в календарь" : "Task added to calendar"
+        );
+      } else {
+        Alert.alert(
+          isRu ? "Ошибка" : "Error",
+          isRu ? "Не удалось добавить в календарь" : "Failed to add to calendar"
+        );
+      }
+    } catch (error) {
+      console.error("Export to calendar error:", error);
+      Alert.alert(
+        isRu ? "Ошибка" : "Error",
+        isRu ? "Ошибка при добавлении в календарь" : "Error adding to calendar"
+      );
     }
   };
 
@@ -363,6 +396,7 @@ export default function HomeScreen() {
                 onToggleExpand={toggleExpand}
                 onStatusChange={handleStatusChange}
                 onDelete={handleDelete}
+                onExportToCalendar={handleExportToCalendar}
               />
             ))}
           </ScrollView>
