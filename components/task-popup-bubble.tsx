@@ -48,13 +48,13 @@ export function TaskPopupBubble({
       }}
     >
       {/* Bubble container with comic-style border */}
-      <View className="bg-white rounded-2xl p-4 shadow-lg border-2 border-black">
+      <View className="bg-background rounded-2xl p-4 shadow-lg border-2 border-black">
         {/* Close button */}
         <Pressable
           onPress={onClose}
-          className="absolute -top-2 -right-2 w-6 h-6 bg-black rounded-full items-center justify-center z-10"
+          className="absolute -top-2 -right-2 w-6 h-6 bg-foreground rounded-full items-center justify-center z-10"
         >
-          <Text className="text-white text-sm font-bold">×</Text>
+          <Text className="text-background text-sm font-bold">×</Text>
         </Pressable>
 
         {/* Title */}
@@ -126,7 +126,7 @@ export function TaskPopupBubble({
 
       {/* Comic-style pointer (tail) */}
       <View
-        className="absolute w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-white"
+        className="absolute w-0 h-0"
         style={{
           left: 20,
           top: -8,
@@ -135,7 +135,7 @@ export function TaskPopupBubble({
           borderTopWidth: 8,
           borderLeftColor: "transparent",
           borderRightColor: "transparent",
-          borderTopColor: "white",
+          borderTopColor: "rgb(var(--color-background))",
         }}
       />
 

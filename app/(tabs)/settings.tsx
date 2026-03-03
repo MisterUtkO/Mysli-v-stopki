@@ -473,6 +473,42 @@ export default function SettingsScreen() {
             )}
           </View>
 
+          {/* Task Reminders */}
+          <View className={sectionStyle}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                <Text style={{ fontSize: 22 }}>🔔</Text>
+                <Text className="text-foreground font-semibold" style={{ fontSize: 16 }}>
+                  {isRu ? "Напоминания" : "Reminders"}
+                </Text>
+              </View>
+            </View>
+            <Text className="text-muted" style={{ fontSize: 13, marginBottom: 8 }}>
+              {isRu ? "Интервал напоминаний для задач без даты (минут):" : "Reminder interval for tasks without date (minutes):"}
+            </Text>
+            <TextInput
+              value="60"
+              onChangeText={() => {}}
+              placeholder="60"
+              placeholderTextColor="#999"
+              keyboardType="number-pad"
+              className="bg-background border border-border rounded-xl p-3 text-foreground"
+              style={{ fontSize: 14 }}
+            />
+            <Text className="text-muted" style={{ fontSize: 13, marginTop: 12, marginBottom: 8 }}>
+              {isRu ? "Напоминание перед сроком (минут):" : "Reminder before due time (minutes):"}
+            </Text>
+            <TextInput
+              value="15"
+              onChangeText={() => {}}
+              placeholder="15"
+              placeholderTextColor="#999"
+              keyboardType="number-pad"
+              className="bg-background border border-border rounded-xl p-3 text-foreground"
+              style={{ fontSize: 14 }}
+            />
+          </View>
+
           {/* Start Screen */}
           <View className={sectionStyle}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 10 }}>

@@ -23,6 +23,13 @@ import {
   formatTaskForCalendar,
   deleteCalendarEventByTaskId,
 } from "@/lib/calendar-sync";
+import {
+  scheduleTaskReminder,
+  rescheduleTaskReminder,
+  cancelTaskReminder,
+  getReminderSettings,
+  requestNotificationPermissions,
+} from "@/lib/reminders";
 
 interface CreateTaskInput {
   title: string;
@@ -184,6 +191,15 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     console.log("[TaskContext] Task created, rescheduling notifications");
     await rescheduleNotifications(updatedTasks, settings);
     
+    // Schedule reminder for new task
+    try {
+      const reminderSettings = await getReminderSettings();
+      await scheduleTaskReminder(newTask, reminderSettings);
+      console.log("[TaskContext] Reminder scheduled for new task");
+    } catch (error) {
+      console.error("[TaskContext] Failed to schedule reminder:", error);
+    }
+    
     // Sync to calendar if task has a due date
     const calendarEvent = formatTaskForCalendar(newTask);
     if (calendarEvent) {
@@ -206,6 +222,20 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     if (updates.status || updates.notificationFrequency) {
       console.log("[TaskContext] Task updated, rescheduling notifications");
       await rescheduleNotifications(updatedTasks, settings);
+    }
+    
+    // Reschedule reminder if due date/time changed
+    if (updates.dueDate || updates.dueTime) {
+      const updatedTask = updatedTasks.find(t => t.id === id);
+      if (updatedTask) {
+        try {
+          const reminderSettings = await getReminderSettings();
+          await rescheduleTaskReminder(updatedTask, reminderSettings);
+          console.log("[TaskContext] Reminder rescheduled for updated task");
+        } catch (error) {
+          console.error("[TaskContext] Failed to reschedule reminder:", error);
+        }
+      }
     }
     
     // Sync to calendar if due date or time changed
@@ -231,6 +261,14 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     setTasks(updatedTasks);
     console.log("[TaskContext] Task deleted, rescheduling notifications");
     await rescheduleNotifications(updatedTasks, settings);
+    
+    // Cancel reminder
+    try {
+      await cancelTaskReminder(id);
+      console.log("[TaskContext] Reminder cancelled for deleted task");
+    } catch (error) {
+      console.error("[TaskContext] Failed to cancel reminder:", error);
+    }
     
     // Remove from calendar
     try {
