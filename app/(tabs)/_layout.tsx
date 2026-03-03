@@ -1,7 +1,7 @@
 import { Tabs, useRouter } from "expo-router";
 import type { RelativePathString } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { HapticTab } from "@/components/haptic-tab";
+import { HapticTabWithGlow } from "@/components/haptic-tab-with-glow";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Platform, View } from "react-native";
 import { useColors } from "@/hooks/use-colors";
@@ -68,7 +68,7 @@ export default function TabLayout() {
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
         headerShown: false,
-        tabBarButton: HapticTab,
+        tabBarButton: HapticTabWithGlow,
         tabBarStyle: {
           paddingTop: 8,
           paddingBottom: bottomPadding,

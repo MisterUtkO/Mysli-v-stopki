@@ -11,6 +11,7 @@ import {
   Linking,
   Modal,
 } from "react-native";
+import { useRouter } from "expo-router";
 import * as Clipboard from "expo-clipboard";
 import { Image } from "expo-image";
 import { ScreenContainer } from "@/components/screen-container";
@@ -26,6 +27,7 @@ type NotifFrequency = "never" | "hourly" | "daily" | "weekly" | "always";
 type MotivFrequency = "never" | "10min" | "30min" | "hourly" | "daily" | "weekly";
 
 export default function SettingsScreen() {
+  const router = useRouter();
   const { settings, updateSettings, exportTasks, clearAllData, tasks } = useTaskContext();
   const { language, setLanguage, t } = useI18n();
   const { colorScheme, setColorScheme } = useThemeContext();
@@ -780,6 +782,24 @@ export default function SettingsScreen() {
           </Pressable>
         </Pressable>
       </Modal>
+      {/* About Button */}
+      <Pressable
+        onPress={() => router.push("/about")}
+        style={({ pressed }) => [{
+          position: "absolute",
+          bottom: 20,
+          right: 20,
+          backgroundColor: colors.primary,
+          borderRadius: 50,
+          width: 56,
+          height: 56,
+          justifyContent: "center",
+          alignItems: "center",
+          opacity: pressed ? 0.7 : 1,
+        }]}
+      >
+        <Text style={{ fontSize: 24 }}>ℹ️</Text>
+      </Pressable>
     </ScreenContainer>
   );
 }
