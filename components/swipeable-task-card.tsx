@@ -13,6 +13,7 @@ import {
 import { useRouter } from "expo-router";
 import type { Task, TaskStatus } from "@/lib/domain/types";
 import { AnimatedEmoji } from "@/components/animated-emoji";
+import { AnimatedTaskBorder } from "@/components/animated-task-border";
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -42,6 +43,27 @@ const MIN_HORIZONTAL_MOVEMENT = 3; // Minimum horizontal movement to start detec
  * 4-5      → Green — low priority, calm
  * 2-3      → Cool blue-gray — minimal priority, relaxed
  */
+/**
+ * Check if a task is overdue (has dueDate and it's in the past)
+ */
+export function isTaskOverdue(task: Task): boolean {
+  if (!task.dueDate) return false;
+  const now = new Date();
+  const dueDate = new Date(task.dueDate);
+  return dueDate < now;
+}
+
+/**
+ * Check if a task is old (no dueDate and created >3 days ago)
+ */
+export function isTaskOld(task: Task): boolean {
+  if (task.dueDate) return false; // Only check tasks without due date
+  const now = new Date();
+  const createdDate = new Date(task.createdAt);
+  const daysDiff = (now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24);
+  return daysDiff > 3;
+}
+
 export function getPriorityGradientColor(importance: number, urgency: number): string {
   const score = importance + urgency; // 2-14
   
@@ -234,8 +256,12 @@ export function SwipeableTaskCard({
 
   // MATRIX VIEW: Minimal display (text only)
   if (isMatrixView) {
+    const overdue = isTaskOverdue(task);
+    const old = isTaskOld(task);
+    
     return (
-      <View style={{ marginBottom: 6, borderRadius: 8, overflow: "hidden" }}>
+      <AnimatedTaskBorder isOverdue={overdue} isOld={old}>
+        <View style={{ marginBottom: 6, borderRadius: 8, overflow: "hidden" }}>
         {/* Background swipe actions */}
         <View
           style={{
@@ -343,6 +369,7 @@ export function SwipeableTaskCard({
           </Pressable>
         </Animated.View>
       </View>
+      </AnimatedTaskBorder>
     );
   }
 

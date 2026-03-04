@@ -6,7 +6,7 @@ import { useTaskContext } from "@/lib/context/task-context";
 import { useEffect, useState } from "react";
 
 
-const APP_VERSION = "1.0.1";
+const APP_VERSION = "1.0.2";
 
 interface ChangelogEntry {
   version: string;
@@ -18,6 +18,24 @@ interface ChangelogEntry {
 }
 
 const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "1.0.2",
+    date: "2026-03-04",
+    changes: {
+      en: [
+        "✓ Animated borders for overdue tasks",
+        "✓ Visual alerts for old tasks (>3 days)",
+        "✓ Task reminder system with date/time support",
+        "✓ Fixed popup text visibility in dark themes",
+      ],
+      ru: [
+        "✓ Анимированные границы для просроченных задач",
+        "✓ Визуальные оповещения для старых задач (>3 дней)",
+        "✓ Система напоминаний с поддержкой даты/времени",
+        "✓ Исправлена видимость текста в тёмных темах",
+      ],
+    },
+  },
   {
     version: "1.0.1",
     date: "2026-03-03",
@@ -68,7 +86,8 @@ const FEATURES = {
     "📋 Task Management — create, edit, delete tasks with detailed info",
     "🎯 Priority Scoring — automatic priority calculation",
     "📅 Calendar Integration — sync tasks with system calendar (Android)",
-    "🔔 Smart Notifications — customizable reminders",
+    "🔔 Smart Notifications — customizable reminders and alerts",
+    "⏰ Overdue Detection — animated borders for expired tasks",
     "📈 Statistics — track your productivity",
     "🏆 Achievements — unlock badges and milestones",
     "🎨 Themes — light, dark, pastel, amoled modes",
@@ -82,7 +101,8 @@ const FEATURES = {
     "📋 Управление задачами — создавайте, редактируйте, удаляйте задачи",
     "🎯 Оценка приоритета — автоматический расчёт приоритета",
     "📅 Интеграция календаря — синхронизация с системным календарём (Android)",
-    "🔔 Умные уведомления — настраиваемые напоминания",
+    "🔔 Умные уведомления — настраиваемые напоминания и оповещения",
+    "⏰ Обнаружение просроченных — анимированные границы для истекших задач",
     "📈 Статистика — отслеживайте вашу продуктивность",
     "🏆 Достижения — разблокируйте значки и вехи",
     "🎨 Темы — светлая, тёмная, пастель, amoled режимы",
