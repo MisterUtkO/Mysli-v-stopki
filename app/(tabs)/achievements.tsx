@@ -8,6 +8,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
+import { AnimatedAchievementCard } from "@/components/animated-achievement-card";
 import { useAchievements } from "@/lib/context/achievement-context";
 import { useI18n } from "@/lib/context/i18n-context";
 import { useColors } from "@/hooks/use-colors";
@@ -111,55 +112,16 @@ export default function AchievementsScreen() {
                 const rarityColor = RARITY_COLORS[achievement.rarity];
 
                 return (
-                  <Pressable
+                  <AnimatedAchievementCard
                     key={achievement.id}
+                    achievement={achievement}
+                    isUnlocked={isUnlocked}
+                    itemSize={itemSize}
+                    rarityColor={rarityColor}
+                    surfaceColor={colors.surface}
+                    borderColor={colors.border}
                     onPress={() => setSelectedAchievement(achievement)}
-                    style={({ pressed }) => [{
-                      width: itemSize,
-                      height: itemSize,
-                      borderRadius: 14,
-                      justifyContent: "center",
-                      alignItems: "center",
-                      backgroundColor: isUnlocked ? `${rarityColor}20` : colors.surface,
-                      borderWidth: 2,
-                      borderColor: isUnlocked ? rarityColor : colors.border,
-                      opacity: pressed ? 0.7 : 1,
-                      transform: [{ scale: pressed ? 0.93 : 1 }],
-                      // Glow effect for unlocked
-                      ...(isUnlocked ? {
-                        shadowColor: rarityColor,
-                        shadowOffset: { width: 0, height: 0 },
-                        shadowOpacity: 0.5,
-                        shadowRadius: 8,
-                        elevation: 6,
-                      } : {}),
-                    }]}
-                  >
-                    {isUnlocked ? (
-                      <Text style={{ fontSize: itemSize * 0.45 }}>{achievement.emoji}</Text>
-                    ) : (
-                      <View style={{
-                        width: itemSize * 0.5,
-                        height: itemSize * 0.5,
-                        borderRadius: itemSize * 0.25,
-                        backgroundColor: colors.border,
-                        justifyContent: "center",
-                        alignItems: "center",
-                      }}>
-                        <Text style={{ fontSize: itemSize * 0.22, color: colors.muted }}>?</Text>
-                      </View>
-                    )}
-                    {/* Rarity dot */}
-                    <View style={{
-                      position: "absolute",
-                      bottom: 4,
-                      right: 4,
-                      width: 8,
-                      height: 8,
-                      borderRadius: 4,
-                      backgroundColor: isUnlocked ? rarityColor : colors.border,
-                    }} />
-                  </Pressable>
+                  />
                 );
               })}
               {/* Fill empty slots in last row */}

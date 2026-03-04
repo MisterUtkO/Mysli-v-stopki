@@ -378,3 +378,12 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Add velocity-based swipe detection for faster response
 - [x] Reduce swipe threshold for easier activation
 - [x] Test swipe left (delete) and swipe right (status change)
+
+## Phase 17: Achievement Animations
+
+- [x] Create AnimatedAchievementCard component with subtle motion effects
+- [x] Add floating animation (subtle rotation) for unlocked achievements
+- [x] Add pulse animation (scale 1.0 → 1.05) for unlocked achievements
+- [x] Add glow pulse animation (shadow opacity) for unlocked achievements
+- [x] Integrate animated cards into Achievements page
+- [x] Spring animation on press (scale 0.93 → 1.0)
