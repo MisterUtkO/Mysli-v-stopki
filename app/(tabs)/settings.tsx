@@ -292,6 +292,11 @@ export default function SettingsScreen() {
                       borderWidth: isActive ? 2 : 1,
                       borderColor: isActive ? colors.primary : colors.border,
                       opacity: pressed ? 0.7 : isLocked ? 0.5 : 1,
+                      shadowColor: isActive ? colors.primary : 'transparent',
+                      shadowOpacity: isActive ? 0.6 : 0,
+                      shadowRadius: isActive ? 8 : 0,
+                      shadowOffset: { width: 0, height: 0 },
+                      elevation: isActive ? 8 : 0,
                     }]}
                   >
                     <Text style={{ fontSize: 20, marginBottom: 4 }}>{isLocked ? "🔒" : opt.emoji}</Text>
