@@ -178,8 +178,7 @@ export default function HomeScreen() {
                 backgroundColor: "#0a7ea4",
                 alignItems: "center",
                 justifyContent: "center",
-                opacity: pressed ? 0.7 : 1,
-                transform: [{ scale: pressed ? 0.95 : 1 }],
+                opacity: pressed ? 0.6 : 1,
               },
             ]}
           >
@@ -204,7 +203,7 @@ export default function HomeScreen() {
                 borderColor: "#9CA3AF",
                 alignItems: "center",
                 justifyContent: "center",
-                opacity: pressed ? 0.7 : 1,
+                opacity: pressed ? 0.6 : 1,
               },
             ]}
           >
@@ -240,7 +239,7 @@ export default function HomeScreen() {
                   backgroundColor: selectedStatus === null ? "#0a7ea4" : "transparent",
                   borderWidth: 1,
                   borderColor: selectedStatus === null ? "#0a7ea4" : "#D1D5DB",
-                  opacity: pressed ? 0.7 : 1,
+                  opacity: pressed ? 0.6 : 1,
                   flexDirection: "row",
                   alignItems: "center",
                   gap: 4,
@@ -277,7 +276,7 @@ export default function HomeScreen() {
                       backgroundColor: selectedStatus === status ? color : "transparent",
                       borderWidth: 1,
                       borderColor: selectedStatus === status ? color : "#D1D5DB",
-                      opacity: pressed ? 0.7 : 1,
+                      opacity: pressed ? 0.6 : 1,
                       flexDirection: "row",
                       alignItems: "center",
                       gap: 3,
@@ -313,7 +312,7 @@ export default function HomeScreen() {
                   backgroundColor: "transparent",
                   borderWidth: 1,
                   borderColor: "#D1D5DB",
-                  opacity: pressed ? 0.7 : 1,
+                  opacity: pressed ? 0.6 : 1,
                   flexDirection: "row",
                   alignItems: "center",
                   gap: 3,
