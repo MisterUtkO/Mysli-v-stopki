@@ -459,3 +459,11 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Add fixed height to all filter buttons to prevent layout shift
 - [x] Ensure consistent vertical alignment of filter buttons
 - [x] Test filter buttons don't change size when switching
+
+## Phase 26: Fix Layout & Deleted Tasks Bug
+
+- [x] Fix filter button heights to be uniform
+- [x] Add proper spacing between filter buttons and task list
+- [x] Remove trash tab from bottom navigation bar
+- [x] Fix deleted tasks restoration bug on app restart
+- [x] Ensure soft-deleted tasks persist correctly in AsyncStorage

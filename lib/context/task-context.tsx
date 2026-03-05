@@ -132,7 +132,17 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       try {
         await initializeDatabase();
         const loadedTasks = await getAllTasks();
-        setTasks(loadedTasks);
+        
+        // Filter out permanently deleted tasks (older than 7 days)
+        const now = Date.now();
+        const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+        const activeTasks = loadedTasks.filter((task) => {
+          if (!task.isDeleted) return true;
+          if (!task.deletedAt) return false;
+          return (now - task.deletedAt) < sevenDaysMs;
+        });
+        
+        setTasks(activeTasks);
 
         const language = (await getSetting("language")) as "en" | "ru" | null;
         const theme = (await getSetting("theme")) as "light" | "dark" | "amoled" | "pastel" | "system" | null;

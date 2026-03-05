@@ -257,7 +257,7 @@ export default function HomeScreen() {
               style={({ pressed }) => [
                 {
                   paddingHorizontal: 10,
-                  paddingVertical: 6,
+                  paddingVertical: 0,
                   borderRadius: 12,
                   backgroundColor: selectedStatus === null ? "#0a7ea4" : "transparent",
                   borderWidth: 1,
@@ -297,7 +297,7 @@ export default function HomeScreen() {
                   style={({ pressed }) => [
                     {
                       paddingHorizontal: 10,
-                      paddingVertical: 6,
+                      paddingVertical: 0,
                       borderRadius: 12,
                       backgroundColor: selectedStatus === status ? color : "transparent",
                       borderWidth: 1,
@@ -343,7 +343,7 @@ export default function HomeScreen() {
           </View>
         ) : (
           <ScrollView showsVerticalScrollIndicator={false}>
-            <View style={{ gap: 8, paddingBottom: 16 }}>
+            <View style={{ gap: 8, paddingBottom: 16, paddingTop: 12 }}>
               {filteredTasks.map((task) => (
                 <SwipeableTaskCard
                   key={task.id}
