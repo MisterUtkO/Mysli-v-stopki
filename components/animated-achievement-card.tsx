@@ -41,7 +41,7 @@ export function AnimatedAchievementCard({
   // Shared values for animations
   const scale = useSharedValue(1);
   const rotateZ = useSharedValue(0);
-  const shadowOpacity = useSharedValue(isUnlocked ? 0.5 : 0);
+  const shadowOpacity = useSharedValue(isUnlocked ? 0.8 : 0);
   const pulseScale = useSharedValue(1);
 
   // Idle floating animation for unlocked achievements
@@ -61,9 +61,9 @@ export function AnimatedAchievementCard({
         true
       );
 
-      // Glow pulse
+      // Glow pulse - much brighter
       shadowOpacity.value = withRepeat(
-        withTiming(0.8, { duration: 2000, easing: Easing.inOut(Easing.sin) }),
+        withTiming(1, { duration: 1500, easing: Easing.inOut(Easing.sin) }),
         -1,
         true
       );
@@ -101,13 +101,13 @@ export function AnimatedAchievementCard({
           borderRadius: 14,
           justifyContent: "center",
           alignItems: "center",
-          backgroundColor: isUnlocked ? `${rarityColor}20` : surfaceColor,
-          borderWidth: 2,
+          backgroundColor: isUnlocked ? `${rarityColor}30` : surfaceColor,
+          borderWidth: isUnlocked ? 2.5 : 2,
           borderColor: isUnlocked ? rarityColor : borderColor,
           shadowColor: rarityColor,
           shadowOffset: { width: 0, height: 0 },
-          shadowRadius: 8,
-          elevation: 6,
+          shadowRadius: isUnlocked ? 16 : 8,
+          elevation: isUnlocked ? 12 : 6,
         },
         animatedCardStyle,
         animatedShadowStyle,

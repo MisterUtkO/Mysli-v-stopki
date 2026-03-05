@@ -387,3 +387,13 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Add glow pulse animation (shadow opacity) for unlocked achievements
 - [x] Integrate animated cards into Achievements page
 - [x] Spring animation on press (scale 0.93 → 1.0)
+
+## Phase 18: Bright Highlights & Neon Glow Effects
+
+- [x] Enhance active button highlights with brighter, more saturated colors
+- [x] Increase glow shadow radius and opacity for all active elements
+- [x] Add neon-like glow effects in AMOLED theme (bright cyan/magenta/lime)
+- [x] Update HapticTabWithGlow with brighter neon colors for AMOLED
+- [x] Update theme buttons in Settings with stronger highlights
+- [x] Update achievement card glows with brighter colors
+- [x] Test highlights in all themes (Light, Dark, AMOLED, Pastel, Notebook)

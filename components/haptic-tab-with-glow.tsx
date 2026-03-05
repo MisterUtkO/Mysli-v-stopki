@@ -6,16 +6,30 @@ import Animated from "react-native-reanimated";
 import { useEffect } from "react";
 import { View } from "react-native";
 import { useColors } from "@/hooks/use-colors";
+import { useThemeContext } from "@/lib/theme-provider";
 
 export function HapticTabWithGlow(props: BottomTabBarButtonProps) {
   const glowAnimation = useSharedValue(0);
   const isActive = props.accessibilityState?.selected ?? false;
   const colors = useColors();
+  const { colorScheme } = useThemeContext();
+  const isAmoled = colorScheme === "amoled";
+
+  // Neon colors for AMOLED theme
+  const neonColors = {
+    cyan: "#00FFFF",
+    magenta: "#FF00FF",
+    lime: "#00FF00",
+    yellow: "#FFFF00",
+  };
+
+  // Use neon cyan for AMOLED, primary color for others
+  const glowColor = isAmoled ? neonColors.cyan : colors.primary;
 
   useEffect(() => {
     if (isActive) {
       glowAnimation.value = withRepeat(
-        withTiming(1, { duration: 1200 }),
+        withTiming(1, { duration: 800 }),
         -1,
         true
       );
@@ -28,14 +42,14 @@ export function HapticTabWithGlow(props: BottomTabBarButtonProps) {
     const scale = interpolate(
       glowAnimation.value,
       [0, 1],
-      [1, 1.3],
+      [1, 1.5],
       Extrapolate.CLAMP
     );
 
     const opacity = interpolate(
       glowAnimation.value,
       [0, 0.5, 1],
-      [0.8, 0.4, 0.8],
+      [isAmoled ? 1 : 0.9, isAmoled ? 0.6 : 0.5, isAmoled ? 1 : 0.9],
       Extrapolate.CLAMP
     );
 
@@ -49,13 +63,13 @@ export function HapticTabWithGlow(props: BottomTabBarButtonProps) {
     const lineOpacity = interpolate(
       glowAnimation.value,
       [0, 1],
-      [0.6, 1],
+      [isAmoled ? 0.8 : 0.7, 1],
       Extrapolate.CLAMP
     );
 
     return {
       opacity: lineOpacity,
-      shadowOpacity: lineOpacity * 0.8,
+      shadowOpacity: isAmoled ? lineOpacity * 1.2 : lineOpacity * 0.8,
     };
   });
 
@@ -70,15 +84,15 @@ export function HapticTabWithGlow(props: BottomTabBarButtonProps) {
               width: 48,
               height: 48,
               borderRadius: 24,
-              backgroundColor: colors.primary,
+              backgroundColor: glowColor,
               top: -24,
             },
             animatedGlowStyle,
             {
-              shadowColor: colors.primary,
-              shadowRadius: 12,
+              shadowColor: glowColor,
+              shadowRadius: isAmoled ? 24 : 16,
               shadowOffset: { width: 0, height: 0 },
-              elevation: 12,
+              elevation: isAmoled ? 20 : 14,
             },
           ]}
         />
@@ -95,18 +109,32 @@ export function HapticTabWithGlow(props: BottomTabBarButtonProps) {
               marginLeft: -12,
               width: 24,
               height: 3,
-              backgroundColor: colors.primary,
+              backgroundColor: glowColor,
               borderRadius: 1.5,
-              shadowColor: colors.primary,
+              shadowColor: glowColor,
               shadowOffset: { width: 0, height: 0 },
-              shadowRadius: 6,
+              shadowRadius: isAmoled ? 12 : 8,
             },
             animatedLineStyle,
           ]}
         />
       )}
 
-      {/* Tab button */}
+      {/* Tab button with bright background in AMOLED */}
+      {isActive && isAmoled && (
+        <View
+          style={{
+            position: "absolute",
+            width: 56,
+            height: 56,
+            borderRadius: 28,
+            backgroundColor: glowColor,
+            opacity: 0.15,
+            zIndex: -1,
+          }}
+        />
+      )}
+
       <PlatformPressable
         {...props}
         onPressIn={(ev) => {

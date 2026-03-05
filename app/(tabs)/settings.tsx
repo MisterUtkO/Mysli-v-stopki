@@ -278,6 +278,10 @@ export default function SettingsScreen() {
               {themeOptions.map((opt) => {
                 const isActive = colorScheme === opt.key;
                 const isLocked = opt.key === "amoled" && !hasExplorerAchievement;
+                const neonCyan = "#00FFFF";
+                const isNeon = isActive && colorScheme === "amoled";
+                const highlightColor = isNeon ? neonCyan : colors.primary;
+
                 return (
                   <Pressable
                     key={opt.key}
@@ -285,25 +289,25 @@ export default function SettingsScreen() {
                     style={({ pressed }) => [{
                       flex: 1,
                       minWidth: 70,
-                      backgroundColor: isActive ? colors.primary : isLocked ? `${colors.border}80` : colors.surface,
+                      backgroundColor: isActive ? (isNeon ? "#000000" : colors.primary) : isLocked ? `${colors.border}80` : colors.surface,
                       borderRadius: 12,
                       paddingVertical: 10,
                       alignItems: "center",
-                      borderWidth: isActive ? 2 : 1,
-                      borderColor: isActive ? colors.primary : colors.border,
+                      borderWidth: isActive ? 3 : 1,
+                      borderColor: isActive ? highlightColor : colors.border,
                       opacity: pressed ? 0.7 : isLocked ? 0.5 : 1,
-                      shadowColor: isActive ? colors.primary : 'transparent',
-                      shadowOpacity: isActive ? 0.6 : 0,
-                      shadowRadius: isActive ? 8 : 0,
+                      shadowColor: isActive ? highlightColor : 'transparent',
+                      shadowOpacity: isActive ? (isNeon ? 1 : 0.85) : 0,
+                      shadowRadius: isActive ? (isNeon ? 16 : 12) : 0,
                       shadowOffset: { width: 0, height: 0 },
-                      elevation: isActive ? 8 : 0,
+                      elevation: isActive ? (isNeon ? 16 : 12) : 0,
                     }]}
                   >
                     <Text style={{ fontSize: 20, marginBottom: 4 }}>{isLocked ? "🔒" : opt.emoji}</Text>
                     <Text style={{
                       fontSize: 12,
                       fontWeight: isActive ? "800" : "600",
-                      color: isActive ? "#FFF" : isLocked ? colors.muted : colors.foreground,
+                      color: isActive ? (isNeon ? neonCyan : "#FFF") : isLocked ? colors.muted : colors.foreground,
                     }}>
                       {isRu ? opt.labelRu : opt.labelEn}
                     </Text>
