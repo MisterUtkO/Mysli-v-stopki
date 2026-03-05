@@ -30,6 +30,7 @@ import {
   getReminderSettings,
   requestNotificationPermissions,
 } from "@/lib/reminders";
+import { scheduleTaskCleanup } from "@/lib/services/task-cleanup";
 
 interface CreateTaskInput {
   title: string;
@@ -50,7 +51,9 @@ interface TaskContextType {
   loading: boolean;
   createTask: (task: CreateTaskInput) => Promise<Task>;
   updateTask: (id: string, updates: Partial<Task>) => Promise<void>;
-  deleteTask: (id: string) => Promise<void>;
+  deleteTask: (id: string) => Promise<void>; // Soft delete (move to trash)
+  permanentlyDeleteTask: (id: string) => Promise<void>; // Permanent delete
+  restoreTask: (id: string) => Promise<void>; // Restore from trash
   updateSettings: (settings: Partial<Settings>) => Promise<void>;
   exportTasks: () => Promise<string>;
   importTasks: (jsonData: string) => Promise<void>;
@@ -85,7 +88,15 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   const refreshTasks = useCallback(async () => {
     try {
       const loadedTasks = await getAllTasks();
-      setTasks(loadedTasks);
+      // Filter out permanently deleted tasks (older than 7 days)
+      const now = Date.now();
+      const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+      const activeTasks = loadedTasks.filter((task) => {
+        if (!task.isDeleted) return true;
+        if (!task.deletedAt) return false;
+        return (now - task.deletedAt) < sevenDaysMs;
+      });
+      setTasks(activeTasks);
     } catch (error) {
       console.error("Failed to refresh tasks:", error);
     }
@@ -154,6 +165,10 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         // Schedule notifications on startup
         console.log("[TaskContext] Initializing notifications on startup");
         await rescheduleNotifications(loadedTasks, loadedSettings);
+        
+        // Schedule task cleanup (permanently delete tasks older than 7 days)
+        console.log("[TaskContext] Running task cleanup");
+        await scheduleTaskCleanup();
       } catch (error) {
         console.error("Failed to initialize database:", error);
       } finally {
@@ -256,10 +271,14 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   };
 
   const deleteTask = async (id: string): Promise<void> => {
-    await dbDeleteTask(id);
-    const updatedTasks = tasks.filter((task) => task.id !== id);
+    // Soft delete: mark task as deleted with timestamp (7-day retention)
+    const now = Date.now();
+    await dbUpdateTask(id, { isDeleted: true, deletedAt: now });
+    const updatedTasks = tasks.map((task) => 
+      task.id === id ? { ...task, isDeleted: true, deletedAt: now } : task
+    );
     setTasks(updatedTasks);
-    console.log("[TaskContext] Task deleted, rescheduling notifications");
+    console.log("[TaskContext] Task moved to trash, will be permanently deleted in 7 days");
     await rescheduleNotifications(updatedTasks, settings);
     
     // Cancel reminder
@@ -327,6 +346,25 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     await refreshTasks();
   };
 
+  const permanentlyDeleteTask = async (id: string): Promise<void> => {
+    // Permanently delete task from database
+    await dbDeleteTask(id);
+    const updatedTasks = tasks.filter((task) => task.id !== id);
+    setTasks(updatedTasks);
+    console.log("[TaskContext] Task permanently deleted");
+  };
+
+  const restoreTask = async (id: string): Promise<void> => {
+    // Restore task from trash
+    await dbUpdateTask(id, { isDeleted: false, deletedAt: undefined });
+    const updatedTasks = tasks.map((task) => 
+      task.id === id ? { ...task, isDeleted: false, deletedAt: undefined } : task
+    );
+    setTasks(updatedTasks);
+    console.log("[TaskContext] Task restored from trash");
+    await rescheduleNotifications(updatedTasks, settings);
+  };
+
   const clearAllData = async (): Promise<void> => {
     await dbClearAllData();
     setTasks([]);
@@ -342,6 +380,8 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         createTask,
         updateTask,
         deleteTask,
+        permanentlyDeleteTask,
+        restoreTask,
         updateSettings,
         exportTasks,
         importTasks,

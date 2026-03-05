@@ -37,6 +37,8 @@ export interface Task {
   attachments?: TaskAttachment[]; // File attachments
   createdAt: number; // timestamp
   updatedAt: number; // timestamp
+  isDeleted?: boolean; // Soft delete flag
+  deletedAt?: number; // Timestamp when task was deleted (for 7-day retention)
 }
 
 export interface MotivationalSettings {

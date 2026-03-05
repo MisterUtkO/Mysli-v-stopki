@@ -423,3 +423,14 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Update tab bar glow to use theme-specific neon colors
 - [x] All glow effects in AMOLED theme should match AMOLED neon style
 - [x] Test all glow effects across all themes
+
+## Phase 22: Tasks Page Redesign with Soft-Delete & Compact Menu
+
+- [x] Add isDeleted and deletedAt fields to Task schema
+- [x] Simplify swipe logic - left swipe = soft delete (move to trash)
+- [x] Redesign top filter menu - compact status tabs (Все, Начать, В процессе, Сделано, 🗑️)
+- [x] Remove duplicate "Все" filter
+- [x] Create Trash page with deleted tasks
+- [x] Show 7-day retention warning on Trash page
+- [x] Add background job to permanently delete tasks after 7 days
+- [x] Test swipe logic and trash functionality
