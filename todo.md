@@ -452,3 +452,10 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Prevent layout shift when switching between filter tabs
 - [x] Enable fullscreen mode (hide system navigation bar on mobile)
 - [x] Test layout stability on different screen sizes
+
+## Phase 25: Remove Trash from Tab Bar & Fix Filter Button Height
+
+- [x] Remove trash icon from bottom tab bar
+- [x] Add fixed height to all filter buttons to prevent layout shift
+- [x] Ensure consistent vertical alignment of filter buttons
+- [x] Test filter buttons don't change size when switching

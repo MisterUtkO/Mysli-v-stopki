@@ -249,8 +249,8 @@ export default function HomeScreen() {
         )}
 
         {/* Compact status filter tabs */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8, maxHeight: 40 }}>
-          <View style={{ flexDirection: "row", gap: 6, paddingRight: 8 }}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8, height: 40 }}>
+          <View style={{ flexDirection: "row", gap: 6, paddingRight: 8, height: 40, alignItems: "center" }}>
             {/* All filter */}
             <Pressable
               onPress={() => setSelectedStatus(null)}
@@ -265,8 +265,10 @@ export default function HomeScreen() {
                   opacity: pressed ? 0.6 : 1,
                   flexDirection: "row",
                   alignItems: "center",
+                  justifyContent: "center",
                   gap: 4,
                   minWidth: 50,
+                  height: 28,
                 },
               ]}
             >
@@ -303,8 +305,10 @@ export default function HomeScreen() {
                       opacity: pressed ? 0.6 : 1,
                       flexDirection: "row",
                       alignItems: "center",
+                      justifyContent: "center",
                       gap: 3,
                       minWidth: 65,
+                      height: 28,
                     },
                   ]}
                 >
