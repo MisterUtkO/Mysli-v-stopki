@@ -397,3 +397,11 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Update theme buttons in Settings with stronger highlights
 - [x] Update achievement card glows with brighter colors
 - [x] Test highlights in all themes (Light, Dark, AMOLED, Pastel, Notebook)
+
+## Phase 19: Glow Border Effects on Task Cards
+
+- [x] Add bright glow border around task cards in Matrix view
+- [x] Add bright glow border around task cards in Tasks view
+- [x] Glow border should follow exact card boundaries with rounded corners
+- [x] Glow intensity should match card priority/quadrant color
+- [x] Test glow borders in all themes
