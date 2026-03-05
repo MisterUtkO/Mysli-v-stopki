@@ -165,7 +165,7 @@ export default function HomeScreen() {
   return (
     <ScreenContainer className="p-4">
       <View className="flex-1">
-        {/* Header: + button left, title center, search icon right */}
+        {/* Header: + button left, title center, search + trash icons right */}
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
           {/* Add task button (top-left) */}
           <Pressable
@@ -190,25 +190,48 @@ export default function HomeScreen() {
             {t.home.title}
           </Text>
 
-          {/* Search icon (top-right) */}
-          <Pressable
-            onPress={toggleSearch}
-            style={({ pressed }) => [
-              {
-                width: 40,
-                height: 40,
-                borderRadius: 20,
-                backgroundColor: searchVisible ? "#0a7ea4" : "transparent",
-                borderWidth: searchVisible ? 0 : 1.5,
-                borderColor: "#9CA3AF",
-                alignItems: "center",
-                justifyContent: "center",
-                opacity: pressed ? 0.6 : 1,
-              },
-            ]}
-          >
-            <Text style={{ fontSize: 18, color: searchVisible ? "#FFFFFF" : "#9CA3AF" }}>🔍</Text>
-          </Pressable>
+          {/* Right icons container */}
+          <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
+            {/* Search icon */}
+            <Pressable
+              onPress={toggleSearch}
+              style={({ pressed }) => [
+                {
+                  width: 40,
+                  height: 40,
+                  borderRadius: 20,
+                  backgroundColor: searchVisible ? "#0a7ea4" : "transparent",
+                  borderWidth: searchVisible ? 0 : 1.5,
+                  borderColor: "#9CA3AF",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  opacity: pressed ? 0.6 : 1,
+                },
+              ]}
+            >
+              <Text style={{ fontSize: 18, color: searchVisible ? "#FFFFFF" : "#9CA3AF" }}>🔍</Text>
+            </Pressable>
+
+            {/* Trash icon */}
+            <Pressable
+              onPress={() => router.push("/trash")}
+              style={({ pressed }) => [
+                {
+                  width: 40,
+                  height: 40,
+                  borderRadius: 20,
+                  backgroundColor: deletedTasksCount > 0 ? "#EF4444" : "transparent",
+                  borderWidth: deletedTasksCount > 0 ? 0 : 1.5,
+                  borderColor: "#9CA3AF",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  opacity: pressed ? 0.6 : 1,
+                },
+              ]}
+            >
+              <Text style={{ fontSize: 18 }}>🗑️</Text>
+            </Pressable>
+          </View>
         </View>
 
         {/* Search field (hidden by default) */}
@@ -243,6 +266,7 @@ export default function HomeScreen() {
                   flexDirection: "row",
                   alignItems: "center",
                   gap: 4,
+                  minWidth: 50,
                 },
               ]}
             >
@@ -280,6 +304,7 @@ export default function HomeScreen() {
                       flexDirection: "row",
                       alignItems: "center",
                       gap: 3,
+                      minWidth: 65,
                     },
                   ]}
                 >
@@ -301,36 +326,7 @@ export default function HomeScreen() {
               );
             })}
 
-            {/* Trash button */}
-            <Pressable
-              onPress={() => router.push("/trash")}
-              style={({ pressed }) => [
-                {
-                  paddingHorizontal: 10,
-                  paddingVertical: 6,
-                  borderRadius: 12,
-                  backgroundColor: "transparent",
-                  borderWidth: 1,
-                  borderColor: "#D1D5DB",
-                  opacity: pressed ? 0.6 : 1,
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 3,
-                },
-              ]}
-            >
-              <Text style={{ fontSize: 14 }}>🗑️</Text>
-              {deletedTasksCount > 0 && (
-                <View style={{
-                  backgroundColor: "#EF4444",
-                  borderRadius: 6, paddingHorizontal: 3, paddingVertical: 1, minWidth: 14, alignItems: "center",
-                }}>
-                  <Text style={{ fontSize: 9, fontWeight: "700", color: "#FFFFFF" }}>
-                    {deletedTasksCount}
-                  </Text>
-                </View>
-              )}
-            </Pressable>
+
           </View>
         </ScrollView>
 

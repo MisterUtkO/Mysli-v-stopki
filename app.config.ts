@@ -46,6 +46,7 @@ const config: ExpoConfig = {
       NSRemindersUsageDescription: "Allow $(PRODUCT_NAME) to send you reminders about your tasks.",
       NSPhotoLibraryUsageDescription: "Allow $(PRODUCT_NAME) to access your photo library.",
       NSDocumentsFolderUsageDescription: "Allow $(PRODUCT_NAME) to access your documents for data export.",
+      UIStatusBarHidden: false,
     },
   },
   android: {
@@ -58,6 +59,7 @@ const config: ExpoConfig = {
     edgeToEdgeEnabled: true,
     predictiveBackGestureEnabled: false,
     package: env.androidPackage,
+    softwareKeyboardLayoutMode: "pan",
     permissions: [
       "POST_NOTIFICATIONS",
       "READ_CALENDAR",
