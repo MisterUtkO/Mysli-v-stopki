@@ -467,3 +467,11 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Remove trash tab from bottom navigation bar
 - [x] Fix deleted tasks restoration bug on app restart
 - [x] Ensure soft-deleted tasks persist correctly in AsyncStorage
+
+## Phase 27: Critical UI Bug Fixes
+
+- [ ] Remove trash tab from bottom navigation bar (still visible as ⏷ trash)
+- [ ] Fix filter button height jumping when switching tabs
+- [ ] Fix task list positioning - tasks should start at consistent position
+- [ ] Ensure all filter buttons have same height and no padding issues
+- [ ] Test layout stability across all filter tabs

@@ -249,8 +249,9 @@ export default function HomeScreen() {
         )}
 
         {/* Compact status filter tabs */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8, height: 40 }}>
-          <View style={{ flexDirection: "row", gap: 6, paddingRight: 8, height: 40, alignItems: "center" }}>
+        <View style={{ marginBottom: 8, height: 40, alignItems: "center" }}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View style={{ flexDirection: "row", gap: 6, paddingRight: 8, paddingLeft: 0, height: 40, alignItems: "center", justifyContent: "flex-start" }}>
             {/* All filter */}
             <Pressable
               onPress={() => setSelectedStatus(null)}
@@ -331,8 +332,9 @@ export default function HomeScreen() {
             })}
 
 
-          </View>
-        </ScrollView>
+            </View>
+          </ScrollView>
+        </View>
 
         {/* Task list */}
         {filteredTasks.length === 0 ? (
@@ -343,7 +345,7 @@ export default function HomeScreen() {
           </View>
         ) : (
           <ScrollView showsVerticalScrollIndicator={false}>
-            <View style={{ gap: 8, paddingBottom: 16, paddingTop: 12 }}>
+            <View style={{ gap: 8, paddingBottom: 16, paddingTop: 8 }}>
               {filteredTasks.map((task) => (
                 <SwipeableTaskCard
                   key={task.id}
