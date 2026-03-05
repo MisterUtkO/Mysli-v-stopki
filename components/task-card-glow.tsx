@@ -11,6 +11,7 @@ import Animated, {
 import { useEffect } from "react";
 import { useThemeContext } from "@/lib/theme-provider";
 import { getGlowColor, type GlowType } from "@/lib/glow-colors";
+import { getThemeNeonColor } from "@/lib/theme-neon-colors";
 
 interface TaskCardGlowProps {
   glowType: GlowType | null;
@@ -27,7 +28,8 @@ export function TaskCardGlow({
   const { colorScheme } = useThemeContext();
   const isAmoled = colorScheme === "amoled";
   const isVisible = glowType !== null;
-  const glowColor = isVisible ? getGlowColor(colorScheme, glowType) : "transparent";
+  // Use theme-specific neon color instead of glow-colors
+  const glowColor = isVisible ? getThemeNeonColor(colorScheme) : "transparent";
 
   // Intensity settings - higher for AMOLED
   const intensitySettings = {

@@ -414,3 +414,12 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Show glow only for old tasks without due date >3 days (yellow/amber glow)
 - [x] Hide glow for regular tasks
 - [x] Test glow colors in all themes
+
+## Phase 21: Theme-Specific Neon Glow Colors for All Elements
+
+- [x] Create theme-specific neon color palette (Light, Dark, AMOLED, Pastel, Notebook)
+- [x] Update theme button styling with theme-specific glow borders
+- [x] Update task card glow to use theme-specific neon colors
+- [x] Update tab bar glow to use theme-specific neon colors
+- [x] All glow effects in AMOLED theme should match AMOLED neon style
+- [x] Test all glow effects across all themes

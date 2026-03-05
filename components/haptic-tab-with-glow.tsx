@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import { View } from "react-native";
 import { useColors } from "@/hooks/use-colors";
 import { useThemeContext } from "@/lib/theme-provider";
+import { getThemeNeonColor } from "@/lib/theme-neon-colors";
 
 export function HapticTabWithGlow(props: BottomTabBarButtonProps) {
   const glowAnimation = useSharedValue(0);
@@ -15,16 +16,8 @@ export function HapticTabWithGlow(props: BottomTabBarButtonProps) {
   const { colorScheme } = useThemeContext();
   const isAmoled = colorScheme === "amoled";
 
-  // Neon colors for AMOLED theme
-  const neonColors = {
-    cyan: "#00FFFF",
-    magenta: "#FF00FF",
-    lime: "#00FF00",
-    yellow: "#FFFF00",
-  };
-
-  // Use neon cyan for AMOLED, primary color for others
-  const glowColor = isAmoled ? neonColors.cyan : colors.primary;
+  // Use theme-specific neon color for glow effect
+  const glowColor = getThemeNeonColor(colorScheme);
 
   useEffect(() => {
     if (isActive) {
@@ -90,9 +83,9 @@ export function HapticTabWithGlow(props: BottomTabBarButtonProps) {
             animatedGlowStyle,
             {
               shadowColor: glowColor,
-              shadowRadius: isAmoled ? 24 : 16,
+              shadowRadius: 24,
               shadowOffset: { width: 0, height: 0 },
-              elevation: isAmoled ? 20 : 14,
+              elevation: 20,
             },
           ]}
         />
@@ -113,7 +106,7 @@ export function HapticTabWithGlow(props: BottomTabBarButtonProps) {
               borderRadius: 1.5,
               shadowColor: glowColor,
               shadowOffset: { width: 0, height: 0 },
-              shadowRadius: isAmoled ? 12 : 8,
+              shadowRadius: 12,
             },
             animatedLineStyle,
           ]}
