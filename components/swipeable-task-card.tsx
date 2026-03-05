@@ -15,6 +15,7 @@ import type { Task, TaskStatus } from "@/lib/domain/types";
 import { AnimatedEmoji } from "@/components/animated-emoji";
 import { AnimatedTaskBorder } from "@/components/animated-task-border";
 import { TaskCardGlow } from "@/components/task-card-glow";
+import { getTaskGlowType } from "@/lib/glow-colors";
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -259,14 +260,14 @@ export function SwipeableTaskCard({
   if (isMatrixView) {
     const overdue = isTaskOverdue(task);
     const old = isTaskOld(task);
+    const glowType = getTaskGlowType(task);
     
     return (
       <AnimatedTaskBorder isOverdue={overdue} isOld={old}>
         <View style={{ marginBottom: 6, borderRadius: 8, overflow: "hidden", position: "relative" }}>
         <TaskCardGlow
-          color={priorityColor}
+          glowType={glowType}
           borderRadius={8}
-          isVisible={true}
           intensity="high"
         />
         {/* Background swipe actions */}
@@ -381,12 +382,12 @@ export function SwipeableTaskCard({
   }
 
   // REGULAR VIEW: Full details
+  const glowType = getTaskGlowType(task);
   return (
     <View style={{ marginBottom: 8, borderRadius: 14, overflow: "hidden", position: "relative" }}>
     <TaskCardGlow
-      color={priorityColor}
+      glowType={glowType}
       borderRadius={14}
-      isVisible={true}
       intensity="high"
     />
       {/* Background swipe actions */}

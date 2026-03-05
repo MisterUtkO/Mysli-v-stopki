@@ -10,25 +10,26 @@ import Animated, {
 } from "react-native-reanimated";
 import { useEffect } from "react";
 import { useThemeContext } from "@/lib/theme-provider";
+import { getGlowColor, type GlowType } from "@/lib/glow-colors";
 
 interface TaskCardGlowProps {
-  color: string;
+  glowType: GlowType | null;
   borderRadius?: number;
-  isVisible?: boolean;
   intensity?: "low" | "medium" | "high";
 }
 
 export function TaskCardGlow({
-  color,
+  glowType,
   borderRadius = 14,
-  isVisible = true,
   intensity = "high",
 }: TaskCardGlowProps) {
   const glowAnimation = useSharedValue(0);
   const { colorScheme } = useThemeContext();
   const isAmoled = colorScheme === "amoled";
+  const isVisible = glowType !== null;
+  const glowColor = isVisible ? getGlowColor(colorScheme, glowType) : "transparent";
 
-  // Intensity settings
+  // Intensity settings - higher for AMOLED
   const intensitySettings = {
     low: { shadowRadius: 8, elevation: 4, opacity: 0.4 },
     medium: { shadowRadius: 12, elevation: 8, opacity: 0.6 },
@@ -83,14 +84,14 @@ export function TaskCardGlow({
           right: 0,
           bottom: 0,
           borderRadius,
-          borderWidth: 2,
-          borderColor: color,
+          borderWidth: 2.5,
+          borderColor: glowColor,
           pointerEvents: "none",
-          shadowColor: color,
+          shadowColor: glowColor,
           shadowOffset: { width: 0, height: 0 },
-          shadowRadius: isAmoled ? settings.shadowRadius * 1.5 : settings.shadowRadius,
-          shadowOpacity: isAmoled ? 1 : 0.8,
-          elevation: isAmoled ? settings.elevation * 1.5 : settings.elevation,
+          shadowRadius: isAmoled ? settings.shadowRadius * 2 : settings.shadowRadius * 1.2,
+          shadowOpacity: isAmoled ? 1 : 0.9,
+          elevation: isAmoled ? settings.elevation * 2 : settings.elevation * 1.2,
         },
         animatedGlowStyle,
       ]}

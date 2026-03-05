@@ -405,3 +405,12 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Glow border should follow exact card boundaries with rounded corners
 - [x] Glow intensity should match card priority/quadrant color
 - [x] Test glow borders in all themes
+
+## Phase 20: Theme-Specific Contrast Glow Colors
+
+- [x] Create theme-specific color mapping for glow effects (Light, Dark, AMOLED, Pastel, Notebook)
+- [x] Update TaskCardGlow to use contrast colors based on current theme
+- [x] Show glow only for overdue tasks (red/pink glow)
+- [x] Show glow only for old tasks without due date >3 days (yellow/amber glow)
+- [x] Hide glow for regular tasks
+- [x] Test glow colors in all themes
