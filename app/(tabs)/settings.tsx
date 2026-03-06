@@ -460,9 +460,13 @@ export default function SettingsScreen() {
             </Pressable>
           </View>
 
-          {/* About */}
+          {/* Telegram Link */}
           <Pressable
-            onPress={() => setAboutTapCount(aboutTapCount + 1)}
+            onPress={() => {
+              Linking.openURL("https://t.me/misterutko").catch(() => {
+                Alert.alert(isRu ? "Ошибка" : "Error", isRu ? "Не удалось открыть Telegram" : "Failed to open Telegram");
+              });
+            }}
             style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
           >
             <View className={sectionStyle}>
@@ -470,17 +474,53 @@ export default function SettingsScreen() {
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
                   <Text style={{ fontSize: 22 }}>✈️</Text>
                   <View>
-                    <Text className="text-foreground font-semibold" style={{ fontSize: 16 }}>@MisterUtkO</Text>
+                    <Text className="text-foreground font-semibold" style={{ fontSize: 16 }}>@misterutko</Text>
                     <Text className="text-muted" style={{ fontSize: 12 }}>SDVGNote Creator</Text>
                   </View>
                 </View>
               </View>
-              {aboutTapCount >= 10 && (
-                <Text className="text-success" style={{ fontSize: 12, marginTop: 8 }}>
-                  🎉 {isRu ? "Достижение разблокировано!" : "Achievement unlocked!"}
-                </Text>
-              )}
             </View>
+          </Pressable>
+
+          {/* About Button */}
+          <Pressable
+            onPress={() => {
+              setAboutTapCount(aboutTapCount + 1);
+              if (aboutTapCount + 1 >= 10) {
+                triggerCustomFlag("persistent_explorer", tasks);
+              }
+            }}
+            style={({ pressed }) => [{
+              backgroundColor: colors.primary,
+              borderRadius: 12,
+              paddingVertical: 12,
+              paddingHorizontal: 16,
+              opacity: pressed ? 0.7 : 1,
+            }]}
+          >
+            <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16, textAlign: "center" }}>
+              ℹ️ {isRu ? "О приложении" : "About"}
+            </Text>
+          </Pressable>
+
+          {/* Support Developer */}
+          <Pressable
+            onPress={() => {
+              Linking.openURL("https://boosty.to/misterutko").catch(() => {
+                Alert.alert(isRu ? "Ошибка" : "Error", isRu ? "Не удалось открыть ссылку" : "Failed to open link");
+              });
+            }}
+            style={({ pressed }) => [{
+              backgroundColor: colors.success,
+              borderRadius: 12,
+              paddingVertical: 12,
+              paddingHorizontal: 16,
+              opacity: pressed ? 0.7 : 1,
+            }]}
+          >
+            <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16, textAlign: "center" }}>
+              ❤️ {isRu ? "Поддержать разработчика" : "Support Developer"}
+            </Text>
           </Pressable>
 
           {/* Card */}

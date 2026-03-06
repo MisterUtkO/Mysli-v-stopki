@@ -3,7 +3,7 @@
  * Handles permanent deletion of soft-deleted tasks after 7 days
  */
 
-import { getAllTasks, deleteTask as dbDeleteTask } from "@/lib/database/db";
+import { getAllTasks, permanentlyDeleteTask as dbPermanentlyDeleteTask } from "@/lib/database/db";
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -22,7 +22,7 @@ export async function cleanupDeletedTasks(): Promise<number> {
         const timeSinceDelete = now - task.deletedAt;
         if (timeSinceDelete > SEVEN_DAYS_MS) {
           // Permanently delete this task
-          await dbDeleteTask(task.id);
+          await dbPermanentlyDeleteTask(task.id);
           deletedCount++;
           console.log(`[TaskCleanup] Permanently deleted task: ${task.id}`);
         }
