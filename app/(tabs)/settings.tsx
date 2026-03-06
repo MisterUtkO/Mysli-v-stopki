@@ -482,9 +482,18 @@ export default function SettingsScreen() {
             </View>
           </Pressable>
 
-          {/* About Button */}
+          {/* About Button - 10 taps unlocks persistent_explorer achievement */}
           <Pressable
             onPress={() => {
+              const newCount = aboutTapCount + 1;
+              setAboutTapCount(newCount);
+              
+              if (newCount >= 10) {
+                triggerCustomFlag("persistent_explorer", tasks);
+                setAboutTapCount(0);
+              }
+              
+              // Also navigate to about page
               router.push("/about");
             }}
             style={({ pressed }) => [{
@@ -500,18 +509,26 @@ export default function SettingsScreen() {
             </Text>
           </Pressable>
 
-          {/* Support Developer */}
+          {/* Support Developer - Opens payment app */}
           <Pressable
             onPress={() => {
-              // Try to open payment app with multiple fallbacks
-              const paymentUrls = [
-                "https://boosty.to/misterutko", // Primary: Boosty
-                "https://t.me/misterutko", // Fallback: Telegram
-              ];
+              // Payment app deep links for different platforms
+              const paymentApps = [
+                // Apple Pay / iOS
+                Platform.OS === "ios" ? "https://apple.com/apple-pay/" : null,
+                // Google Pay / Android
+                Platform.OS === "android" ? "https://pay.google.com/" : null,
+                // Sberbank (Russian bank)
+                "sberbank://",
+                // Yandex.Kassa
+                "https://yandex.ru/kassa/",
+                // Telegram (fallback)
+                "https://t.me/misterutko",
+              ].filter(Boolean) as string[];
 
               let urlOpened = false;
-              const tryNextUrl = (index: number) => {
-                if (index >= paymentUrls.length) {
+              const tryNextApp = (index: number) => {
+                if (index >= paymentApps.length) {
                   if (!urlOpened) {
                     Alert.alert(
                       isRu ? "Ошибка" : "Error",
@@ -523,16 +540,16 @@ export default function SettingsScreen() {
                   return;
                 }
 
-                Linking.openURL(paymentUrls[index])
+                Linking.openURL(paymentApps[index])
                   .then(() => {
                     urlOpened = true;
                   })
                   .catch(() => {
-                    tryNextUrl(index + 1);
+                    tryNextApp(index + 1);
                   });
               };
 
-              tryNextUrl(0);
+              tryNextApp(0);
             }}
             style={({ pressed }) => [{
               backgroundColor: colors.success,
