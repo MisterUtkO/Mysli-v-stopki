@@ -39,6 +39,7 @@ export default function SettingsScreen() {
   const [exporting, setExporting] = useState(false);
   const [copiedCard, setCopiedCard] = useState(false);
   const [aboutTapCount, setAboutTapCount] = useState(0);
+  const [amoledTapCount, setAmoledTapCount] = useState(0);
 
   // Check if persistent_explorer achievement is unlocked (for AMOLED)
   const hasExplorerAchievement = unlocked.some((u) => u.achievementId === "persistent_explorer");
@@ -83,12 +84,27 @@ export default function SettingsScreen() {
 
   const handleThemeChange = async (theme: "light" | "dark" | "amoled" | "pastel" | "notebook") => {
     if (theme === "amoled" && !hasExplorerAchievement) {
-      Alert.alert(
-        isRu ? "🔒 Заблокировано" : "🔒 Locked",
-        isRu
-          ? "Получите достижение \"Упорный исследователь\" чтобы разблокировать AMOLED тему. Подсказка: изучите раздел \"О приложении\"."
-          : "Earn the \"Persistent Explorer\" achievement to unlock the AMOLED theme. Hint: explore the About section."
-      );
+      // Count taps on AMOLED button to unlock achievement
+      const newCount = amoledTapCount + 1;
+      setAmoledTapCount(newCount);
+      
+      if (newCount >= 10) {
+        triggerCustomFlag("persistent_explorer", tasks);
+        setAmoledTapCount(0);
+        Alert.alert(
+          isRu ? "🎉 Достижение разблокировано!" : "🎉 Achievement Unlocked!",
+          isRu
+            ? "Вы разблокировали AMOLED тему! Теперь вы можете использовать эту тему."
+            : "You unlocked the AMOLED theme! You can now use this theme."
+        );
+      } else {
+        Alert.alert(
+          isRu ? "🔒 Заблокировано" : "🔒 Locked",
+          isRu
+            ? `Нажмите ещё ${10 - newCount} раз на AMOLED, чтобы разблокировать тему.`
+            : `Tap AMOLED ${10 - newCount} more times to unlock the theme.`
+        );
+      }
       return;
     }
     await setColorScheme(theme);
@@ -482,18 +498,9 @@ export default function SettingsScreen() {
             </View>
           </Pressable>
 
-          {/* About Button - 10 taps unlocks persistent_explorer achievement */}
+          {/* About Button */}
           <Pressable
             onPress={() => {
-              const newCount = aboutTapCount + 1;
-              setAboutTapCount(newCount);
-              
-              if (newCount >= 10) {
-                triggerCustomFlag("persistent_explorer", tasks);
-                setAboutTapCount(0);
-              }
-              
-              // Also navigate to about page
               router.push("/about");
             }}
             style={({ pressed }) => [{
@@ -509,47 +516,48 @@ export default function SettingsScreen() {
             </Text>
           </Pressable>
 
-          {/* Support Developer - Opens payment app */}
+          {/* Support Developer - Copy card and show bank app chooser */}
           <Pressable
             onPress={() => {
-              // Payment app deep links for different platforms
-              const paymentApps = [
-                // Apple Pay / iOS
-                Platform.OS === "ios" ? "https://apple.com/apple-pay/" : null,
-                // Google Pay / Android
-                Platform.OS === "android" ? "https://pay.google.com/" : null,
-                // Sberbank (Russian bank)
-                "sberbank://",
-                // Yandex.Kassa
-                "https://yandex.ru/kassa/",
-                // Telegram (fallback)
-                "https://t.me/misterutko",
-              ].filter(Boolean) as string[];
-
-              let urlOpened = false;
-              const tryNextApp = (index: number) => {
-                if (index >= paymentApps.length) {
-                  if (!urlOpened) {
-                    Alert.alert(
-                      isRu ? "Ошибка" : "Error",
-                      isRu
-                        ? "Не удалось открыть приложение платежа. Попытайтесь позже."
-                        : "Failed to open payment app. Please try again later."
-                    );
-                  }
-                  return;
-                }
-
-                Linking.openURL(paymentApps[index])
-                  .then(() => {
-                    urlOpened = true;
-                  })
-                  .catch(() => {
-                    tryNextApp(index + 1);
-                  });
-              };
-
-              tryNextApp(0);
+              // First, copy card number to clipboard
+              const cardNumber = "2200 7006 3018 0684";
+              Clipboard.setStringAsync(cardNumber);
+              setCopiedCard(true);
+              setTimeout(() => setCopiedCard(false), 2000);
+              
+              // Then show bank app options
+              const bankApps = [
+                { name: isRu ? "Сбербанк" : "Sberbank", url: "sberbank://" },
+                { name: isRu ? "Яндекс.Касса" : "Yandex.Kassa", url: "https://yandex.ru/kassa/" },
+                { name: isRu ? "Телеграм" : "Telegram", url: "https://t.me/misterutko" },
+              ];
+              
+              Alert.alert(
+                isRu ? "❤️ Спасибо за поддержку!" : "❤️ Thank you for support!",
+                isRu
+                  ? "Номер карты скопирован. Выберите приложение банка для перевода:"
+                  : "Card number copied. Choose your bank app to transfer:",
+                [
+                  ...bankApps.map((app) => ({
+                    text: app.name,
+                    onPress: () => {
+                      Linking.openURL(app.url).catch(() => {
+                        Alert.alert(
+                          isRu ? "Ошибка" : "Error",
+                          isRu
+                            ? `Не удалось открыть ${app.name}. Пожалуйста, установите приложение.`
+                            : `Failed to open ${app.name}. Please install the app.`
+                        );
+                      });
+                    },
+                  })),
+                  {
+                    text: isRu ? "Отмена" : "Cancel",
+                    onPress: () => {},
+                    style: "cancel",
+                  },
+                ]
+              );
             }}
             style={({ pressed }) => [{
               backgroundColor: colors.success,
