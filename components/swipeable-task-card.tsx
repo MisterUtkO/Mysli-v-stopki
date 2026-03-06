@@ -264,7 +264,8 @@ export function SwipeableTaskCard({
     
     return (
       <AnimatedTaskBorder isOverdue={overdue} isOld={old}>
-        <View style={{ marginBottom: 6, borderRadius: 8, overflow: "hidden", position: "relative" }}>
+        <View style={{ marginBottom: 6, borderRadius: 8, position: "relative" }}>
+        {/* Glow border - positioned absolutely to avoid overflow clipping */}
         <TaskCardGlow
           glowType={glowType}
           borderRadius={8}

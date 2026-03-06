@@ -24,7 +24,7 @@ function generateId(): string {
 
 const DB_NAME = "eisenhower_v2.db";
 const DB_VERSION_KEY = "db_schema_version";
-const CURRENT_VERSION = 3;
+const CURRENT_VERSION = 4;
 const TASKS_STORAGE_KEY = "eisenhower_tasks";
 const SETTINGS_STORAGE_KEY = "eisenhower_settings";
 
@@ -130,6 +130,20 @@ export async function initializeDatabase() {
     }
   }
 
+  if (version < 4) {
+    // Migration v4: add isDeleted and deletedAt columns for soft delete
+    try {
+      await database.execAsync(`ALTER TABLE tasks ADD COLUMN isDeleted INTEGER DEFAULT 0;`);
+    } catch (e) {
+      // Column may already exist
+    }
+    try {
+      await database.execAsync(`ALTER TABLE tasks ADD COLUMN deletedAt INTEGER;`);
+    } catch (e) {
+      // Column may already exist
+    }
+  }
+
   await AsyncStorage.setItem(DB_VERSION_KEY, String(CURRENT_VERSION));
 }
 
@@ -167,8 +181,8 @@ export async function createTask(task: Omit<Task, "id" | "createdAt" | "updatedA
     newTask.sortOrder = (maxResult?.maxOrder || 0) + 1;
 
     await database.runAsync(
-      `INSERT INTO tasks (id, title, description, importance, urgency, dueDate, dueTime, status, quadrant, priorityScore, emoji, sortOrder, notificationFrequency, attachments, createdAt, updatedAt)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO tasks (id, title, description, importance, urgency, dueDate, dueTime, status, quadrant, priorityScore, emoji, sortOrder, notificationFrequency, attachments, isDeleted, deletedAt, createdAt, updatedAt)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         newTask.id,
         newTask.title,
@@ -184,6 +198,8 @@ export async function createTask(task: Omit<Task, "id" | "createdAt" | "updatedA
         newTask.sortOrder,
         newTask.notificationFrequency || 'global',
         JSON.stringify(newTask.attachments || []),
+        0,
+        null,
         newTask.createdAt,
         newTask.updatedAt,
       ]
@@ -320,21 +336,28 @@ export async function updateTaskOrder(taskOrders: { id: string; sortOrder: numbe
 }
 
 export async function deleteTask(id: string): Promise<void> {
+  const now = Date.now();
+  
   if (Platform.OS === "web") {
-    // Web: use AsyncStorage
+    // Web: use AsyncStorage - soft delete
     const tasksData = await AsyncStorage.getItem(TASKS_STORAGE_KEY);
     const tasks = tasksData ? JSON.parse(tasksData) : [];
     
-    const index = tasks.findIndex((t: Task) => t.id === id);
-    if (index !== -1) {
-      tasks.splice(index, 1);
+    const task = tasks.find((t: Task) => t.id === id);
+    if (task) {
+      task.isDeleted = true;
+      task.deletedAt = now;
+      task.updatedAt = now;
       await AsyncStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks));
     }
   } else {
-    // Native: use SQLite
+    // Native: use SQLite - soft delete
     const database = await getDB();
     if (!database) return;
-    await database.runAsync("DELETE FROM tasks WHERE id = ?", [id]);
+    await database.runAsync(
+      "UPDATE tasks SET isDeleted = 1, deletedAt = ?, updatedAt = ? WHERE id = ?",
+      [now, now, id]
+    );
   }
 }
 
@@ -432,5 +455,50 @@ export async function clearAllData(): Promise<void> {
     if (!database) return;
     await database.execAsync("DELETE FROM tasks; DELETE FROM settings;");
     await AsyncStorage.removeItem(DB_VERSION_KEY);
+  }
+}
+
+export async function permanentlyDeleteTask(id: string): Promise<void> {
+  if (Platform.OS === "web") {
+    // Web: use AsyncStorage - permanent delete
+    const tasksData = await AsyncStorage.getItem(TASKS_STORAGE_KEY);
+    const tasks = tasksData ? JSON.parse(tasksData) : [];
+    
+    const index = tasks.findIndex((t: Task) => t.id === id);
+    if (index !== -1) {
+      tasks.splice(index, 1);
+      await AsyncStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks));
+    }
+  } else {
+    // Native: use SQLite - permanent delete
+    const database = await getDB();
+    if (!database) return;
+    await database.runAsync("DELETE FROM tasks WHERE id = ?", [id]);
+  }
+}
+
+export async function restoreTask(id: string): Promise<void> {
+  const now = Date.now();
+  
+  if (Platform.OS === "web") {
+    // Web: use AsyncStorage - restore from trash
+    const tasksData = await AsyncStorage.getItem(TASKS_STORAGE_KEY);
+    const tasks = tasksData ? JSON.parse(tasksData) : [];
+    
+    const task = tasks.find((t: Task) => t.id === id);
+    if (task) {
+      task.isDeleted = false;
+      task.deletedAt = null;
+      task.updatedAt = now;
+      await AsyncStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks));
+    }
+  } else {
+    // Native: use SQLite - restore from trash
+    const database = await getDB();
+    if (!database) return;
+    await database.runAsync(
+      "UPDATE tasks SET isDeleted = 0, deletedAt = NULL, updatedAt = ? WHERE id = ?",
+      [now, id]
+    );
   }
 }

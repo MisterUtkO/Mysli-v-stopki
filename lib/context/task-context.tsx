@@ -5,6 +5,8 @@ import {
   getAllTasks,
   updateTask as dbUpdateTask,
   deleteTask as dbDeleteTask,
+  permanentlyDeleteTask as dbPermanentlyDeleteTask,
+  restoreTask as dbRestoreTask,
   getSetting,
   setSetting,
   exportTasks as dbExportTasks,
@@ -358,7 +360,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
 
   const permanentlyDeleteTask = async (id: string): Promise<void> => {
     // Permanently delete task from database
-    await dbDeleteTask(id);
+    await dbPermanentlyDeleteTask(id);
     const updatedTasks = tasks.filter((task) => task.id !== id);
     setTasks(updatedTasks);
     console.log("[TaskContext] Task permanently deleted");
@@ -366,7 +368,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
 
   const restoreTask = async (id: string): Promise<void> => {
     // Restore task from trash
-    await dbUpdateTask(id, { isDeleted: false, deletedAt: undefined });
+    await dbRestoreTask(id);
     const updatedTasks = tasks.map((task) => 
       task.id === id ? { ...task, isDeleted: false, deletedAt: undefined } : task
     );
