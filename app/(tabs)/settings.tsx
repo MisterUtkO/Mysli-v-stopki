@@ -485,10 +485,7 @@ export default function SettingsScreen() {
           {/* About Button */}
           <Pressable
             onPress={() => {
-              setAboutTapCount(aboutTapCount + 1);
-              if (aboutTapCount + 1 >= 10) {
-                triggerCustomFlag("persistent_explorer", tasks);
-              }
+              router.push("/about");
             }}
             style={({ pressed }) => [{
               backgroundColor: colors.primary,
@@ -506,9 +503,36 @@ export default function SettingsScreen() {
           {/* Support Developer */}
           <Pressable
             onPress={() => {
-              Linking.openURL("https://boosty.to/misterutko").catch(() => {
-                Alert.alert(isRu ? "Ошибка" : "Error", isRu ? "Не удалось открыть ссылку" : "Failed to open link");
-              });
+              // Try to open payment app with multiple fallbacks
+              const paymentUrls = [
+                "https://boosty.to/misterutko", // Primary: Boosty
+                "https://t.me/misterutko", // Fallback: Telegram
+              ];
+
+              let urlOpened = false;
+              const tryNextUrl = (index: number) => {
+                if (index >= paymentUrls.length) {
+                  if (!urlOpened) {
+                    Alert.alert(
+                      isRu ? "Ошибка" : "Error",
+                      isRu
+                        ? "Не удалось открыть приложение платежа. Попытайтесь позже."
+                        : "Failed to open payment app. Please try again later."
+                    );
+                  }
+                  return;
+                }
+
+                Linking.openURL(paymentUrls[index])
+                  .then(() => {
+                    urlOpened = true;
+                  })
+                  .catch(() => {
+                    tryNextUrl(index + 1);
+                  });
+              };
+
+              tryNextUrl(0);
             }}
             style={({ pressed }) => [{
               backgroundColor: colors.success,

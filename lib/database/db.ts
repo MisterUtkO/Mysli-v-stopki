@@ -275,7 +275,7 @@ export async function updateTask(id: string, updates: Partial<Task>): Promise<vo
       "title", "description", "importance", "urgency",
       "dueDate", "dueTime", "status", "quadrant",
       "priorityScore", "emoji", "sortOrder",
-      "notificationFrequency"
+      "notificationFrequency", "isDeleted", "deletedAt"
     ];
 
     const setClauses: string[] = [];
