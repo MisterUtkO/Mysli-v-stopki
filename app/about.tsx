@@ -148,9 +148,14 @@ export default function AboutScreen() {
         <Text className="text-2xl font-bold text-foreground">{title}</Text>
         <Pressable
           onPress={() => router.back()}
-          style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}
+          style={({ pressed }) => [{
+            padding: 8,
+            borderRadius: 8,
+            backgroundColor: pressed ? 'rgba(0, 0, 0, 0.1)' : 'transparent',
+            opacity: pressed ? 0.7 : 1
+          }]}
         >
-          <Text style={{ fontSize: 24 }}>✕</Text>
+          <Text style={{ fontSize: 28, fontWeight: 'bold', color: '#0a7ea4' }}>←</Text>
         </Pressable>
       </View>
 
