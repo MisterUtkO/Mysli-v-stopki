@@ -8,7 +8,6 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
-import { ScreenWithBackground } from "@/components/screen-with-background";
 import { AnimatedAchievementCard } from "@/components/animated-achievement-card";
 import { useAchievements } from "@/lib/context/achievement-context";
 import { useI18n } from "@/lib/context/i18n-context";
@@ -59,9 +58,8 @@ export default function AchievementsScreen() {
   }
 
   return (
-    <ScreenWithBackground>
-      <ScreenContainer className="p-4">
-        <View className="flex-1">
+    <ScreenContainer className="p-4">
+      <View className="flex-1">
         {/* Header */}
         <View style={{ marginBottom: 12 }}>
           <Text className="text-foreground font-bold" style={{ fontSize: 28, lineHeight: 34 }}>
@@ -133,19 +131,19 @@ export default function AchievementsScreen() {
             </View>
           ))}
         </ScrollView>
-        </View>
+      </View>
 
-        {/* Achievement Detail Modal */}
-        <Modal
-          visible={!!selectedAchievement}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setSelectedAchievement(null)}
-        >
-          {selectedAchievement && (
-            <Pressable
-              onPress={() => setSelectedAchievement(null)}
-              style={{
+      {/* Achievement Detail Modal */}
+      <Modal
+        visible={!!selectedAchievement}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedAchievement(null)}
+      >
+        {selectedAchievement && (
+          <Pressable
+            onPress={() => setSelectedAchievement(null)}
+            style={{
               flex: 1,
               backgroundColor: "rgba(0,0,0,0.6)",
               justifyContent: "center",
@@ -241,9 +239,8 @@ export default function AchievementsScreen() {
               </Pressable>
             </Pressable>
           </Pressable>
-          )}
-        </Modal>
-      </ScreenContainer>
-    </ScreenWithBackground>
+        )}
+      </Modal>
+    </ScreenContainer>
   );
 }

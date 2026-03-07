@@ -1,108 +1,98 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { BackgroundAnimationType } from "@/components/animated-background";
 
-interface BackgroundAnimationSettings {
-  animationType: BackgroundAnimationType;
-  speed: number; // 0.5 to 2.0
-  intensity: number; // 0.2 to 1.0
-}
+export type AnimationType = "none" | "hearts" | "stars" | "bubbles" | "snowflakes";
+export type IntensityLevel = "never" | "hourly" | "daily" | "weekly" | "every_30_min";
 
 interface BackgroundAnimationContextType {
-  settings: BackgroundAnimationSettings;
-  updateAnimationType: (type: BackgroundAnimationType) => Promise<void>;
-  updateSpeed: (speed: number) => Promise<void>;
-  updateIntensity: (intensity: number) => Promise<void>;
-  isLoading: boolean;
+  animationType: AnimationType;
+  setAnimationType: (type: AnimationType) => void;
+  speed: number;
+  setSpeed: (speed: number) => void;
+  intensity: IntensityLevel;
+  setIntensity: (intensity: IntensityLevel) => void;
 }
 
-const BackgroundAnimationContext = createContext<
-  BackgroundAnimationContextType | undefined
->(undefined);
+const BackgroundAnimationContext = createContext<BackgroundAnimationContextType | undefined>(undefined);
 
-const STORAGE_KEY = "background_animation_settings";
+export function BackgroundAnimationProvider({ children }: { children: React.ReactNode }) {
+  const [animationType, setAnimationTypeState] = useState<AnimationType>("hearts");
+  const [speed, setSpeedState] = useState(1);
+  const [intensity, setIntensityState] = useState<IntensityLevel>("daily");
+  const [isLoaded, setIsLoaded] = useState(false);
 
-const DEFAULT_SETTINGS: BackgroundAnimationSettings = {
-  animationType: "none",
-  speed: 1.0,
-  intensity: 0.5,
-};
-
-export const BackgroundAnimationProvider: React.FC<{
-  children: React.ReactNode;
-}> = ({ children }) => {
-  const [settings, setSettings] = useState<BackgroundAnimationSettings>(
-    DEFAULT_SETTINGS
-  );
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Load settings from storage on mount
+  // Load settings from AsyncStorage on mount
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        const stored = await AsyncStorage.getItem(STORAGE_KEY);
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          setSettings({
-            animationType: parsed.animationType || DEFAULT_SETTINGS.animationType,
-            speed: Math.max(0.5, Math.min(2.0, parsed.speed || DEFAULT_SETTINGS.speed)),
-            intensity: Math.max(0.2, Math.min(1.0, parsed.intensity || DEFAULT_SETTINGS.intensity)),
-          });
-        }
+        const savedAnimationType = (await AsyncStorage.getItem("bgAnimationType")) as AnimationType;
+        const savedSpeed = await AsyncStorage.getItem("bgAnimationSpeed");
+        const savedIntensity = (await AsyncStorage.getItem("bgAnimationIntensity")) as IntensityLevel;
+
+        if (savedAnimationType) setAnimationTypeState(savedAnimationType);
+        if (savedSpeed) setSpeedState(parseFloat(savedSpeed));
+        if (savedIntensity) setIntensityState(savedIntensity);
       } catch (error) {
         console.error("Failed to load background animation settings:", error);
       } finally {
-        setIsLoading(false);
+        setIsLoaded(true);
       }
     };
 
     loadSettings();
   }, []);
 
-  const saveSettings = async (newSettings: BackgroundAnimationSettings) => {
+  const setAnimationType = async (type: AnimationType) => {
+    setAnimationTypeState(type);
     try {
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newSettings));
-      setSettings(newSettings);
+      await AsyncStorage.setItem("bgAnimationType", type);
     } catch (error) {
-      console.error("Failed to save background animation settings:", error);
+      console.error("Failed to save animation type:", error);
     }
   };
 
-  const updateAnimationType = async (type: BackgroundAnimationType) => {
-    await saveSettings({ ...settings, animationType: type });
+  const setSpeed = async (newSpeed: number) => {
+    setSpeedState(newSpeed);
+    try {
+      await AsyncStorage.setItem("bgAnimationSpeed", newSpeed.toString());
+    } catch (error) {
+      console.error("Failed to save animation speed:", error);
+    }
   };
 
-  const updateSpeed = async (speed: number) => {
-    const clampedSpeed = Math.max(0.5, Math.min(2.0, speed));
-    await saveSettings({ ...settings, speed: clampedSpeed });
+  const setIntensity = async (newIntensity: IntensityLevel) => {
+    setIntensityState(newIntensity);
+    try {
+      await AsyncStorage.setItem("bgAnimationIntensity", newIntensity);
+    } catch (error) {
+      console.error("Failed to save animation intensity:", error);
+    }
   };
 
-  const updateIntensity = async (intensity: number) => {
-    const clampedIntensity = Math.max(0.2, Math.min(1.0, intensity));
-    await saveSettings({ ...settings, intensity: clampedIntensity });
-  };
+  if (!isLoaded) {
+    return <>{children}</>;
+  }
 
   return (
     <BackgroundAnimationContext.Provider
       value={{
-        settings,
-        updateAnimationType,
-        updateSpeed,
-        updateIntensity,
-        isLoading,
+        animationType,
+        setAnimationType,
+        speed,
+        setSpeed,
+        intensity,
+        setIntensity,
       }}
     >
       {children}
     </BackgroundAnimationContext.Provider>
   );
-};
+}
 
-export const useBackgroundAnimation = (): BackgroundAnimationContextType => {
+export function useBackgroundAnimationContext() {
   const context = useContext(BackgroundAnimationContext);
-  if (!context) {
-    throw new Error(
-      "useBackgroundAnimation must be used within BackgroundAnimationProvider"
-    );
+  if (context === undefined) {
+    throw new Error("useBackgroundAnimationContext must be used within BackgroundAnimationProvider");
   }
   return context;
-};
+}

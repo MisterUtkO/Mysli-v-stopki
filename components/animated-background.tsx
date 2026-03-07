@@ -1,383 +1,141 @@
 import React, { useEffect, useState } from "react";
-import { View, Animated, Dimensions, Text } from "react-native";
-import { useColors } from "@/hooks/use-colors";
+import { View, Text, Animated, Dimensions } from "react-native";
+import { useBackgroundAnimationContext } from "@/lib/context/background-animation-context";
 
-export type BackgroundAnimationType = "hearts" | "stars" | "bubbles" | "snowflakes" | "none";
-
-interface AnimatedBackgroundProps {
-  animationType: BackgroundAnimationType;
-  speed: number; // 0.5 to 2.0
-  intensity: number; // 0.2 to 1.0 (percentage of screen filled)
-}
-
-interface AnimatedElement {
+interface Particle {
   id: string;
-  animatedValue: Animated.Value;
-  duration: number;
-  delay: number;
-  size: number;
-  horizontalOffset: number;
+  initialLeft: number;
+  emoji: string;
+  animValue: Animated.Value;
 }
 
-const WINDOW_HEIGHT = Dimensions.get("window").height;
-const WINDOW_WIDTH = Dimensions.get("window").width;
+export function AnimatedBackground() {
+  const { animationType, speed, intensity } = useBackgroundAnimationContext();
+  const [particles, setParticles] = useState<Particle[]>([]);
+  const { width, height } = Dimensions.get("window");
 
-// Generate random elements for animation
-const generateElements = (
-  count: number,
-  duration: number
-): AnimatedElement[] => {
-  return Array.from({ length: count }, (_, i) => ({
-    id: `element-${i}`,
-    animatedValue: new Animated.Value(0),
-    duration: duration + Math.random() * 1000,
-    delay: Math.random() * 2000,
-    size: 16 + Math.random() * 24,
-    horizontalOffset: Math.random() * WINDOW_WIDTH - WINDOW_WIDTH / 2,
-  }));
-};
+  const getEmoji = () => {
+    switch (animationType) {
+      case "hearts":
+        return "❤️";
+      case "stars":
+        return "⭐";
+      case "bubbles":
+        return "🫧";
+      case "snowflakes":
+        return "❄️";
+      default:
+        return "";
+    }
+  };
 
-// Hearts animation
-const HeartsAnimation: React.FC<Omit<AnimatedBackgroundProps, 'animationType'>> = ({
-  speed,
-  intensity,
-}) => {
-  const colors = useColors();
-  const elementCount = Math.ceil(intensity * 15);
-  const [elements] = useState(() =>
-    generateElements(elementCount, 3000 / speed)
-  );
-
-  useEffect(() => {
-    const animations = elements.map((element) =>
-      Animated.loop(
-        Animated.sequence([
-          Animated.delay(element.delay),
-          Animated.timing(element.animatedValue, {
-            toValue: 1,
-            duration: element.duration,
-            useNativeDriver: true,
-          }),
-        ])
-      )
-    );
-
-    animations.forEach((anim) => anim.start());
-
-    return () => {
-      animations.forEach((anim) => anim.stop());
-    };
-  }, [elements, speed]);
-
-  return (
-    <View
-      style={{
-        position: "absolute",
-        width: "100%",
-        height: "100%",
-        overflow: "hidden",
-        pointerEvents: "none",
-      }}
-    >
-      {elements.map((element) => (
-        <Animated.View
-          key={element.id}
-          style={{
-            position: "absolute",
-            left: WINDOW_WIDTH / 2 + element.horizontalOffset,
-            top: -50,
-            opacity: element.animatedValue.interpolate({
-              inputRange: [0, 0.1, 0.9, 1],
-              outputRange: [0, 1, 1, 0],
-            }),
-            transform: [
-              {
-                translateY: element.animatedValue.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [0, WINDOW_HEIGHT + 100],
-                }),
-              },
-              {
-                rotate: element.animatedValue.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: ["0deg", "360deg"],
-                }),
-              },
-            ],
-          }}
-        >
-          <Text style={{ fontSize: element.size, color: colors.primary }}>
-            ❤️
-          </Text>
-        </Animated.View>
-      ))}
-    </View>
-  );
-};
-
-// Stars animation
-const StarsAnimation: React.FC<Omit<AnimatedBackgroundProps, 'animationType'>> = ({
-  speed,
-  intensity,
-}) => {
-  const colors = useColors();
-  const elementCount = Math.ceil(intensity * 20);
-  const [elements] = useState(() =>
-    generateElements(elementCount, 4000 / speed)
-  );
+  const getIntensityCount = () => {
+    switch (intensity) {
+      case "never":
+        return 0;
+      case "hourly":
+        return 5;
+      case "daily":
+        return 10;
+      case "weekly":
+        return 15;
+      case "every_30_min":
+        return 20;
+      default:
+        return 10;
+    }
+  };
 
   useEffect(() => {
-    const animations = elements.map((element) =>
-      Animated.loop(
-        Animated.sequence([
-          Animated.delay(element.delay),
-          Animated.timing(element.animatedValue, {
-            toValue: 1,
-            duration: element.duration,
-            useNativeDriver: true,
-          }),
-        ])
-      )
-    );
+    if (animationType === "none" || getIntensityCount() === 0) {
+      setParticles([]);
+      return;
+    }
 
-    animations.forEach((anim) => anim.start());
+    const newParticles: Particle[] = [];
+    const count = getIntensityCount();
+    const speedMultiplier = 3 / speed;
 
-    return () => {
-      animations.forEach((anim) => anim.stop());
-    };
-  }, [elements, speed]);
+    for (let i = 0; i < count; i++) {
+      const animValue = new Animated.Value(0);
+      const particle: Particle = {
+        id: `particle-${Date.now()}-${i}`,
+        initialLeft: Math.random() * width,
+        emoji: getEmoji(),
+        animValue,
+      };
 
-  return (
-    <View
-      style={{
-        position: "absolute",
-        width: "100%",
-        height: "100%",
-        overflow: "hidden",
-        pointerEvents: "none",
-      }}
-    >
-      {elements.map((element) => (
-        <Animated.View
-          key={element.id}
-          style={{
-            position: "absolute",
-            left: WINDOW_WIDTH / 2 + element.horizontalOffset,
-            top: -50,
-            opacity: element.animatedValue.interpolate({
-              inputRange: [0, 0.1, 0.9, 1],
-              outputRange: [0, 0.8, 0.8, 0],
-            }),
-            transform: [
-              {
-                translateY: element.animatedValue.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [0, WINDOW_HEIGHT + 100],
-                }),
-              },
-              {
-                scaleX: element.animatedValue.interpolate({
-                  inputRange: [0, 0.5, 1],
-                  outputRange: [0.5, 1, 0.5],
-                }),
-              },
-              {
-                scaleY: element.animatedValue.interpolate({
-                  inputRange: [0, 0.5, 1],
-                  outputRange: [0.5, 1, 0.5],
-                }),
-              },
-            ],
-          }}
-        >
-          <Text style={{ fontSize: element.size, color: colors.warning }}>
-            ⭐
-          </Text>
-        </Animated.View>
-      ))}
-    </View>
-  );
-};
+      newParticles.push(particle);
 
-// Bubbles animation
-const BubblesAnimation: React.FC<Omit<AnimatedBackgroundProps, 'animationType'>> = ({
-  speed,
-  intensity,
-}) => {
-  const colors = useColors();
-  const elementCount = Math.ceil(intensity * 12);
-  const [elements] = useState(() =>
-    generateElements(elementCount, 5000 / speed)
-  );
+      // Start animation
+      const duration = 3000 * speedMultiplier * (0.5 + Math.random() * 0.5);
+      const delay = (i * 200) / count;
 
-  useEffect(() => {
-    const animations = elements.map((element) =>
-      Animated.loop(
-        Animated.sequence([
-          Animated.delay(element.delay),
-          Animated.timing(element.animatedValue, {
-            toValue: 1,
-            duration: element.duration,
-            useNativeDriver: true,
-          }),
-        ])
-      )
-    );
+      setTimeout(() => {
+        Animated.timing(animValue, {
+          toValue: height + 100,
+          duration: duration,
+          useNativeDriver: false,
+        }).start(() => {
+          // Reset animation when complete
+          animValue.setValue(0);
+        });
+      }, delay);
+    }
 
-    animations.forEach((anim) => anim.start());
+    setParticles(newParticles);
 
-    return () => {
-      animations.forEach((anim) => anim.stop());
-    };
-  }, [elements, speed]);
+    // Restart animation periodically
+    const interval = setInterval(() => {
+      newParticles.forEach((particle, index) => {
+        const duration = 3000 * speedMultiplier * (0.5 + Math.random() * 0.5);
+        const delay = (index * 200) / count;
 
-  return (
-    <View
-      style={{
-        position: "absolute",
-        width: "100%",
-        height: "100%",
-        overflow: "hidden",
-        pointerEvents: "none",
-      }}
-    >
-      {elements.map((element) => (
-        <Animated.View
-          key={element.id}
-          style={{
-            position: "absolute",
-            left: WINDOW_WIDTH / 2 + element.horizontalOffset,
-            bottom: -50,
-            opacity: element.animatedValue.interpolate({
-              inputRange: [0, 0.1, 0.9, 1],
-              outputRange: [0, 0.6, 0.6, 0],
-            }),
-            transform: [
-              {
-                translateY: element.animatedValue.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [0, -WINDOW_HEIGHT - 100],
-                }),
-              },
-            ],
-          }}
-        >
-          <View
-            style={{
-              width: element.size,
-              height: element.size,
-              borderRadius: element.size / 2,
-              borderWidth: 2,
-              borderColor: colors.primary,
-              opacity: 0.5,
-            }}
-          />
-        </Animated.View>
-      ))}
-    </View>
-  );
-};
+        setTimeout(() => {
+          Animated.timing(particle.animValue, {
+            toValue: height + 100,
+            duration: duration,
+            useNativeDriver: false,
+          }).start(() => {
+            particle.animValue.setValue(0);
+          });
+        }, delay);
+      });
+    }, 5000);
 
-// Snowflakes animation
-const SnowflakesAnimation: React.FC<Omit<AnimatedBackgroundProps, 'animationType'>> = ({
-  speed,
-  intensity,
-}) => {
-  const colors = useColors();
-  const elementCount = Math.ceil(intensity * 18);
-  const [elements] = useState(() =>
-    generateElements(elementCount, 6000 / speed)
-  );
+    return () => clearInterval(interval);
+  }, [animationType, speed, intensity, width, height]);
 
-  useEffect(() => {
-    const animations = elements.map((element) =>
-      Animated.loop(
-        Animated.sequence([
-          Animated.delay(element.delay),
-          Animated.timing(element.animatedValue, {
-            toValue: 1,
-            duration: element.duration,
-            useNativeDriver: true,
-          }),
-        ])
-      )
-    );
-
-    animations.forEach((anim) => anim.start());
-
-    return () => {
-      animations.forEach((anim) => anim.stop());
-    };
-  }, [elements, speed]);
-
-  return (
-    <View
-      style={{
-        position: "absolute",
-        width: "100%",
-        height: "100%",
-        overflow: "hidden",
-        pointerEvents: "none",
-      }}
-    >
-      {elements.map((element) => (
-        <Animated.View
-          key={element.id}
-          style={{
-            position: "absolute",
-            left: WINDOW_WIDTH / 2 + element.horizontalOffset,
-            top: -50,
-            opacity: element.animatedValue.interpolate({
-              inputRange: [0, 0.1, 0.9, 1],
-              outputRange: [0, 0.7, 0.7, 0],
-            }),
-            transform: [
-              {
-                translateY: element.animatedValue.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [0, WINDOW_HEIGHT + 100],
-                }),
-              },
-              {
-                rotate: element.animatedValue.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: ["0deg", "720deg"],
-                }),
-              },
-            ],
-          }}
-        >
-          <Text style={{ fontSize: element.size, color: colors.muted }}>
-            ❄️
-          </Text>
-        </Animated.View>
-      ))}
-    </View>
-  );
-};
-
-// Main component
-export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
-  animationType,
-  speed,
-  intensity,
-}) => {
-  if (animationType === "none") {
+  if (animationType === "none" || getIntensityCount() === 0) {
     return null;
   }
 
-  switch (animationType) {
-    case "hearts":
-      return <HeartsAnimation speed={speed} intensity={intensity} />;
-    case "stars":
-      return <StarsAnimation speed={speed} intensity={intensity} />;
-    case "bubbles":
-      return <BubblesAnimation speed={speed} intensity={intensity} />;
-    case "snowflakes":
-      return <SnowflakesAnimation speed={speed} intensity={intensity} />;
-    default:
-      return null;
-  }
-};
-
-
+  return (
+    <View
+      style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "100%",
+        pointerEvents: "none",
+        overflow: "hidden",
+        zIndex: 0,
+      }}
+    >
+      {particles.map((particle) => (
+        <Animated.View
+          key={particle.id}
+          style={{
+            position: "absolute",
+            left: particle.initialLeft,
+            top: particle.animValue,
+            opacity: 0.8,
+          }}
+        >
+          <Text style={{ fontSize: 32, lineHeight: 32 }}>{particle.emoji}</Text>
+        </Animated.View>
+      ))}
+    </View>
+  );
+}

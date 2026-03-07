@@ -7,7 +7,6 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
-import { ScreenWithBackground } from "@/components/screen-with-background";
 import { useTaskContext } from "@/lib/context/task-context";
 import { useI18n } from "@/lib/context/i18n-context";
 import { SwipeableTaskCard } from "@/components/swipeable-task-card";
@@ -67,9 +66,8 @@ export default function TrashScreen() {
   };
 
   return (
-    <ScreenWithBackground>
-      <ScreenContainer className="p-4">
-        <View className="flex-1">
+    <ScreenContainer className="p-4">
+      <View className="flex-1">
         {/* Header */}
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
           {/* Back button */}
@@ -211,8 +209,7 @@ export default function TrashScreen() {
             </View>
           </ScrollView>
         )}
-        </View>
-      </ScreenContainer>
-    </ScreenWithBackground>
+      </View>
+    </ScreenContainer>
   );
 }

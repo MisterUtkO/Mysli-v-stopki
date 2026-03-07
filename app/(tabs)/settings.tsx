@@ -22,7 +22,6 @@ import { useThemeContext } from "@/lib/theme-provider";
 import { useColors } from "@/hooks/use-colors";
 import { sendTestNotification } from "@/lib/services/notification-scheduler";
 import { useAchievements } from "@/lib/context/achievement-context";
-import { useBackgroundAnimation } from "@/lib/context/background-animation-context";
 import { getThemeNeonColor } from "@/lib/theme-neon-colors";
 import type { MotivationalSettings } from "@/lib/domain/types";
 import type { ColorScheme } from "@/lib/_core/theme";
@@ -37,7 +36,6 @@ export default function SettingsScreen() {
   const { language, setLanguage, t } = useI18n();
   const { colorScheme, setColorScheme } = useThemeContext();
   const { triggerCustomFlag, unlocked } = useAchievements();
-  const { settings: bgSettings, updateAnimationType, updateSpeed, updateIntensity } = useBackgroundAnimation();
   const colors = useColors();
   const [exporting, setExporting] = useState(false);
   const [copiedCard, setCopiedCard] = useState(false);
@@ -244,8 +242,8 @@ export default function SettingsScreen() {
   return (
     <ScreenWithBackground>
       <ScreenContainer className="p-4">
-        <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
-          <View className="gap-4">
+      <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+        <View className="gap-4">
           <Text className="text-foreground font-bold" style={{ fontSize: 28, lineHeight: 34, marginBottom: 2 }}>
             {t.settings.title}
           </Text>
@@ -315,161 +313,6 @@ export default function SettingsScreen() {
                 );
               })}
             </View>
-          </View>
-
-          {/* Background Animation */}
-          <View className={sectionStyle}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 12 }}>
-              <Text style={{ fontSize: 22 }}>✨</Text>
-              <Text className="text-foreground font-semibold" style={{ fontSize: 16 }}>
-                {isRu ? "Анимация фона" : "Background Animation"}
-              </Text>
-            </View>
-
-            {/* Animation Type Selection */}
-            <View style={{ marginBottom: 12 }}>
-              <Text className="text-muted" style={{ fontSize: 12, marginBottom: 8 }}>
-                {isRu ? "Тип анимации" : "Animation Type"}
-              </Text>
-              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-                {[
-                  { value: "none" as const, label: isRu ? "Нет" : "None", emoji: "⭕" },
-                  { value: "hearts" as const, label: isRu ? "Сердечки" : "Hearts", emoji: "❤️" },
-                  { value: "stars" as const, label: isRu ? "Звёздочки" : "Stars", emoji: "⭐" },
-                  { value: "bubbles" as const, label: isRu ? "Пузыри" : "Bubbles", emoji: "🫧" },
-                  { value: "snowflakes" as const, label: isRu ? "Снежинки" : "Snowflakes", emoji: "❄️" },
-                ].map((opt) => (
-                  <Pressable
-                    key={opt.value}
-                    onPress={() => updateAnimationType(opt.value)}
-                    style={({ pressed }) => [{
-                      flex: 1,
-                      minWidth: 60,
-                      backgroundColor: bgSettings.animationType === opt.value ? colors.primary : colors.surface,
-                      borderRadius: 10,
-                      paddingVertical: 8,
-                      alignItems: "center",
-                      borderWidth: bgSettings.animationType === opt.value ? 2 : 1,
-                      borderColor: bgSettings.animationType === opt.value ? colors.primary : colors.border,
-                      opacity: pressed ? 0.7 : 1,
-                    }]}
-                  >
-                    <Text style={{ fontSize: 16, marginBottom: 2 }}>{opt.emoji}</Text>
-                    <Text style={{
-                      fontSize: 11,
-                      fontWeight: bgSettings.animationType === opt.value ? "700" : "500",
-                      color: bgSettings.animationType === opt.value ? colors.background : colors.foreground,
-                    }}>
-                      {opt.label}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            </View>
-
-            {bgSettings.animationType !== "none" && (
-              <>
-                {/* Speed Control */}
-                <View style={{ marginBottom: 12 }}>
-                  <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 8 }}>
-                    <Text className="text-muted" style={{ fontSize: 12 }}>
-                      {isRu ? "Скорость" : "Speed"}
-                    </Text>
-                    <Text className="text-primary font-semibold" style={{ fontSize: 12 }}>
-                      {bgSettings.speed.toFixed(1)}x
-                    </Text>
-                  </View>
-                  <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
-                    <Text style={{ fontSize: 12, color: colors.muted }}>🐢</Text>
-                    <View style={{ flex: 1, height: 6, backgroundColor: colors.border, borderRadius: 3, overflow: "hidden" }}>
-                      <View
-                        style={{
-                          height: "100%",
-                          width: `${((bgSettings.speed - 0.5) / 1.5) * 100}%`,
-                          backgroundColor: colors.primary,
-                          borderRadius: 3,
-                        }}
-                      />
-                    </View>
-                    <Text style={{ fontSize: 12, color: colors.muted }}>🚀</Text>
-                  </View>
-                  <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 8, gap: 4 }}>
-                    {[0.5, 1.0, 1.5, 2.0].map((speed) => (
-                      <Pressable
-                        key={speed}
-                        onPress={() => updateSpeed(speed)}
-                        style={({ pressed }) => [{
-                          flex: 1,
-                          paddingVertical: 6,
-                          borderRadius: 6,
-                          backgroundColor: bgSettings.speed === speed ? colors.primary : colors.border,
-                          opacity: pressed ? 0.7 : 1,
-                          alignItems: "center",
-                        }]}
-                      >
-                        <Text style={{
-                          fontSize: 10,
-                          fontWeight: bgSettings.speed === speed ? "700" : "500",
-                          color: bgSettings.speed === speed ? colors.background : colors.foreground,
-                        }}>
-                          {speed}x
-                        </Text>
-                      </Pressable>
-                    ))}
-                  </View>
-                </View>
-
-                {/* Intensity Control */}
-                <View>
-                  <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 8 }}>
-                    <Text className="text-muted" style={{ fontSize: 12 }}>
-                      {isRu ? "Интенсивность" : "Intensity"}
-                    </Text>
-                    <Text className="text-primary font-semibold" style={{ fontSize: 12 }}>
-                      {Math.round(bgSettings.intensity * 100)}%
-                    </Text>
-                  </View>
-                  <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
-                    <Text style={{ fontSize: 12, color: colors.muted }}>💤</Text>
-                    <View style={{ flex: 1, height: 6, backgroundColor: colors.border, borderRadius: 3, overflow: "hidden" }}>
-                      <View
-                        style={{
-                          height: "100%",
-                          width: `${((bgSettings.intensity - 0.2) / 0.8) * 100}%`,
-                          backgroundColor: colors.primary,
-                          borderRadius: 3,
-                        }}
-                      />
-                    </View>
-                    <Text style={{ fontSize: 12, color: colors.muted }}>🎆</Text>
-                  </View>
-                  <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 8, gap: 4 }}>
-                    {[0.2, 0.4, 0.6, 0.8, 1.0].map((intensity) => (
-                      <Pressable
-                        key={intensity}
-                        onPress={() => updateIntensity(intensity)}
-                        style={({ pressed }) => [{
-                          flex: 1,
-                          paddingVertical: 6,
-                          borderRadius: 6,
-                          backgroundColor: bgSettings.intensity === intensity ? colors.primary : colors.border,
-                          opacity: pressed ? 0.7 : 1,
-                          alignItems: "center",
-                        }]}
-                      >
-                        <Text style={{
-                          fontSize: 9,
-                          fontWeight: bgSettings.intensity === intensity ? "700" : "500",
-                          color: bgSettings.intensity === intensity ? colors.background : colors.foreground,
-                        }}>
-                          {Math.round(intensity * 100)}%
-                        </Text>
-                      </Pressable>
-                    ))}
-                  </View>
-                </View>
-              </>
-            )}
           </View>
 
           {/* Task Notifications */}
@@ -753,9 +596,9 @@ export default function SettingsScreen() {
               v1.0.0 • SDVGNote
             </Text>
           </View>
-          </View>
-        </ScrollView>
-      </ScreenContainer>
+        </View>
+      </ScrollView>
+    </ScreenContainer>
     </ScreenWithBackground>
   );
 }
