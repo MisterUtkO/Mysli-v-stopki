@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
+import { ScreenWithBackground } from "@/components/screen-with-background";
 import { useTaskContext } from "@/lib/context/task-context";
 import { useI18n } from "@/lib/context/i18n-context";
 import { SwipeableTaskCard } from "@/components/swipeable-task-card";
@@ -163,8 +164,9 @@ export default function HomeScreen() {
   };
 
   return (
-    <ScreenContainer className="p-4">
-      <View className="flex-1">
+    <ScreenWithBackground>
+      <ScreenContainer className="p-4">
+        <View className="flex-1">
         {/* Header: + button left, title center, search + trash icons right */}
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
           {/* Add task button (top-left) */}
@@ -361,7 +363,8 @@ export default function HomeScreen() {
             </View>
           </ScrollView>
         )}
-      </View>
-    </ScreenContainer>
+        </View>
+      </ScreenContainer>
+    </ScreenWithBackground>
   );
 }

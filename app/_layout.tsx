@@ -21,6 +21,7 @@ import { initManusRuntime, subscribeSafeAreaInsets } from "@/lib/_core/manus-run
 import { TaskProvider } from "@/lib/context/task-context";
 import { I18nProvider } from "@/lib/context/i18n-context";
 import { AchievementProvider, useAchievements } from "@/lib/context/achievement-context";
+import { BackgroundAnimationProvider } from "@/lib/context/background-animation-context";
 import { AchievementCelebration } from "@/components/achievement-celebration";
 import { useTaskContext } from "@/lib/context/task-context";
 import { useI18n } from "@/lib/context/i18n-context";
@@ -151,8 +152,9 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <I18nProvider>
             <TaskProvider>
-              <AchievementProvider>
-                <AchievementChecker />
+              <BackgroundAnimationProvider>
+                <AchievementProvider>
+                  <AchievementChecker />
                 <Stack screenOptions={{ headerShown: false }}>
                   <Stack.Screen name="(tabs)" />
                   <Stack.Screen name="add-task" options={{ presentation: "modal", title: "Add Task" }} />
@@ -163,6 +165,7 @@ export default function RootLayout() {
                 </Stack>
                 <StatusBar style="auto" hidden={Platform.OS !== "web"} />
               </AchievementProvider>
+            </BackgroundAnimationProvider>
             </TaskProvider>
           </I18nProvider>
         </QueryClientProvider>
