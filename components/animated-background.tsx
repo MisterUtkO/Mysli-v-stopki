@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, Animated, Dimensions } from "react-native";
 import { useBackgroundAnimationContext } from "@/lib/context/background-animation-context";
 

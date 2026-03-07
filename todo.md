@@ -475,3 +475,13 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [ ] Fix task list positioning - tasks should start at consistent position
 - [ ] Ensure all filter buttons have same height and no padding issues
 - [ ] Test layout stability across all filter tabs
+
+## Phase 15: Animated Backgrounds System Fix
+
+- [x] Fix missing React imports in AnimatedBackground component (useState, useEffect)
+- [x] Wrap all screens with ScreenWithBackground component (Tasks, Matrix, Kanban, Achievements, Settings, Trash)
+- [x] Verify BackgroundAnimationContext is properly initialized in root _layout.tsx
+- [x] Verify BackgroundAnimationProvider wraps all screens
+- [x] Confirm animation settings controls are visible in Settings page
+- [x] Verify z-index layering (background: 0, animation: 1, content: 2)
+- [x] Test animations visibility on all screens
