@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export type AnimationType = "none" | "hearts" | "stars" | "bubbles" | "snowflakes";
+export type AnimationType = "none" | "hearts" | "stars" | "bubbles" | "snowflakes" | "matrix";
 export type IntensityLevel = "never" | "hourly" | "daily" | "weekly" | "every_30_min";
 
 interface BackgroundAnimationContextType {

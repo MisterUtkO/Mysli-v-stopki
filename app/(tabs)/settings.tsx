@@ -26,6 +26,7 @@ import { getThemeNeonColor } from "@/lib/theme-neon-colors";
 import type { MotivationalSettings } from "@/lib/domain/types";
 import type { ColorScheme } from "@/lib/_core/theme";
 import { useState } from "react";
+import { useBackgroundAnimationContext } from "@/lib/context/background-animation-context";
 
 type NotifFrequency = "never" | "hourly" | "daily" | "weekly" | "always";
 type MotivFrequency = "never" | "10min" | "30min" | "hourly" | "daily" | "weekly";
@@ -37,6 +38,7 @@ export default function SettingsScreen() {
   const { colorScheme, setColorScheme } = useThemeContext();
   const { triggerCustomFlag, unlocked } = useAchievements();
   const colors = useColors();
+  const { animationType, setAnimationType, speed, setSpeed, intensity, setIntensity } = useBackgroundAnimationContext();
   const [exporting, setExporting] = useState(false);
   const [copiedCard, setCopiedCard] = useState(false);
   const [aboutTapCount, setAboutTapCount] = useState(0);
@@ -46,6 +48,15 @@ export default function SettingsScreen() {
   const hasExplorerAchievement = unlocked.some((u) => u.achievementId === "persistent_explorer");
 
   const isRu = language === "ru";
+
+  const animationOptions = [
+    { key: "none", emoji: "⭕", labelEn: "None", labelRu: "Нет" },
+    { key: "hearts", emoji: "❤️", labelEn: "Hearts", labelRu: "Сердечки" },
+    { key: "stars", emoji: "⭐", labelEn: "Stars", labelRu: "Звёздочки" },
+    { key: "bubbles", emoji: "🫧", labelEn: "Bubbles", labelRu: "Пузыри" },
+    { key: "snowflakes", emoji: "❄️", labelEn: "Snowflakes", labelRu: "Снежинки" },
+    { key: "matrix", emoji: "💚", labelEn: "Matrix", labelRu: "Матрица" },
+  ];
 
   // Motivational state
   const motivational = settings.motivational || { enabled: false, text: "", frequency: "daily" as MotivFrequency, exactTime: undefined };
@@ -306,6 +317,45 @@ export default function SettingsScreen() {
                       fontSize: 12,
                       fontWeight: isActive ? "800" : "600",
                       color: isActive ? themeNeonColor : isLocked ? colors.muted : colors.foreground,
+                    }}>
+                      {isRu ? opt.labelRu : opt.labelEn}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* Background Animation */}
+          <View className={sectionStyle}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 10 }}>
+              <Text style={{ fontSize: 22 }}>✨</Text>
+              <Text className="text-foreground font-semibold" style={{ fontSize: 16 }}>{isRu ? "Анимация фона" : "Background Animation"}</Text>
+            </View>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+              {animationOptions.map((opt) => {
+                const isActive = animationType === opt.key;
+                return (
+                  <Pressable
+                    key={opt.key}
+                    onPress={() => setAnimationType(opt.key as any)}
+                    style={({ pressed }) => [{
+                      flex: 1,
+                      minWidth: 60,
+                      backgroundColor: isActive ? colors.primary : colors.surface,
+                      borderRadius: 12,
+                      paddingVertical: 10,
+                      alignItems: "center",
+                      borderWidth: isActive ? 2 : 1,
+                      borderColor: isActive ? colors.primary : colors.border,
+                      opacity: pressed ? 0.7 : 1,
+                    }]}
+                  >
+                    <Text style={{ fontSize: 20, marginBottom: 4 }}>{opt.emoji}</Text>
+                    <Text style={{
+                      fontSize: 11,
+                      fontWeight: isActive ? "700" : "600",
+                      color: isActive ? "#FFF" : colors.foreground,
                     }}>
                       {isRu ? opt.labelRu : opt.labelEn}
                     </Text>

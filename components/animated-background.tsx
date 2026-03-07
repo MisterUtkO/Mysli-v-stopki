@@ -24,6 +24,8 @@ export function AnimatedBackground() {
         return "🫧";
       case "snowflakes":
         return "❄️";
+      case "matrix":
+        return String.fromCharCode(0x30A0 + Math.floor(Math.random() * 96)); // Random Japanese/Cyrillic-like character
       default:
         return "";
     }
@@ -133,7 +135,17 @@ export function AnimatedBackground() {
             opacity: 0.8,
           }}
         >
-          <Text style={{ fontSize: 32, lineHeight: 32 }}>{particle.emoji}</Text>
+          <Text
+            style={{
+              fontSize: 32,
+              lineHeight: 32,
+              color: animationType === "matrix" ? "#00ff00" : "inherit",
+              fontWeight: animationType === "matrix" ? "bold" : "normal",
+              textShadow: animationType === "matrix" ? "0 0 10px #00ff00" : "none",
+            }}
+          >
+            {particle.emoji}
+          </Text>
         </Animated.View>
       ))}
     </View>
