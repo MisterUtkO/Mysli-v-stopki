@@ -122,7 +122,7 @@ export function AnimatedBackground() {
         height: "100%",
         pointerEvents: "none",
         overflow: "hidden",
-        zIndex: 0,
+        zIndex: 1,
       }}
     >
       {particles.map((particle) => (
@@ -141,7 +141,6 @@ export function AnimatedBackground() {
               lineHeight: 32,
               color: animationType === "matrix" ? "#00ff00" : "inherit",
               fontWeight: animationType === "matrix" ? "bold" : "normal",
-              textShadow: animationType === "matrix" ? "0 0 10px #00ff00" : "none",
             }}
           >
             {particle.emoji}
