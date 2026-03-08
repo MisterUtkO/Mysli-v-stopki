@@ -485,3 +485,9 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Confirm animation settings controls are visible in Settings page
 - [x] Verify z-index layering (background: 0, animation: 1, content: 2)
 - [x] Test animations visibility on all screens
+
+
+## Phase 30: Bug Fixes & UX Improvements
+- [x] Fix swipe gesture to cycle through task statuses in All tab
+- [x] Add dynamic empty state messages for Completed and In Progress tabs
+- [x] Fix matrix glow frame alignment and sizing

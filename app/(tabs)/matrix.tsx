@@ -67,8 +67,10 @@ export default function MatrixScreen() {
 
   const screenWidth = Dimensions.get("window").width;
   const screenHeight = Dimensions.get("window").height;
+  // Use exact half of screen for perfect alignment
   const quadrantWidth = screenWidth / 2;
-  const quadrantHeight = (screenHeight * 0.85) / 2;
+  // Calculate height to fill available space (accounting for header and safe areas)
+  const quadrantHeight = screenHeight / 2;
 
   const quadrantTasks = useMemo(() => {
     const result: Record<QuadrantKey, typeof tasks> = {
@@ -154,14 +156,14 @@ export default function MatrixScreen() {
           width: quadrantWidth,
           height: quadrantHeight,
           backgroundColor: config.color,
-          borderWidth: 3,
+          borderWidth: 2,
           borderColor: config.color,
           overflow: "hidden",
           shadowColor: config.color,
           shadowOffset: { width: 0, height: 0 },
-          shadowOpacity: 0.8,
-          shadowRadius: 12,
-          elevation: 8,
+          shadowOpacity: 0.6,
+          shadowRadius: 8,
+          elevation: 5,
         }}
       >
         {/* Header */}

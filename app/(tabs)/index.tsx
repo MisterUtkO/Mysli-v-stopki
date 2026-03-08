@@ -340,7 +340,11 @@ export default function HomeScreen() {
         {filteredTasks.length === 0 ? (
           <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
             <Text className="text-muted text-center text-lg">
-              {isRu ? "Нет задач. Создайте первую!" : "No tasks yet. Create your first!"}
+              {selectedStatus === "completed" 
+                ? (isRu ? "Нет выполненных задач" : "No completed tasks")
+                : selectedStatus === "in_progress"
+                ? (isRu ? "Нет задач в процессе выполнения" : "No tasks in progress")
+                : (isRu ? "Нет задач. Создайте первую!" : "No tasks yet. Create your first!")}
             </Text>
           </View>
         ) : (
