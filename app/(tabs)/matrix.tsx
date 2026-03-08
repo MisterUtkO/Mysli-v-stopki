@@ -1,7 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
 import { View, Text, ScrollView, Dimensions, FlatList, Pressable, Modal } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
-import { ScreenWithBackground } from "@/components/screen-with-background";
 import { useTaskContext } from "@/lib/context/task-context";
 import { useColors } from "@/hooks/use-colors";
 import { useI18n } from "@/lib/context/i18n-context";
@@ -204,8 +203,7 @@ export default function MatrixScreen() {
   const selectedTask = selectedTaskId ? tasks.find(t => t.id === selectedTaskId) : null;
 
   return (
-    <ScreenWithBackground>
-      <ScreenContainer className="p-0">
+    <ScreenContainer className="p-0">
       <View className="flex-1 flex-row flex-wrap bg-black">
         {/* Row 1: Q1 and Q2 */}
         <View className="flex-row">
@@ -241,6 +239,5 @@ export default function MatrixScreen() {
         </Pressable>
       )}
       </ScreenContainer>
-    </ScreenWithBackground>
   );
 }

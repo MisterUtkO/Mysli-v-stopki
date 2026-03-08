@@ -15,7 +15,6 @@ import { useRouter } from "expo-router";
 import * as Clipboard from "expo-clipboard";
 import { Image } from "expo-image";
 import { ScreenContainer } from "@/components/screen-container";
-import { ScreenWithBackground } from "@/components/screen-with-background";
 import { useTaskContext } from "@/lib/context/task-context";
 import { useI18n } from "@/lib/context/i18n-context";
 import { useThemeContext } from "@/lib/theme-provider";
@@ -26,7 +25,7 @@ import { getThemeNeonColor } from "@/lib/theme-neon-colors";
 import type { MotivationalSettings } from "@/lib/domain/types";
 import type { ColorScheme } from "@/lib/_core/theme";
 import { useState } from "react";
-import { useBackgroundAnimationContext } from "@/lib/context/background-animation-context";
+
 
 type NotifFrequency = "never" | "hourly" | "daily" | "weekly" | "always";
 type MotivFrequency = "never" | "10min" | "30min" | "hourly" | "daily" | "weekly";
@@ -38,7 +37,7 @@ export default function SettingsScreen() {
   const { colorScheme, setColorScheme } = useThemeContext();
   const { triggerCustomFlag, unlocked } = useAchievements();
   const colors = useColors();
-  const { animationType, setAnimationType, speed, setSpeed, animationIntensity, setAnimationIntensity } = useBackgroundAnimationContext();
+
   const [exporting, setExporting] = useState(false);
   const [copiedCard, setCopiedCard] = useState(false);
   const [aboutTapCount, setAboutTapCount] = useState(0);
@@ -49,14 +48,7 @@ export default function SettingsScreen() {
 
   const isRu = language === "ru";
 
-  const animationOptions = [
-    { key: "none", emoji: "⭕", labelEn: "None", labelRu: "Нет" },
-    { key: "hearts", emoji: "❤️", labelEn: "Hearts", labelRu: "Сердечки" },
-    { key: "stars", emoji: "⭐", labelEn: "Stars", labelRu: "Звёздочки" },
-    { key: "bubbles", emoji: "🫧", labelEn: "Bubbles", labelRu: "Пузыри" },
-    { key: "snowflakes", emoji: "❄️", labelEn: "Snowflakes", labelRu: "Снежинки" },
-    { key: "matrix", emoji: "💚", labelEn: "Matrix", labelRu: "Матрица" },
-  ];
+
 
   // Motivational state
   const motivational = settings.motivational || { enabled: false, text: "", frequency: "daily" as MotivFrequency, exactTime: undefined };
@@ -251,8 +243,7 @@ export default function SettingsScreen() {
   const sectionStyle = "bg-surface rounded-2xl p-4 border border-border";
 
   return (
-    <ScreenWithBackground>
-      <ScreenContainer className="p-4">
+    <ScreenContainer className="p-4">
       <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
         <View className="gap-4">
           <Text className="text-foreground font-bold" style={{ fontSize: 28, lineHeight: 34, marginBottom: 2 }}>
@@ -326,128 +317,7 @@ export default function SettingsScreen() {
             </View>
           </View>
 
-          {/* Background Animation */}
-          <View className={sectionStyle}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 10 }}>
-              <Text style={{ fontSize: 22 }}>✨</Text>
-              <Text className="text-foreground font-semibold" style={{ fontSize: 16 }}>{isRu ? "Анимация фона" : "Background Animation"}</Text>
-            </View>
-            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-              {animationOptions.map((opt) => {
-                const isActive = animationType === opt.key;
-                return (
-                  <Pressable
-                    key={opt.key}
-                    onPress={() => setAnimationType(opt.key as any)}
-                    style={({ pressed }) => [{
-                      flex: 1,
-                      minWidth: 60,
-                      backgroundColor: isActive ? colors.primary : colors.surface,
-                      borderRadius: 12,
-                      paddingVertical: 10,
-                      alignItems: "center",
-                      borderWidth: isActive ? 2 : 1,
-                      borderColor: isActive ? colors.primary : colors.border,
-                      opacity: pressed ? 0.7 : 1,
-                    }]}
-                  >
-                    <Text style={{ fontSize: 20, marginBottom: 4 }}>{opt.emoji}</Text>
-                    <Text style={{
-                      fontSize: 11,
-                      fontWeight: isActive ? "700" : "600",
-                      color: isActive ? "#FFF" : colors.foreground,
-                    }}>
-                      {isRu ? opt.labelRu : opt.labelEn}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
 
-            {/* Speed Slider */}
-            {animationType !== "none" && (
-              <View style={{ marginTop: 12, gap: 6 }}>
-                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                  <Text className="text-muted" style={{ fontSize: 14 }}>{isRu ? "Скорость" : "Speed"}</Text>
-                  <Text className="text-foreground font-semibold" style={{ fontSize: 14 }}>{speed.toFixed(1)}x</Text>
-                </View>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                  <Text style={{ fontSize: 12, color: colors.muted }}>0.5x</Text>
-                  <View style={{ flex: 1, height: 6, backgroundColor: colors.border, borderRadius: 3, overflow: "hidden" }}>
-                    <View
-                      style={{
-                        height: "100%",
-                        width: `${((speed - 0.5) / 2.5) * 100}%`,
-                        backgroundColor: colors.primary,
-                      }}
-                    />
-                  </View>
-                  <Text style={{ fontSize: 12, color: colors.muted }}>3x</Text>
-                </View>
-                <View style={{ flexDirection: "row", gap: 4, justifyContent: "space-between" }}>
-                  {[0.5, 1, 1.5, 2, 2.5, 3].map((val) => (
-                    <Pressable
-                      key={val}
-                      onPress={() => setSpeed(val)}
-                      style={({ pressed }) => [{
-                        flex: 1,
-                        paddingVertical: 6,
-                        borderRadius: 6,
-                        backgroundColor: Math.abs(speed - val) < 0.1 ? colors.primary : colors.surface,
-                        opacity: pressed ? 0.7 : 1,
-                      }]}
-                    >
-                      <Text style={{ textAlign: "center", fontSize: 11, fontWeight: Math.abs(speed - val) < 0.1 ? "700" : "600", color: Math.abs(speed - val) < 0.1 ? "#FFF" : colors.foreground }}>
-                        {val}x
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
-              </View>
-            )}
-
-            {/* Intensity Slider */}
-            {animationType !== "none" && (
-              <View style={{ marginTop: 12, gap: 6 }}>
-                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                  <Text className="text-muted" style={{ fontSize: 14 }}>{isRu ? "Интенсивность" : "Intensity"}</Text>
-                  <Text className="text-foreground font-semibold" style={{ fontSize: 14 }}>{animationIntensity}</Text>
-                </View>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                  <Text style={{ fontSize: 12, color: colors.muted }}>1</Text>
-                  <View style={{ flex: 1, height: 6, backgroundColor: colors.border, borderRadius: 3, overflow: "hidden" }}>
-                    <View
-                      style={{
-                        height: "100%",
-                        width: `${((animationIntensity - 1) / 19) * 100}%`,
-                        backgroundColor: colors.primary,
-                      }}
-                    />
-                  </View>
-                  <Text style={{ fontSize: 12, color: colors.muted }}>20</Text>
-                </View>
-                <View style={{ flexDirection: "row", gap: 4, justifyContent: "space-between" }}>
-                  {[1, 5, 10, 15, 20].map((val) => (
-                    <Pressable
-                      key={val}
-                      onPress={() => setAnimationIntensity(val)}
-                      style={({ pressed }) => [{
-                        flex: 1,
-                        paddingVertical: 6,
-                        borderRadius: 6,
-                        backgroundColor: animationIntensity === val ? colors.primary : colors.surface,
-                        opacity: pressed ? 0.7 : 1,
-                      }]}
-                    >
-                      <Text style={{ textAlign: "center", fontSize: 11, fontWeight: animationIntensity === val ? "700" : "600", color: animationIntensity === val ? "#FFF" : colors.foreground }}>
-                        {val}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
-              </View>
-            )}
-          </View>
 
           {/* Task Notifications */}
           <View className={sectionStyle}>
@@ -733,6 +603,5 @@ export default function SettingsScreen() {
         </View>
       </ScrollView>
     </ScreenContainer>
-    </ScreenWithBackground>
   );
 }

@@ -8,7 +8,6 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
-import { ScreenWithBackground } from "@/components/screen-with-background";
 import { AnimatedAchievementCard } from "@/components/animated-achievement-card";
 import { useAchievements } from "@/lib/context/achievement-context";
 import { useI18n } from "@/lib/context/i18n-context";
@@ -59,8 +58,7 @@ export default function AchievementsScreen() {
   }
 
   return (
-    <ScreenWithBackground>
-      <ScreenContainer className="p-4">
+    <ScreenContainer className="p-4">
       <View className="flex-1">
         {/* Header */}
         <View style={{ marginBottom: 12 }}>
@@ -244,6 +242,5 @@ export default function AchievementsScreen() {
         )}
       </Modal>
       </ScreenContainer>
-    </ScreenWithBackground>
   );
 }
