@@ -7,7 +7,6 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
-import { ScreenTransition } from "@/components/screen-transition";
 import { useTaskContext } from "@/lib/context/task-context";
 import { useI18n } from "@/lib/context/i18n-context";
 import { SwipeableTaskCard } from "@/components/swipeable-task-card";
@@ -67,15 +66,14 @@ export default function TrashScreen() {
   };
 
   return (
-    <ScreenTransition animationType="fade" duration={300}>
-      <ScreenContainer className="p-4">
-        <View className="flex-1">
-          {/* Header */}
-          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-            {/* Back button */}
-            <Pressable
-              onPress={() => router.back()}
-              style={({ pressed }) => [
+    <ScreenContainer className="p-4">
+      <View className="flex-1">
+        {/* Header */}
+        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          {/* Back button */}
+          <Pressable
+            onPress={() => router.back()}
+            style={({ pressed }) => [
               {
                 width: 40,
                 height: 40,
@@ -211,8 +209,7 @@ export default function TrashScreen() {
             </View>
           </ScrollView>
         )}
-        </View>
+      </View>
       </ScreenContainer>
-    </ScreenTransition>
   );
 }

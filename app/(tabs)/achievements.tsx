@@ -8,7 +8,6 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
-import { ScreenTransition } from "@/components/screen-transition";
 import { AnimatedAchievementCard } from "@/components/animated-achievement-card";
 import { useAchievements } from "@/lib/context/achievement-context";
 import { useI18n } from "@/lib/context/i18n-context";
@@ -59,11 +58,10 @@ export default function AchievementsScreen() {
   }
 
   return (
-    <ScreenTransition animationType="fade" duration={300}>
-      <ScreenContainer className="p-4">
-        <View className="flex-1">
-          {/* Header */}
-          <View style={{ marginBottom: 12 }}>
+    <ScreenContainer className="p-4">
+      <View className="flex-1">
+        {/* Header */}
+        <View style={{ marginBottom: 12 }}>
           <Text className="text-foreground font-bold" style={{ fontSize: 28, lineHeight: 34 }}>
             {isRu ? "Достижения" : "Achievements"}
           </Text>
@@ -132,27 +130,27 @@ export default function AchievementsScreen() {
               ))}
             </View>
           ))}
-          </ScrollView>
-        </View>
+        </ScrollView>
+      </View>
 
-        {/* Achievement Detail Modal */}
-        <Modal
-          visible={!!selectedAchievement}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setSelectedAchievement(null)}
-        >
-          {selectedAchievement && (
+      {/* Achievement Detail Modal */}
+      <Modal
+        visible={!!selectedAchievement}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedAchievement(null)}
+      >
+        {selectedAchievement && (
+          <Pressable
+            onPress={() => setSelectedAchievement(null)}
+            style={{
+              flex: 1,
+              backgroundColor: "rgba(0,0,0,0.6)",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
             <Pressable
-              onPress={() => setSelectedAchievement(null)}
-              style={{
-                flex: 1,
-                backgroundColor: "rgba(0,0,0,0.6)",
-                justifyContent: "center",
-                alignItems: "center",
-              }}
-            >
-              <Pressable
               onPress={() => {}}
               style={{
                 width: screenWidth * 0.85,
@@ -241,9 +239,8 @@ export default function AchievementsScreen() {
               </Pressable>
             </Pressable>
           </Pressable>
-          )}
-        </Modal>
+        )}
+      </Modal>
       </ScreenContainer>
-    </ScreenTransition>
   );
 }

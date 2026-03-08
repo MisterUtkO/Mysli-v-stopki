@@ -1,7 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
 import { View, Text, ScrollView, Dimensions, FlatList, Pressable, Modal } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
-import { ScreenTransition } from "@/components/screen-transition";
 import { useTaskContext } from "@/lib/context/task-context";
 import { useColors } from "@/hooks/use-colors";
 import { useI18n } from "@/lib/context/i18n-context";
@@ -204,43 +203,41 @@ export default function MatrixScreen() {
   const selectedTask = selectedTaskId ? tasks.find(t => t.id === selectedTaskId) : null;
 
   return (
-    <ScreenTransition animationType="fade" duration={300}>
-      <ScreenContainer className="p-0">
-        <View className="flex-1 flex-row flex-wrap bg-black">
-          {/* Row 1: Q1 and Q2 */}
-          <View className="flex-row">
-            {renderQuadrant("Q1")}
-            {renderQuadrant("Q2")}
-          </View>
-
-          {/* Row 2: Q3 and Q4 */}
-          <View className="flex-row">
-            {renderQuadrant("Q3")}
-            {renderQuadrant("Q4")}
-          </View>
+    <ScreenContainer className="p-0">
+      <View className="flex-1 flex-row flex-wrap bg-black">
+        {/* Row 1: Q1 and Q2 */}
+        <View className="flex-row">
+          {renderQuadrant("Q1")}
+          {renderQuadrant("Q2")}
         </View>
 
-        {/* Task Detail Popup Bubble */}
-        {popupVisible && selectedTask && (
-          <Pressable
-            className="absolute inset-0 z-40"
-            onPress={() => setPopupVisible(false)}
-          >
-            <TaskPopupBubble
-              title={selectedTask.title}
-              description={selectedTask.description}
-              importance={selectedTask.importance}
-              urgency={selectedTask.urgency}
-              dueDate={selectedTask.dueDate}
-              dueTime={selectedTask.dueTime}
-              status={selectedTask.status}
-              isRu={isRu}
-              position={popupPosition}
-              onClose={() => setPopupVisible(false)}
-            />
-          </Pressable>
-        )}
+        {/* Row 2: Q3 and Q4 */}
+        <View className="flex-row">
+          {renderQuadrant("Q3")}
+          {renderQuadrant("Q4")}
+        </View>
+      </View>
+
+      {/* Task Detail Popup Bubble */}
+      {popupVisible && selectedTask && (
+        <Pressable
+          className="absolute inset-0 z-40"
+          onPress={() => setPopupVisible(false)}
+        >
+          <TaskPopupBubble
+            title={selectedTask.title}
+            description={selectedTask.description}
+            importance={selectedTask.importance}
+            urgency={selectedTask.urgency}
+            dueDate={selectedTask.dueDate}
+            dueTime={selectedTask.dueTime}
+            status={selectedTask.status}
+            isRu={isRu}
+            position={popupPosition}
+            onClose={() => setPopupVisible(false)}
+          />
+        </Pressable>
+      )}
       </ScreenContainer>
-    </ScreenTransition>
   );
 }

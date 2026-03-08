@@ -12,7 +12,6 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
-import { ScreenTransition } from "@/components/screen-transition";
 import { useTaskContext } from "@/lib/context/task-context";
 import { useI18n } from "@/lib/context/i18n-context";
 import { SwipeableTaskCard } from "@/components/swipeable-task-card";
@@ -164,11 +163,10 @@ export default function HomeScreen() {
   };
 
   return (
-    <ScreenTransition animationType="fade" duration={300}>
-      <ScreenContainer className="p-4">
-        <View className="flex-1">
-          {/* Header: + button left, title center, search + trash icons right */}
-          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+    <ScreenContainer className="p-4">
+      <View className="flex-1">
+        {/* Header: + button left, title center, search + trash icons right */}
+        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
           {/* Add task button (top-left) */}
           <Pressable
             onPress={() => router.push("/add-task")}
@@ -363,8 +361,7 @@ export default function HomeScreen() {
             </View>
           </ScrollView>
         )}
-        </View>
-      </ScreenContainer>
-    </ScreenTransition>
+      </View>
+    </ScreenContainer>
   );
 }

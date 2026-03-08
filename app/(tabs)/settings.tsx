@@ -15,7 +15,6 @@ import { useRouter } from "expo-router";
 import * as Clipboard from "expo-clipboard";
 import { Image } from "expo-image";
 import { ScreenContainer } from "@/components/screen-container";
-import { ScreenTransition } from "@/components/screen-transition";
 import { useTaskContext } from "@/lib/context/task-context";
 import { useI18n } from "@/lib/context/i18n-context";
 import { useThemeContext } from "@/lib/theme-provider";
@@ -244,29 +243,28 @@ export default function SettingsScreen() {
   const sectionStyle = "bg-surface rounded-2xl p-4 border border-border";
 
   return (
-    <ScreenTransition animationType="fade" duration={300}>
-      <ScreenContainer className="p-4">
-        <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
-          <View className="gap-4">
-            <Text className="text-foreground font-bold" style={{ fontSize: 28, lineHeight: 34, marginBottom: 2 }}>
-              {t.settings.title}
-            </Text>
+    <ScreenContainer className="p-4">
+      <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+        <View className="gap-4">
+          <Text className="text-foreground font-bold" style={{ fontSize: 28, lineHeight: 34, marginBottom: 2 }}>
+            {t.settings.title}
+          </Text>
 
-            {/* Language */}
-            <View className={sectionStyle}>
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-                  <Text style={{ fontSize: 22 }}>🌐</Text>
-                  <Text className="text-foreground font-semibold" style={{ fontSize: 16 }}>{t.settings.language}</Text>
-                </View>
-                <Pressable
-                  onPress={handleLanguageToggle}
-                  style={({ pressed }) => [{ backgroundColor: "#0a7ea4", borderRadius: 12, paddingHorizontal: 14, paddingVertical: 7, opacity: pressed ? 0.7 : 1 }]}
-                >
-                  <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 14 }}>
-                    {language === "en" ? "РУС" : "ENG"}
-                  </Text>
-                </Pressable>
+          {/* Language */}
+          <View className={sectionStyle}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                <Text style={{ fontSize: 22 }}>🌐</Text>
+                <Text className="text-foreground font-semibold" style={{ fontSize: 16 }}>{t.settings.language}</Text>
+              </View>
+              <Pressable
+                onPress={handleLanguageToggle}
+                style={({ pressed }) => [{ backgroundColor: "#0a7ea4", borderRadius: 12, paddingHorizontal: 14, paddingVertical: 7, opacity: pressed ? 0.7 : 1 }]}
+              >
+                <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 14 }}>
+                  {language === "en" ? "РУС" : "ENG"}
+                </Text>
+              </Pressable>
             </View>
           </View>
 
@@ -604,7 +602,6 @@ export default function SettingsScreen() {
           </View>
         </View>
       </ScrollView>
-      </ScreenContainer>
-    </ScreenTransition>
+    </ScreenContainer>
   );
 }
