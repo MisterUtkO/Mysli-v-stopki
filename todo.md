@@ -491,3 +491,7 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Fix swipe gesture to cycle through task statuses in All tab
 - [x] Add dynamic empty state messages for Completed and In Progress tabs
 - [x] Fix matrix glow frame alignment and sizing
+
+
+## Phase 31: Restore Missing Features
+- [x] Restore home screen selection in Settings

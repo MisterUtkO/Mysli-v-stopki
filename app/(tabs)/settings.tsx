@@ -524,6 +524,46 @@ export default function SettingsScreen() {
 
           {/* Support Developer - Copy card and show bank app chooser */}
 
+          {/* Home Screen Selection */}
+          <View className={sectionStyle}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 10 }}>
+              <Text style={{ fontSize: 22 }}>🏠</Text>
+              <Text className="text-foreground font-semibold" style={{ fontSize: 16 }}>
+                {isRu ? "Начальный экран" : "Home Screen"}
+              </Text>
+            </View>
+            <View style={{ gap: 8 }}>
+              {[
+                { value: "index", label: isRu ? "Задачи" : "Tasks", emoji: "📋" },
+                { value: "matrix", label: isRu ? "Матрица" : "Matrix", emoji: "📊" },
+                { value: "kanban", label: isRu ? "Канбан" : "Kanban", emoji: "📌" },
+                { value: "achievements", label: isRu ? "Достижения" : "Achievements", emoji: "🏆" },
+              ].map((screen) => (
+                <Pressable
+                  key={screen.value}
+                  onPress={() => updateSettings({ startScreen: screen.value as any })}
+                  style={({ pressed }) => [{
+                    paddingVertical: 10,
+                    paddingHorizontal: 12,
+                    borderRadius: 8,
+                    backgroundColor: (settings.startScreen as string) === screen.value ? colors.primary : colors.background,
+                    borderWidth: 1,
+                    borderColor: (settings.startScreen as string) === screen.value ? colors.primary : colors.border,
+                    opacity: pressed ? 0.7 : 1,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 8,
+                  }]}
+                >
+                  <Text style={{ fontSize: 16 }}>{screen.emoji}</Text>
+                  <Text style={{ color: (settings.startScreen as string) === screen.value ? "#FFF" : colors.foreground, fontWeight: "600", fontSize: 14 }}>
+                    {screen.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+
           {/* Privacy Policy Button */}
           <Pressable
             onPress={() => {
