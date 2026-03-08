@@ -523,6 +523,46 @@ export default function SettingsScreen() {
           </Pressable>
 
           {/* Support Developer - Copy card and show bank app chooser */}
+
+          {/* Privacy Policy Button */}
+          <Pressable
+            onPress={() => {
+              router.push("/privacy-policy");
+            }}
+            style={({ pressed }) => [{
+              backgroundColor: colors.surface,
+              borderRadius: 12,
+              paddingVertical: 12,
+              paddingHorizontal: 16,
+              borderWidth: 1,
+              borderColor: colors.border,
+              opacity: pressed ? 0.7 : 1,
+            }]}
+          >
+            <Text style={{ color: colors.foreground, fontWeight: "600", fontSize: 14, textAlign: "center" }}>
+              {isRu ? "🔒 Политика конфиденциальности" : "🔒 Privacy Policy"}
+            </Text>
+          </Pressable>
+
+          {/* Terms of Service Button */}
+          <Pressable
+            onPress={() => {
+              router.push("/terms-of-service");
+            }}
+            style={({ pressed }) => [{
+              backgroundColor: colors.surface,
+              borderRadius: 12,
+              paddingVertical: 12,
+              paddingHorizontal: 16,
+              borderWidth: 1,
+              borderColor: colors.border,
+              opacity: pressed ? 0.7 : 1,
+            }]}
+          >
+            <Text style={{ color: colors.foreground, fontWeight: "600", fontSize: 14, textAlign: "center" }}>
+              {isRu ? "⚖️ Условия использования" : "⚖️ Terms of Service"}
+            </Text>
+          </Pressable>
           <Pressable
             onPress={() => {
               // First, copy card number to clipboard
@@ -597,7 +637,7 @@ export default function SettingsScreen() {
           {/* Footer */}
           <View style={{ alignItems: "center", marginTop: 20, marginBottom: 20 }}>
             <Text className="text-muted" style={{ fontSize: 12 }}>
-              v1.0.0 • SDVGNote
+              v1.0.3 • SDVGNote
             </Text>
           </View>
         </View>

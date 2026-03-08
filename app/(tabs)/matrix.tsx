@@ -79,6 +79,9 @@ export default function MatrixScreen() {
     };
 
     tasks.forEach((task) => {
+      // Skip completed tasks in matrix view
+      if (task.status === "completed") return;
+      
       const quadrantKey = task.quadrant as QuadrantKey;
       if (result[quadrantKey]) {
         result[quadrantKey].push(task);
@@ -151,9 +154,14 @@ export default function MatrixScreen() {
           width: quadrantWidth,
           height: quadrantHeight,
           backgroundColor: config.color,
-          borderWidth: 2,
-          borderColor: "#000000",
+          borderWidth: 3,
+          borderColor: config.color,
           overflow: "hidden",
+          shadowColor: config.color,
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: 0.8,
+          shadowRadius: 12,
+          elevation: 8,
         }}
       >
         {/* Header */}

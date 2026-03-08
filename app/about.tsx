@@ -6,7 +6,7 @@ import { useTaskContext } from "@/lib/context/task-context";
 import { useEffect, useState } from "react";
 
 
-const APP_VERSION = "1.0.2";
+const APP_VERSION = "1.0.3";
 
 interface ChangelogEntry {
   version: string;
@@ -18,6 +18,24 @@ interface ChangelogEntry {
 }
 
 const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "1.0.3",
+    date: "2026-03-08",
+    changes: {
+      en: [
+        "✓ Privacy Policy and Terms of Service pages",
+        "✓ Completed tasks hidden from Matrix view",
+        "✓ Improved glow frame alignment in Matrix",
+        "✓ RF and Google Play compliance updates",
+      ],
+      ru: [
+        "✓ Страницы политики конфиденциальности и условий использования",
+        "✓ Выполненные задачи скрыты в режиме матрицы",
+        "✓ Улучшено выравнивание светящихся рамок в матрице",
+        "✓ Обновления соответствия РФ и Google Play",
+      ],
+    },
+  },
   {
     version: "1.0.2",
     date: "2026-03-04",
