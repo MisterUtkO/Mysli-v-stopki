@@ -1,18 +1,22 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, Animated, Dimensions } from "react-native";
+import { View, Text, Dimensions } from "react-native";
 import { useBackgroundAnimationContext } from "@/lib/context/background-animation-context";
 
 interface Particle {
   id: string;
-  initialLeft: number;
+  left: number;
+  top: number;
   emoji: string;
-  animValue: Animated.Value;
+  duration: number;
 }
 
 export function AnimatedBackground() {
-  const { animationType, speed, intensity } = useBackgroundAnimationContext();
+  const context = useBackgroundAnimationContext();
+  const { animationType, speed, animationIntensity } = context;
   const [particles, setParticles] = useState<Particle[]>([]);
-  const { width, height } = Dimensions.get("window");
+  const dims = Dimensions.get("window");
+  const width = dims.width || 400;
+  const height = dims.height || 800;
 
   const getEmoji = () => {
     switch (animationType) {
@@ -25,90 +29,58 @@ export function AnimatedBackground() {
       case "snowflakes":
         return "❄️";
       case "matrix":
-        return String.fromCharCode(0x30A0 + Math.floor(Math.random() * 96)); // Random Japanese/Cyrillic-like character
+        return String.fromCharCode(0x30A0 + Math.floor(Math.random() * 96));
       default:
         return "";
     }
   };
 
-  const getIntensityCount = () => {
-    switch (intensity) {
-      case "never":
-        return 0;
-      case "hourly":
-        return 5;
-      case "daily":
-        return 10;
-      case "weekly":
-        return 15;
-      case "every_30_min":
-        return 20;
-      default:
-        return 10;
-    }
-  };
-
+  // Generate particles
   useEffect(() => {
-    if (animationType === "none" || getIntensityCount() === 0) {
+    if (animationType === "none" || animationIntensity === 0) {
       setParticles([]);
       return;
     }
 
     const newParticles: Particle[] = [];
-    const count = getIntensityCount();
-    const speedMultiplier = 3 / speed;
-
-    for (let i = 0; i < count; i++) {
-      const animValue = new Animated.Value(0);
-      const particle: Particle = {
-        id: `particle-${Date.now()}-${i}`,
-        initialLeft: Math.random() * width,
+    for (let i = 0; i < animationIntensity; i++) {
+      const duration = 3000 / speed + Math.random() * 2000;
+      newParticles.push({
+        id: `particle-${i}`,
+        left: Math.random() * width,
+        top: -50,
         emoji: getEmoji(),
-        animValue,
-      };
+        duration,
+      });
+    }
+    setParticles(newParticles);
+  }, [animationType, speed, animationIntensity, width]);
 
-      newParticles.push(particle);
-
-      // Start animation
-      const duration = 3000 * speedMultiplier * (0.5 + Math.random() * 0.5);
-      const delay = (i * 200) / count;
-
-      setTimeout(() => {
-        Animated.timing(animValue, {
-          toValue: height + 100,
-          duration: duration,
-          useNativeDriver: false,
-        }).start(() => {
-          // Reset animation when complete
-          animValue.setValue(0);
-        });
-      }, delay);
+  // Regenerate particles periodically
+  useEffect(() => {
+    if (animationType === "none" || animationIntensity === 0) {
+      return;
     }
 
-    setParticles(newParticles);
-
-    // Restart animation periodically
     const interval = setInterval(() => {
-      newParticles.forEach((particle, index) => {
-        const duration = 3000 * speedMultiplier * (0.5 + Math.random() * 0.5);
-        const delay = (index * 200) / count;
-
-        setTimeout(() => {
-          Animated.timing(particle.animValue, {
-            toValue: height + 100,
-            duration: duration,
-            useNativeDriver: false,
-          }).start(() => {
-            particle.animValue.setValue(0);
-          });
-        }, delay);
-      });
+      const refreshedParticles: Particle[] = [];
+      for (let i = 0; i < animationIntensity; i++) {
+        const duration = 3000 / speed + Math.random() * 2000;
+        refreshedParticles.push({
+          id: `particle-${Date.now()}-${i}`,
+          left: Math.random() * width,
+          top: -50,
+          emoji: getEmoji(),
+          duration,
+        });
+      }
+      setParticles(refreshedParticles);
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [animationType, speed, intensity, width, height]);
+  }, [animationType, speed, animationIntensity, width]);
 
-  if (animationType === "none" || getIntensityCount() === 0) {
+  if (animationType === "none" || animationIntensity === 0) {
     return null;
   }
 
@@ -122,31 +94,67 @@ export function AnimatedBackground() {
         height: "100%",
         pointerEvents: "none",
         overflow: "hidden",
-        zIndex: 1,
       }}
     >
       {particles.map((particle) => (
-        <Animated.View
+        <ParticleAnimation
           key={particle.id}
-          style={{
-            position: "absolute",
-            left: particle.initialLeft,
-            top: particle.animValue,
-            opacity: 0.8,
-          }}
-        >
-          <Text
-            style={{
-              fontSize: 32,
-              lineHeight: 32,
-              color: animationType === "matrix" ? "#00ff00" : "inherit",
-              fontWeight: animationType === "matrix" ? "bold" : "normal",
-            }}
-          >
-            {particle.emoji}
-          </Text>
-        </Animated.View>
+          particle={particle}
+          screenHeight={height}
+          animationType={animationType}
+        />
       ))}
+    </View>
+  );
+}
+
+interface ParticleAnimationProps {
+  particle: Particle;
+  screenHeight: number;
+  animationType: string;
+}
+
+function ParticleAnimation({ particle, screenHeight, animationType }: ParticleAnimationProps) {
+  const [offset, setOffset] = useState(0);
+
+  useEffect(() => {
+    let animationFrameId: number;
+    let startTime: number;
+
+    const animate = (currentTime: number) => {
+      if (!startTime) startTime = currentTime;
+      const elapsed = currentTime - startTime;
+      const progress = (elapsed % particle.duration) / particle.duration;
+      const newOffset = progress * (screenHeight + 100);
+
+      setOffset(newOffset);
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    animationFrameId = requestAnimationFrame(animate);
+
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [particle.duration, screenHeight]);
+
+  return (
+    <View
+      style={{
+        position: "absolute",
+        left: particle.left,
+        top: particle.top + offset,
+        opacity: 0.8,
+      }}
+    >
+      <Text
+        style={{
+          fontSize: 32,
+          lineHeight: 32,
+          color: animationType === "matrix" ? "#00ff00" : "inherit",
+          fontWeight: animationType === "matrix" ? "bold" : "normal",
+        }}
+      >
+        {particle.emoji}
+      </Text>
     </View>
   );
 }

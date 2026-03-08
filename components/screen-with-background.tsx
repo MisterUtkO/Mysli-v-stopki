@@ -1,22 +1,29 @@
 import React from "react";
 import { View, type ViewProps } from "react-native";
+import { SafeAreaView, type Edge } from "react-native-safe-area-context";
 import { AnimatedBackground } from "./animated-background";
 import { useColors } from "@/hooks/use-colors";
+import { cn } from "@/lib/utils";
 
 export interface ScreenWithBackgroundProps extends ViewProps {
   children: React.ReactNode;
+  className?: string;
+  edges?: Edge[];
 }
 
 /**
  * A screen wrapper component that adds animated background to any screen.
+ * Combines ScreenContainer + AnimatedBackground functionality.
  * Z-index layering:
- * - z-0: Background color (ScreenContainer)
+ * - z-0: Background color
  * - z-1: Animated background (if enabled)
  * - z-2: Content (children)
  */
 export function ScreenWithBackground({
   children,
   style,
+  className,
+  edges = ["top", "left", "right"],
   ...props
 }: ScreenWithBackgroundProps) {
   const colors = useColors();
@@ -26,27 +33,13 @@ export function ScreenWithBackground({
       style={[
         {
           flex: 1,
-          position: "relative",
           backgroundColor: colors.background,
         },
         style,
       ]}
       {...props}
     >
-      {/* Base background layer - z-index 0 */}
-      <View
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: colors.background,
-          zIndex: 0,
-        }}
-      />
-
-      {/* Animated background layer - z-index 1 */}
+      {/* Animated background layer */}
       <View
         style={{
           position: "absolute",
@@ -61,16 +54,18 @@ export function ScreenWithBackground({
         <AnimatedBackground />
       </View>
 
-      {/* Content layer - z-index 2 */}
-      <View
+      {/* Content layer - must be on top */}
+      <SafeAreaView
+        edges={edges}
         style={{
           flex: 1,
-          position: "relative",
           zIndex: 2,
         }}
       >
-        {children}
-      </View>
+        <View className={cn("flex-1", className)}>
+          {children}
+        </View>
+      </SafeAreaView>
     </View>
   );
 }

@@ -164,9 +164,8 @@ export default function HomeScreen() {
   };
 
   return (
-    <ScreenWithBackground>
-      <ScreenContainer className="p-4">
-        <View className="flex-1">
+    <ScreenWithBackground className="p-4">
+      <View className="flex-1">
         {/* Header: + button left, title center, search + trash icons right */}
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
           {/* Add task button (top-left) */}
@@ -363,8 +362,7 @@ export default function HomeScreen() {
             </View>
           </ScrollView>
         )}
-        </View>
-      </ScreenContainer>
+      </View>
     </ScreenWithBackground>
   );
 }

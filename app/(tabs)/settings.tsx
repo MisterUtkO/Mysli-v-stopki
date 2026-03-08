@@ -38,7 +38,7 @@ export default function SettingsScreen() {
   const { colorScheme, setColorScheme } = useThemeContext();
   const { triggerCustomFlag, unlocked } = useAchievements();
   const colors = useColors();
-  const { animationType, setAnimationType, speed, setSpeed, intensity, setIntensity } = useBackgroundAnimationContext();
+  const { animationType, setAnimationType, speed, setSpeed, animationIntensity, setAnimationIntensity } = useBackgroundAnimationContext();
   const [exporting, setExporting] = useState(false);
   const [copiedCard, setCopiedCard] = useState(false);
   const [aboutTapCount, setAboutTapCount] = useState(0);
@@ -363,6 +363,90 @@ export default function SettingsScreen() {
                 );
               })}
             </View>
+
+            {/* Speed Slider */}
+            {animationType !== "none" && (
+              <View style={{ marginTop: 12, gap: 6 }}>
+                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                  <Text className="text-muted" style={{ fontSize: 14 }}>{isRu ? "Скорость" : "Speed"}</Text>
+                  <Text className="text-foreground font-semibold" style={{ fontSize: 14 }}>{speed.toFixed(1)}x</Text>
+                </View>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                  <Text style={{ fontSize: 12, color: colors.muted }}>0.5x</Text>
+                  <View style={{ flex: 1, height: 6, backgroundColor: colors.border, borderRadius: 3, overflow: "hidden" }}>
+                    <View
+                      style={{
+                        height: "100%",
+                        width: `${((speed - 0.5) / 2.5) * 100}%`,
+                        backgroundColor: colors.primary,
+                      }}
+                    />
+                  </View>
+                  <Text style={{ fontSize: 12, color: colors.muted }}>3x</Text>
+                </View>
+                <View style={{ flexDirection: "row", gap: 4, justifyContent: "space-between" }}>
+                  {[0.5, 1, 1.5, 2, 2.5, 3].map((val) => (
+                    <Pressable
+                      key={val}
+                      onPress={() => setSpeed(val)}
+                      style={({ pressed }) => [{
+                        flex: 1,
+                        paddingVertical: 6,
+                        borderRadius: 6,
+                        backgroundColor: Math.abs(speed - val) < 0.1 ? colors.primary : colors.surface,
+                        opacity: pressed ? 0.7 : 1,
+                      }]}
+                    >
+                      <Text style={{ textAlign: "center", fontSize: 11, fontWeight: Math.abs(speed - val) < 0.1 ? "700" : "600", color: Math.abs(speed - val) < 0.1 ? "#FFF" : colors.foreground }}>
+                        {val}x
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {/* Intensity Slider */}
+            {animationType !== "none" && (
+              <View style={{ marginTop: 12, gap: 6 }}>
+                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                  <Text className="text-muted" style={{ fontSize: 14 }}>{isRu ? "Интенсивность" : "Intensity"}</Text>
+                  <Text className="text-foreground font-semibold" style={{ fontSize: 14 }}>{animationIntensity}</Text>
+                </View>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                  <Text style={{ fontSize: 12, color: colors.muted }}>1</Text>
+                  <View style={{ flex: 1, height: 6, backgroundColor: colors.border, borderRadius: 3, overflow: "hidden" }}>
+                    <View
+                      style={{
+                        height: "100%",
+                        width: `${((animationIntensity - 1) / 19) * 100}%`,
+                        backgroundColor: colors.primary,
+                      }}
+                    />
+                  </View>
+                  <Text style={{ fontSize: 12, color: colors.muted }}>20</Text>
+                </View>
+                <View style={{ flexDirection: "row", gap: 4, justifyContent: "space-between" }}>
+                  {[1, 5, 10, 15, 20].map((val) => (
+                    <Pressable
+                      key={val}
+                      onPress={() => setAnimationIntensity(val)}
+                      style={({ pressed }) => [{
+                        flex: 1,
+                        paddingVertical: 6,
+                        borderRadius: 6,
+                        backgroundColor: animationIntensity === val ? colors.primary : colors.surface,
+                        opacity: pressed ? 0.7 : 1,
+                      }]}
+                    >
+                      <Text style={{ textAlign: "center", fontSize: 11, fontWeight: animationIntensity === val ? "700" : "600", color: animationIntensity === val ? "#FFF" : colors.foreground }}>
+                        {val}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+            )}
           </View>
 
           {/* Task Notifications */}
