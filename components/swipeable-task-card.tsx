@@ -407,7 +407,7 @@ export function SwipeableTaskCard({
   // REGULAR VIEW: Full details
   const glowType = getTaskGlowType(task);
   return (
-    <View style={{ marginBottom: 8, borderRadius: 14, overflow: "hidden", position: "relative" }}>
+    <View style={{ marginBottom: 8, borderRadius: 14, overflow: "hidden", position: "relative" }} {...panResponder.panHandlers}>
     <TaskCardGlow
       glowType={glowType}
       borderRadius={14}
@@ -463,7 +463,6 @@ export function SwipeableTaskCard({
       {/* Swipeable card */}
       <Animated.View
         style={{ transform: [{ translateX }] }}
-        {...panResponder.panHandlers}
       >
         <Pressable
           onPress={() => {

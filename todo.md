@@ -546,3 +546,10 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Update app.config.ts with new app name and description
 - [x] Update translations to use SDVGNote
 - [x] Update about.tsx copyright to use SDVGNote
+
+
+## Phase 39: Fix Swipe Status Cycling Bug
+- [x] Debug swipe gesture on Tasks screen - moved panHandlers to outer View
+- [x] Fix status cycle loop: not_started → in_progress → completed → not_started
+- [x] Ensure swipe works on all tabs (All, Start, In Progress, Done)
+- [x] Test swipe on all task views (6 tests passed)
