@@ -599,3 +599,10 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Task deletion removes linked kanban sticker
 - [x] Sticker column move (drag) updates linked task status
 - [x] Kanban board refreshes on tab focus (no restart needed to see changes)
+
+## Phase 47: Kanban Drag-and-Drop
+
+- [x] Long-press on sticker activates drag mode (short press still opens info)
+- [x] Dragged sticker follows finger across the board
+- [x] Column drop zones highlight when sticker is dragged over them
+- [x] Dropping sticker in a different column moves it and updates linked task status
