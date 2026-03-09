@@ -148,16 +148,19 @@ export function calculateStreakDays(tasks: Task[]): number {
   const today = getTodayStart();
   const oneDayMs = 86400000;
 
-  if (sortedDays[0] < today - oneDayMs) return 0;
+  // Allow up to 25h gap to handle DST transitions
+  if (sortedDays[0] < today - oneDayMs * 1.1) return 0;
 
   let streak = 1;
   let currentDay = sortedDays[0];
 
   for (let i = 1; i < sortedDays.length; i++) {
-    if (currentDay - sortedDays[i] === oneDayMs) {
+    const diff = currentDay - sortedDays[i];
+    // Accept 23-25 hours as "one day" to handle DST transitions
+    if (diff >= oneDayMs * 0.9 && diff <= oneDayMs * 1.1) {
       streak++;
       currentDay = sortedDays[i];
-    } else if (currentDay - sortedDays[i] > oneDayMs) {
+    } else if (diff > oneDayMs * 1.1) {
       break;
     }
   }

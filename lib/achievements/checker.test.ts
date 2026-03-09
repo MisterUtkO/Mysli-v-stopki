@@ -98,12 +98,15 @@ describe("calculateStreakDays", () => {
   });
 
   it("returns 3 for tasks on 3 consecutive days", () => {
-    const now = Date.now();
+    // Use start-of-day timestamps to ensure streak calculation works correctly
+    const d = new Date();
+    d.setHours(12, 0, 0, 0); // Use noon to avoid DST edge cases
+    const todayNoon = d.getTime();
     const oneDay = 86400000;
     const tasks = [
-      makeTask({ createdAt: now, updatedAt: now }),
-      makeTask({ createdAt: now - oneDay, updatedAt: now - oneDay }),
-      makeTask({ createdAt: now - 2 * oneDay, updatedAt: now - 2 * oneDay }),
+      makeTask({ createdAt: todayNoon, updatedAt: todayNoon }),
+      makeTask({ createdAt: todayNoon - oneDay, updatedAt: todayNoon - oneDay }),
+      makeTask({ createdAt: todayNoon - 2 * oneDay, updatedAt: todayNoon - 2 * oneDay }),
     ];
     expect(calculateStreakDays(tasks)).toBe(3);
   });

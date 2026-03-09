@@ -436,21 +436,102 @@ export default function SettingsScreen() {
                     </Pressable>
                   ))}
                 </View>
+
+                {/* Exact Time Picker */}
+                <View style={{ marginTop: 4 }}>
+                  <Text className="text-muted" style={{ fontSize: 13, marginBottom: 6 }}>
+                    {isRu ? "Точное время уведомления:" : "Exact notification time:"}
+                  </Text>
+                  <Pressable
+                    onPress={() => setShowTimePicker(!showTimePicker)}
+                    style={({ pressed }) => [{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      paddingVertical: 10,
+                      paddingHorizontal: 14,
+                      borderRadius: 10,
+                      borderWidth: 1,
+                      borderColor: showTimePicker ? colors.primary : colors.border,
+                      backgroundColor: colors.background,
+                      opacity: pressed ? 0.7 : 1,
+                    }]}
+                  >
+                    <Text style={{ color: colors.foreground, fontWeight: "600", fontSize: 15 }}>
+                      ⏰ {String(pickerHour).padStart(2, "0")}:{String(pickerMinute).padStart(2, "0")}
+                    </Text>
+                    <Text style={{ color: colors.muted, fontSize: 13 }}>
+                      {showTimePicker ? "▲" : "▼"}
+                    </Text>
+                  </Pressable>
+
+                  {showTimePicker && (
+                    <View style={{ marginTop: 10, padding: 12, borderRadius: 12, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}>
+                      {/* Hour selector */}
+                      <Text className="text-muted" style={{ fontSize: 12, marginBottom: 6 }}>
+                        {isRu ? "Час (0–23):" : "Hour (0–23):"}
+                      </Text>
+                      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+                        {Array.from({ length: 24 }, (_, i) => i).map((h) => (
+                          <Pressable
+                            key={h}
+                            onPress={() => {
+                              setPickerHour(h);
+                              handleExactTimeChange(h, pickerMinute);
+                            }}
+                            style={({ pressed }) => [{
+                              width: 36,
+                              height: 36,
+                              borderRadius: 8,
+                              alignItems: "center",
+                              justifyContent: "center",
+                              backgroundColor: pickerHour === h ? colors.primary : colors.background,
+                              borderWidth: 1,
+                              borderColor: pickerHour === h ? colors.primary : colors.border,
+                              opacity: pressed ? 0.7 : 1,
+                            }]}
+                          >
+                            <Text style={{ color: pickerHour === h ? "#FFF" : colors.foreground, fontWeight: "600", fontSize: 13 }}>
+                              {String(h).padStart(2, "0")}
+                            </Text>
+                          </Pressable>
+                        ))}
+                      </View>
+
+                      {/* Minute selector */}
+                      <Text className="text-muted" style={{ fontSize: 12, marginBottom: 6 }}>
+                        {isRu ? "Минуты:" : "Minutes:"}
+                      </Text>
+                      <View style={{ flexDirection: "row", gap: 6 }}>
+                        {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((m) => (
+                          <Pressable
+                            key={m}
+                            onPress={() => {
+                              setPickerMinute(m);
+                              handleExactTimeChange(pickerHour, m);
+                            }}
+                            style={({ pressed }) => [{
+                              flex: 1,
+                              paddingVertical: 8,
+                              borderRadius: 8,
+                              alignItems: "center",
+                              backgroundColor: pickerMinute === m ? colors.primary : colors.background,
+                              borderWidth: 1,
+                              borderColor: pickerMinute === m ? colors.primary : colors.border,
+                              opacity: pressed ? 0.7 : 1,
+                            }]}
+                          >
+                            <Text style={{ color: pickerMinute === m ? "#FFF" : colors.foreground, fontWeight: "600", fontSize: 11 }}>
+                              :{String(m).padStart(2, "0")}
+                            </Text>
+                          </Pressable>
+                        ))}
+                      </View>
+                    </View>
+                  )}
+                </View>
               </View>
             )}
-          </View>
-
-          {/* Reminders */}
-          <View className={sectionStyle}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 8 }}>
-              <Text style={{ fontSize: 22 }}>⏰</Text>
-              <Text className="text-foreground font-semibold" style={{ fontSize: 16 }}>
-                {isRu ? "Напоминания" : "Reminders"}
-              </Text>
-            </View>
-            <View style={{ gap: 8 }}>
-
-            </View>
           </View>
 
           {/* Data Management */}

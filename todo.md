@@ -562,3 +562,18 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Status cycle works: not_started → in_progress → completed → not_started
 - [x] Added 'previous' translation to onboarding (EN: Back, RU: Назад)
 - [x] 14 tests passed
+
+
+## Phase 41: Verify Swipe After Server Restart
+- [x] Reviewed SwipeableTaskCard - uses Gesture.Pan() from react-native-gesture-handler
+- [x] 20 swipe tests passed (14 gesture-handler + 6 swipe-fix)
+- [x] TypeScript compiles clean (0 real errors)
+- [x] Dev server running correctly
+
+
+## Phase 42: Onboarding Swipe, Settings Cleanup, Time Picker
+- [x] Add swipe navigation to onboarding tutorial (GestureDetector + Gesture.Pan, no layout breakage)
+- [x] Remove unused app block from Settings
+- [x] Add exact time picker for motivational reminders
+- [x] Fix DST bug in calculateStreakDays (accept 23-25h as one day)
+- [x] All 99 tests passed, TypeScript clean

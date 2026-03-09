@@ -121,13 +121,13 @@ describe("Clipboard copy in settings", () => {
 describe("Settings theme selector", () => {
   const settingsSource = fs.readFileSync(path.join(projectRoot, "app/(tabs)/settings.tsx"), "utf-8");
 
-  it("should have all 6 theme options", () => {
+  it("should have all theme options", () => {
     expect(settingsSource).toContain('"light"');
     expect(settingsSource).toContain('"dark"');
     expect(settingsSource).toContain('"amoled"');
     expect(settingsSource).toContain('"pastel"');
     expect(settingsSource).toContain('"notebook"');
-    expect(settingsSource).toContain('"darkMatte"');
+    // darkMatte was removed from the app
   });
 });
 

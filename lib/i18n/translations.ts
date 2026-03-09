@@ -194,6 +194,7 @@ export interface Translations {
     next: string;
     previous: string;
     getStarted: string;
+    swipeHint: string;
   };
 }
 
@@ -376,6 +377,7 @@ const EN: Translations = {
     next: "Next",
     previous: "Back",
     getStarted: "Get Started",
+    swipeHint: "← swipe to navigate →",
   },
 };
 
@@ -558,6 +560,7 @@ const RU: Translations = {
     next: "Далее",
     previous: "Назад",
     getStarted: "Начать",
+    swipeHint: "← свайп для навигации →",
   },
 };
 

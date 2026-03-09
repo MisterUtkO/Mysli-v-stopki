@@ -1,8 +1,20 @@
-import React, { useState, createContext, useContext, useEffect, useRef } from "react";
-import { View, Text, Pressable, ScrollView, Modal, PanResponder } from "react-native";
+import React, { useState, createContext, useContext, useEffect } from "react";
+import { View, Text, Pressable, Modal, Dimensions } from "react-native";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  runOnJS,
+  interpolate,
+  Extrapolation,
+} from "react-native-reanimated";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { useColors } from "@/hooks/use-colors";
 import { useI18n } from "@/lib/context/i18n-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const SWIPE_THRESHOLD = 60;
 
 interface OnboardingStep {
   id: string;
@@ -81,7 +93,6 @@ export function OnboardingTutorialProvider({
     setVisible(true);
   };
 
-  // Check if user has seen onboarding on mount
   useEffect(() => {
     const checkAndShowOnboarding = async () => {
       try {
@@ -125,26 +136,9 @@ function OnboardingTutorialModal({
 }) {
   const colors = useColors();
   const { t } = useI18n();
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: (_, gestureState) => {
-        // Detect horizontal swipe
-        return Math.abs(gestureState.dx) > 20 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
-      },
-      onPanResponderRelease: (_, gestureState) => {
-        const swipeThreshold = 50;
-        // Swipe left → next step
-        if (gestureState.dx < -swipeThreshold) {
-          handleNext();
-        }
-        // Swipe right → previous step
-        if (gestureState.dx > swipeThreshold) {
-          handlePrevious();
-        }
-      },
-    })
-  ).current;
+
+  // Shared value for swipe drag
+  const translateX = useSharedValue(0);
 
   const handleSkip = async () => {
     try {
@@ -155,7 +149,7 @@ function OnboardingTutorialModal({
     }
   };
 
-  const handleNext = () => {
+  const goToNext = () => {
     if (currentStep < ONBOARDING_STEPS.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
@@ -163,15 +157,48 @@ function OnboardingTutorialModal({
     }
   };
 
-  const handlePrevious = () => {
+  const goToPrevious = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
     }
   };
 
+  const handleSwipeEnd = (dx: number) => {
+    if (dx < -SWIPE_THRESHOLD) {
+      // Swipe left → next
+      goToNext();
+    } else if (dx > SWIPE_THRESHOLD) {
+      // Swipe right → previous
+      goToPrevious();
+    }
+    translateX.value = withTiming(0, { duration: 200 });
+  };
+
+  const panGesture = Gesture.Pan()
+    .activeOffsetX([-12, 12])
+    .failOffsetY([-20, 20])
+    .onUpdate((e) => {
+      translateX.value = e.translationX;
+    })
+    .onEnd((e) => {
+      runOnJS(handleSwipeEnd)(e.translationX);
+    })
+    .onFinalize(() => {
+      translateX.value = withTiming(0, { duration: 150 });
+    });
+
+  const cardAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.value * 0.15 }],
+    opacity: interpolate(
+      Math.abs(translateX.value),
+      [0, 100],
+      [1, 0.85],
+      Extrapolation.CLAMP
+    ),
+  }));
+
   const step = ONBOARDING_STEPS[currentStep];
 
-  // Get translated text using the key path (e.g., "onboarding.welcome")
   const getTranslation = (key: string) => {
     const keys = key.split(".");
     let value: any = t;
@@ -194,142 +221,154 @@ function OnboardingTutorialModal({
       <View
         style={{
           flex: 1,
-          backgroundColor: "rgba(0, 0, 0, 0.7)",
+          backgroundColor: "rgba(0, 0, 0, 0.75)",
           justifyContent: "center",
           alignItems: "center",
+          paddingHorizontal: 24,
         }}
-        {...panResponder.panHandlers}
       >
-        <View
-          style={{
-            width: "80%",
-            borderRadius: 24,
-            padding: 32,
-            backgroundColor: colors.background,
-          }}
-        >
-          <ScrollView>
-            {/* Icon */}
-            <View style={{ alignItems: "center", marginBottom: 24 }}>
-              <Text style={{ fontSize: 48 }}>{step.icon}</Text>
-            </View>
+        <GestureDetector gesture={panGesture}>
+          <Animated.View
+            style={[
+              {
+                width: "100%",
+                maxWidth: 360,
+                borderRadius: 24,
+                backgroundColor: colors.background,
+                overflow: "hidden",
+              },
+              cardAnimStyle,
+            ]}
+          >
+            {/* Content area — fixed height, no ScrollView to avoid layout issues */}
+            <View style={{ padding: 28 }}>
+              {/* Icon */}
+              <View style={{ alignItems: "center", marginBottom: 16 }}>
+                <Text style={{ fontSize: 52 }}>{step.icon}</Text>
+              </View>
 
-            {/* Title */}
-            <Text
-              style={{
-                fontSize: 24,
-                fontWeight: "bold",
-                textAlign: "center",
-                marginBottom: 16,
-                color: colors.foreground,
-              }}
-            >
-              {stepTitle}
-            </Text>
+              {/* Title */}
+              <Text
+                style={{
+                  fontSize: 22,
+                  fontWeight: "700",
+                  textAlign: "center",
+                  marginBottom: 12,
+                  color: colors.foreground,
+                  lineHeight: 28,
+                }}
+                numberOfLines={2}
+              >
+                {stepTitle}
+              </Text>
 
-            {/* Description */}
-            <Text
-              style={{
-                fontSize: 16,
-                textAlign: "center",
-                marginBottom: 32,
-                lineHeight: 24,
-                color: colors.muted,
-              }}
-            >
-              {stepDescription}
-            </Text>
+              {/* Description */}
+              <Text
+                style={{
+                  fontSize: 15,
+                  textAlign: "center",
+                  lineHeight: 22,
+                  color: colors.muted,
+                  minHeight: 88,
+                }}
+              >
+                {stepDescription}
+              </Text>
 
-            {/* Progress Indicator */}
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "center",
-                marginBottom: 32,
-                gap: 8,
-              }}
-            >
-              {ONBOARDING_STEPS.map((_, index) => (
-                <View
-                  key={index}
-                  style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: 4,
-                    backgroundColor:
-                      index === currentStep ? colors.primary : colors.border,
-                  }}
-                />
-              ))}
-            </View>
+              {/* Swipe hint */}
+              <Text
+                style={{
+                  fontSize: 12,
+                  textAlign: "center",
+                  color: colors.border,
+                  marginTop: 8,
+                  marginBottom: 4,
+                }}
+              >
+                {t.onboarding?.swipeHint || "← свайп для навигации →"}
+              </Text>
 
-            {/* Buttons */}
-            <View style={{ flexDirection: "row", gap: 12 }}>
-              {currentStep > 0 && (
-                <Pressable
-                  onPress={handlePrevious}
-                  style={{
-                    flex: 1,
-                    paddingVertical: 12,
-                    borderRadius: 8,
-                    alignItems: "center",
-                    backgroundColor: colors.surface,
-                  }}
-                >
-                  <Text
+              {/* Progress dots */}
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "center",
+                  marginVertical: 16,
+                  gap: 8,
+                }}
+              >
+                {ONBOARDING_STEPS.map((_, index) => (
+                  <Pressable
+                    key={index}
+                    onPress={() => setCurrentStep(index)}
                     style={{
-                      fontWeight: "600",
-                      color: colors.muted,
+                      width: index === currentStep ? 20 : 8,
+                      height: 8,
+                      borderRadius: 4,
+                      backgroundColor:
+                        index === currentStep ? colors.primary : colors.border,
                     }}
+                  />
+                ))}
+              </View>
+
+              {/* Buttons */}
+              <View style={{ flexDirection: "row", gap: 10 }}>
+                {currentStep > 0 ? (
+                  <Pressable
+                    onPress={goToPrevious}
+                    style={({ pressed }) => ({
+                      flex: 1,
+                      paddingVertical: 13,
+                      borderRadius: 10,
+                      alignItems: "center",
+                      backgroundColor: colors.surface,
+                      opacity: pressed ? 0.7 : 1,
+                    })}
                   >
-                    {t.onboarding.previous || "← Back"}
+                    <Text style={{ fontWeight: "600", color: colors.muted, fontSize: 14 }}>
+                      {t.onboarding?.previous || "← Назад"}
+                    </Text>
+                  </Pressable>
+                ) : (
+                  <Pressable
+                    onPress={handleSkip}
+                    style={({ pressed }) => ({
+                      flex: 1,
+                      paddingVertical: 13,
+                      borderRadius: 10,
+                      alignItems: "center",
+                      backgroundColor: colors.surface,
+                      opacity: pressed ? 0.7 : 1,
+                    })}
+                  >
+                    <Text style={{ fontWeight: "600", color: colors.muted, fontSize: 14 }}>
+                      {t.onboarding?.skip || "Пропустить"}
+                    </Text>
+                  </Pressable>
+                )}
+
+                <Pressable
+                  onPress={goToNext}
+                  style={({ pressed }) => ({
+                    flex: 1,
+                    paddingVertical: 13,
+                    borderRadius: 10,
+                    alignItems: "center",
+                    backgroundColor: colors.primary,
+                    opacity: pressed ? 0.85 : 1,
+                  })}
+                >
+                  <Text style={{ fontWeight: "700", color: "white", fontSize: 14 }}>
+                    {currentStep === ONBOARDING_STEPS.length - 1
+                      ? (t.onboarding?.getStarted || "Начать")
+                      : (t.onboarding?.next || "Далее →")}
                   </Text>
                 </Pressable>
-              )}
-              <Pressable
-                onPress={handleSkip}
-                style={{
-                  flex: 1,
-                  paddingVertical: 12,
-                  borderRadius: 8,
-                  alignItems: "center",
-                  backgroundColor: colors.surface,
-                }}
-              >
-                <Text
-                  style={{
-                    fontWeight: "600",
-                    color: colors.muted,
-                  }}
-                >
-                  {t.onboarding.skip}
-                </Text>
-              </Pressable>
-
-              <Pressable
-                onPress={handleNext}
-                style={{
-                  flex: 1,
-                  paddingVertical: 12,
-                  borderRadius: 8,
-                  alignItems: "center",
-                  backgroundColor: colors.primary,
-                }}
-              >
-                <Text
-                  style={{
-                    fontWeight: "600",
-                    color: "white",
-                  }}
-                >
-                  {currentStep === ONBOARDING_STEPS.length - 1
-                    ? t.onboarding.getStarted
-                    : t.onboarding.next}
-                </Text>
-              </Pressable>
+              </View>
             </View>
-          </ScrollView>
-        </View>
+          </Animated.View>
+        </GestureDetector>
       </View>
     </Modal>
   );
