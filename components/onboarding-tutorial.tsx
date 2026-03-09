@@ -1,56 +1,51 @@
 import React, { useState } from "react";
 import { View, Text, Pressable, ScrollView, Modal } from "react-native";
 import { useColors } from "@/hooks/use-colors";
+import { useI18n } from "@/lib/context/i18n-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface OnboardingStep {
   id: string;
-  title: string;
-  description: string;
+  titleKey: string;
+  descriptionKey: string;
   icon: string;
 }
 
 const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     id: "welcome",
-    title: "Welcome to Eisenhower Priority",
-    description:
-      "Manage your tasks efficiently using the Eisenhower Matrix method. Organize tasks by urgency and importance.",
+    titleKey: "onboarding.welcome",
+    descriptionKey: "onboarding.welcomeDescription",
     icon: "📋",
   },
   {
     id: "tasks",
-    title: "Tasks Screen",
-    description:
-      "View all your tasks in different views: All, Start, In Progress, and Done. Swipe tasks to change their status or delete them.",
+    titleKey: "onboarding.tasksTitle",
+    descriptionKey: "onboarding.tasksDescription",
     icon: "✓",
   },
   {
     id: "matrix",
-    title: "Eisenhower Matrix",
-    description:
-      "Visualize your tasks in a 2x2 matrix: Urgent & Important, Important, Urgent, and Neither. Focus on what matters most.",
+    titleKey: "onboarding.matrixTitle",
+    descriptionKey: "onboarding.matrixDescription",
     icon: "📊",
   },
   {
     id: "kanban",
-    title: "Kanban Board",
-    description:
-      "Organize tasks in columns: To Do, In Progress, and Done. Drag tasks between columns to update their status.",
+    titleKey: "onboarding.kanbanTitle",
+    descriptionKey: "onboarding.kanbanDescription",
     icon: "📌",
   },
   {
     id: "achievements",
-    title: "Achievements",
-    description:
-      "Track your progress with daily, weekly, and monthly achievements. Celebrate your productivity milestones!",
+    titleKey: "onboarding.achievementsTitle",
+    descriptionKey: "onboarding.achievementsDescription",
     icon: "🏆",
   },
   {
     id: "tips",
-    title: "Pro Tips",
-    description:
-      "Create tasks with clear titles, set priorities, and review your progress regularly. Start with one task and build momentum!",
+    titleKey: "onboarding.tipsTitle",
+    descriptionKey: "onboarding.tipsDescription",
     icon: "💡",
   },
 ];
@@ -59,6 +54,7 @@ export function OnboardingTutorial() {
   const [currentStep, setCurrentStep] = useState(0);
   const [visible, setVisible] = useState(false);
   const colors = useColors();
+  const { t } = useI18n();
 
   const checkAndShowOnboarding = async () => {
     try {
@@ -91,6 +87,19 @@ export function OnboardingTutorial() {
   };
 
   const step = ONBOARDING_STEPS[currentStep];
+  
+  // Get translated text using the key path (e.g., "onboarding.welcome")
+  const getTranslation = (key: string) => {
+    const keys = key.split(".");
+    let value: any = t;
+    for (const k of keys) {
+      value = value?.[k];
+    }
+    return typeof value === "string" ? value : key;
+  };
+
+  const stepTitle = getTranslation(step.titleKey);
+  const stepDescription = getTranslation(step.descriptionKey);
 
   React.useEffect(() => {
     checkAndShowOnboarding();
@@ -135,7 +144,7 @@ export function OnboardingTutorial() {
                 color: colors.foreground,
               }}
             >
-              {step.title}
+              {stepTitle}
             </Text>
 
             {/* Description */}
@@ -148,7 +157,7 @@ export function OnboardingTutorial() {
                 color: colors.muted,
               }}
             >
-              {step.description}
+              {stepDescription}
             </Text>
 
             {/* Progress Indicator */}
@@ -192,7 +201,7 @@ export function OnboardingTutorial() {
                     color: colors.muted,
                   }}
                 >
-                  Skip
+                  {t.onboarding.skip}
                 </Text>
               </Pressable>
 
@@ -213,8 +222,8 @@ export function OnboardingTutorial() {
                   }}
                 >
                   {currentStep === ONBOARDING_STEPS.length - 1
-                    ? "Get Started"
-                    : "Next"}
+                    ? t.onboarding.getStarted
+                    : t.onboarding.next}
                 </Text>
               </Pressable>
             </View>

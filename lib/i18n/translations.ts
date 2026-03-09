@@ -175,6 +175,25 @@ export interface Translations {
     permissionDenied: string;
     offline: string;
   };
+
+  // Onboarding
+  onboarding: {
+    welcome: string;
+    welcomeDescription: string;
+    tasksTitle: string;
+    tasksDescription: string;
+    matrixTitle: string;
+    matrixDescription: string;
+    kanbanTitle: string;
+    kanbanDescription: string;
+    achievementsTitle: string;
+    achievementsDescription: string;
+    tipsTitle: string;
+    tipsDescription: string;
+    skip: string;
+    next: string;
+    getStarted: string;
+  };
 }
 
 const EN: Translations = {
@@ -337,6 +356,24 @@ const EN: Translations = {
     dataCleared: "All data cleared",
     permissionDenied: "Permission denied",
     offline: "You are offline",
+  },
+
+  onboarding: {
+    welcome: "Welcome to Eisenhower Priority",
+    welcomeDescription: "Manage your tasks efficiently using the Eisenhower Matrix method. Organize tasks by urgency and importance.",
+    tasksTitle: "Tasks Screen",
+    tasksDescription: "View all your tasks in different views: All, Start, In Progress, and Done. Swipe tasks to change their status or delete them.",
+    matrixTitle: "Eisenhower Matrix",
+    matrixDescription: "Visualize your tasks in a 2x2 matrix: Urgent & Important, Important, Urgent, and Neither. Focus on what matters most.",
+    kanbanTitle: "Kanban Board",
+    kanbanDescription: "Organize tasks in columns: To Do, In Progress, and Done. Drag tasks between columns to update their status.",
+    achievementsTitle: "Achievements",
+    achievementsDescription: "Track your progress with daily, weekly, and monthly achievements. Celebrate your productivity milestones!",
+    tipsTitle: "Pro Tips",
+    tipsDescription: "Create tasks with clear titles, set priorities, and review your progress regularly. Start with one task and build momentum!",
+    skip: "Skip",
+    next: "Next",
+    getStarted: "Get Started",
   },
 };
 
@@ -501,6 +538,24 @@ const RU: Translations = {
     permissionDenied: "Доступ запрещен",
     offline: "Вы в режиме оффлайн",
   },
+
+  onboarding: {
+    welcome: "Добро пожаловать в Eisenhower Priority",
+    welcomeDescription: "Управляйте своими задачами эффективно, используя метод матрицы Эйзенхауэра. Организуйте задачи по срочности и важности.",
+    tasksTitle: "Экран задач",
+    tasksDescription: "Просмотрите все свои задачи в разных представлениях: Все, Начало, В процессе и Готово. Проведите по задачам, чтобы изменить статус или удалить их.",
+    matrixTitle: "Матрица Эйзенхауэра",
+    matrixDescription: "Визуализируйте свои задачи в матрице 2x2: Срочно и важно, Важно, Срочно и Ни то ни другое. Сосредоточьтесь на том, что действительно важно.",
+    kanbanTitle: "Доска Канбан",
+    kanbanDescription: "Организуйте задачи в столбцы: К выполнению, В процессе и Готово. Перетащите задачи между столбцами, чтобы обновить их статус.",
+    achievementsTitle: "Достижения",
+    achievementsDescription: "Отслеживайте свой прогресс с помощью ежедневных, еженедельных и ежемесячных достижений. Празднуйте вехи своей производительности!",
+    tipsTitle: "Полезные советы",
+    tipsDescription: "Создавайте задачи с четкими названиями, устанавливайте приоритеты и регулярно проверяйте свой прогресс. Начните с одной задачи и наберите темп!",
+    skip: "Пропустить",
+    next: "Далее",
+    getStarted: "Начать",
+  },
 };
 
 export const TRANSLATIONS: Record<Language, Translations> = {
@@ -514,3 +569,4 @@ export const TRANSLATIONS: Record<Language, Translations> = {
 export function getTranslations(language: Language): Translations {
   return TRANSLATIONS[language] || TRANSLATIONS.en;
 }
+
