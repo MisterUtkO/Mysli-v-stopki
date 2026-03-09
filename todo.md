@@ -530,3 +530,10 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Status circle icon updates correctly after swipe (uses task.status from context)
 - [x] Tune screen transition animation speed (250ms with ease-out/ease-in curves)
 - [x] Test all changes (10 tests passed)
+
+
+## Phase 37: Status Change Flash Animation
+- [x] Add color flash animation on task card when status changes via swipe
+- [x] Flash color matches the new status (blue for in_progress, green for completed, gray for not_started)
+- [x] Flash triggers on swipe right, collapsed icon press, and expanded button press
+- [x] Test flash animation (9 tests passed)

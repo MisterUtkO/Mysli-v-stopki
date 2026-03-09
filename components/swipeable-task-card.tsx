@@ -11,6 +11,7 @@ import {
   UIManager,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { useState } from "react";
 import * as Haptics from "expo-haptics";
 import type { Task, TaskStatus } from "@/lib/domain/types";
 import { AnimatedEmoji } from "@/components/animated-emoji";
@@ -120,8 +121,30 @@ export function SwipeableTaskCard({
 }: SwipeableTaskCardProps) {
   const router = useRouter();
   const translateX = useRef(new Animated.Value(0)).current;
+  const flashOpacity = useRef(new Animated.Value(0)).current;
+  const [flashColor, setFlashColor] = useState<string>("#22C55E");
   const isSwipingRef = useRef(false);
   const startXRef = useRef(0);
+
+  // Get the color for the NEXT status (what the task will become)
+  const getNextStatusColor = (currentStatus: TaskStatus): string => {
+    switch (currentStatus) {
+      case "not_started": return "#3B82F6";  // blue for in_progress
+      case "in_progress": return "#22C55E";  // green for completed
+      case "completed": return "#9CA3AF";    // gray for not_started
+    }
+  };
+
+  // Trigger a brief color flash on the card
+  const triggerFlash = (currentStatus: TaskStatus) => {
+    setFlashColor(getNextStatusColor(currentStatus));
+    flashOpacity.setValue(0.35);
+    Animated.timing(flashOpacity, {
+      toValue: 0,
+      duration: 400,
+      useNativeDriver: true,
+    }).start();
+  };
 
   const getStatusLabel = (status: TaskStatus): string => {
     switch (status) {
@@ -212,6 +235,7 @@ export function SwipeableTaskCard({
           if (Platform.OS !== "web") {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
           }
+          triggerFlash(task.status);
           Animated.timing(translateX, {
             toValue: 100,
             duration: 150,
@@ -459,12 +483,33 @@ export function SwipeableTaskCard({
             }}
             className="bg-surface border border-border rounded-2xl"
           >
+            {/* Flash overlay for status change animation */}
+            <Animated.View
+              pointerEvents="none"
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: flashColor,
+                opacity: flashOpacity,
+                borderRadius: 14,
+                zIndex: 10,
+              }}
+            />
             {/* COLLAPSED VIEW */}
             <View style={{ paddingHorizontal: 12, paddingVertical: 10 }}>
               <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
                 <View style={{ flexDirection: "row", alignItems: "center", flex: 1, marginRight: 8 }}>
                   <Pressable
-                    onPress={() => onStatusChange(task.id, task.status)}
+                    onPress={() => {
+                      triggerFlash(task.status);
+                      if (Platform.OS !== "web") {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                      }
+                      onStatusChange(task.id, task.status);
+                    }}
                     style={({ pressed }) => [{ marginRight: 10, opacity: pressed ? 0.6 : 1 }]}
                   >
                     <Text style={{ fontSize: 28, color: getStatusColor(task.status), lineHeight: 32 }}>
@@ -625,7 +670,13 @@ export function SwipeableTaskCard({
 
                 <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 10, gap: 8 }}>
                   <Pressable
-                    onPress={() => onStatusChange(task.id, task.status)}
+                    onPress={() => {
+                      triggerFlash(task.status);
+                      if (Platform.OS !== "web") {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                      }
+                      onStatusChange(task.id, task.status);
+                    }}
                     style={({ pressed }) => [{
                       flexDirection: "row",
                       alignItems: "center",
