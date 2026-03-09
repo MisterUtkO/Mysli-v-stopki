@@ -8,6 +8,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
+import { ScreenTransition } from "@/components/screen-transition";
 import { AnimatedAchievementCard } from "@/components/animated-achievement-card";
 import { useAchievements } from "@/lib/context/achievement-context";
 import { useI18n } from "@/lib/context/i18n-context";
@@ -58,56 +59,57 @@ export default function AchievementsScreen() {
   }
 
   return (
-    <ScreenContainer className="p-4">
-      <View className="flex-1">
-        {/* Header */}
-        <View style={{ marginBottom: 12 }}>
-          <Text className="text-foreground font-bold" style={{ fontSize: 28, lineHeight: 34 }}>
-            {isRu ? "Достижения" : "Achievements"}
-          </Text>
-          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-            <Text className="text-muted" style={{ fontSize: 14, marginTop: 4 }}>
-              {isRu
-                ? `Открыто: ${unlockedCount} из ${totalCount}`
-                : `Unlocked: ${unlockedCount} of ${totalCount}`}
+    <ScreenTransition>
+      <ScreenContainer className="p-4">
+        <View className="flex-1">
+          {/* Header */}
+          <View style={{ marginBottom: 12 }}>
+            <Text className="text-foreground font-bold" style={{ fontSize: 28, lineHeight: 34 }}>
+              {isRu ? "Достижения" : "Achievements"}
             </Text>
-            <Pressable
-              onPress={() => router.push("/statistics")}
-              style={({ pressed }) => [{
-                flexDirection: "row",
-                alignItems: "center",
-                backgroundColor: colors.primary,
-                paddingHorizontal: 12,
-                paddingVertical: 6,
-                borderRadius: 10,
-                opacity: pressed ? 0.7 : 1,
-                gap: 4,
-              }]}
-            >
-              <Text style={{ fontSize: 14 }}>📊</Text>
-              <Text style={{ fontSize: 12, fontWeight: "700", color: "#FFF" }}>
-                {isRu ? "Статистика" : "Stats"}
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+              <Text className="text-muted" style={{ fontSize: 14, marginTop: 4 }}>
+                {isRu
+                  ? `Открыто: ${unlockedCount} из ${totalCount}`
+                  : `Unlocked: ${unlockedCount} of ${totalCount}`}
               </Text>
-            </Pressable>
+              <Pressable
+                onPress={() => router.push("/statistics")}
+                style={({ pressed }) => [{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  backgroundColor: colors.primary,
+                  paddingHorizontal: 12,
+                  paddingVertical: 6,
+                  borderRadius: 10,
+                  opacity: pressed ? 0.7 : 1,
+                  gap: 4,
+                }]}
+              >
+                <Text style={{ fontSize: 14 }}>📊</Text>
+                <Text style={{ fontSize: 12, fontWeight: "700", color: "#FFF" }}>
+                  {isRu ? "Статистика" : "Stats"}
+                </Text>
+              </Pressable>
+            </View>
+            {/* Progress bar */}
+            <View style={{ height: 6, backgroundColor: colors.border, borderRadius: 3, marginTop: 8, overflow: "hidden" }}>
+              <View
+                style={{
+                  height: 6,
+                  backgroundColor: "#F59E0B",
+                  borderRadius: 3,
+                  width: `${totalCount > 0 ? (unlockedCount / totalCount) * 100 : 0}%`,
+                }}
+              />
+            </View>
           </View>
-          {/* Progress bar */}
-          <View style={{ height: 6, backgroundColor: colors.border, borderRadius: 3, marginTop: 8, overflow: "hidden" }}>
-            <View
-              style={{
-                height: 6,
-                backgroundColor: "#F59E0B",
-                borderRadius: 3,
-                width: `${totalCount > 0 ? (unlockedCount / totalCount) * 100 : 0}%`,
-              }}
-            />
-          </View>
-        </View>
 
-        {/* Sticker Grid — explicit rows to prevent layout issues */}
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
-          {rows.map((row, rowIndex) => (
-            <View key={rowIndex} style={{ flexDirection: "row", gap: GRID_GAP, marginBottom: GRID_GAP }}>
-              {row.map((achievement) => {
+          {/* Sticker Grid— explicit rows to prevent layout issues */}
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+            {rows.map((row, rowIndex) => (
+              <View key={rowIndex} style={{ flexDirection: "row", gap: GRID_GAP, marginBottom: GRID_GAP }}>
+                {row.map((achievement) => {
                 const isUnlocked = unlockedIds.has(achievement.id);
                 const rarityColor = RARITY_COLORS[achievement.rarity];
 
@@ -123,18 +125,18 @@ export default function AchievementsScreen() {
                     onPress={() => setSelectedAchievement(achievement)}
                   />
                 );
-              })}
-              {/* Fill empty slots in last row */}
-              {row.length < COLUMNS && Array.from({ length: COLUMNS - row.length }).map((_, i) => (
-                <View key={`empty-${i}`} style={{ width: itemSize, height: itemSize }} />
-              ))}
-            </View>
-          ))}
-        </ScrollView>
-      </View>
+                })}
+                {/* Fill empty slots in last row */}
+                {row.length < COLUMNS && Array.from({ length: COLUMNS - row.length }).map((_, i) => (
+                  <View key={`empty-${i}`} style={{ width: itemSize, height: itemSize }} />
+                ))}
+              </View>
+            ))}
+          </ScrollView>
+        </View>
 
-      {/* Achievement Detail Modal */}
-      <Modal
+        {/* Achievement Detail Modal */}
+        <Modal
         visible={!!selectedAchievement}
         transparent
         animationType="fade"
@@ -240,7 +242,8 @@ export default function AchievementsScreen() {
             </Pressable>
           </Pressable>
         )}
-      </Modal>
+        </Modal>
       </ScreenContainer>
+    </ScreenTransition>
   );
 }

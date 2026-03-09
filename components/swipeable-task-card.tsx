@@ -260,17 +260,9 @@ export function SwipeableTaskCard({
   if (isMatrixView) {
     const overdue = isTaskOverdue(task);
     const old = isTaskOld(task);
-    const glowType = getTaskGlowType(task);
     
     return (
-      <AnimatedTaskBorder isOverdue={overdue} isOld={old}>
-        <View style={{ marginBottom: 6, borderRadius: 8, position: "relative" }}>
-        {/* Glow border - positioned absolutely to avoid overflow clipping */}
-        <TaskCardGlow
-          glowType={glowType}
-          borderRadius={8}
-          intensity="high"
-        />
+      <View style={{ marginBottom: 6, borderRadius: 8, position: "relative" }}>
         {/* Background swipe actions */}
         <View
           style={{
@@ -340,7 +332,7 @@ export function SwipeableTaskCard({
                 paddingHorizontal: 10,
                 paddingVertical: 8,
               }}
-              className="bg-surface border border-border"
+              className="bg-surface"
             >
               {/* Minimal view: only text + status */}
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
@@ -378,7 +370,6 @@ export function SwipeableTaskCard({
           </Pressable>
         </Animated.View>
       </View>
-      </AnimatedTaskBorder>
     );
   }
 

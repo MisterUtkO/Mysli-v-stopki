@@ -515,3 +515,10 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Add 'Show Tutorial' button in Settings screen
 - [x] Test tutorial trigger from Settings button
 - [x] Fix crash when clicking tutorial button (hook call in wrong place)
+
+
+## Phase 35: Screen Animations, Swipe Status Cycle, Matrix Border Fix
+- [x] Add smooth fade transition animations to all tab screens (already present on all 5 tabs)
+- [x] Swipe-right cycles task status: not_started → in_progress → completed → not_started (already working)
+- [x] Fix double borders on Matrix screen task cards (removed AnimatedTaskBorder, TaskCardGlow, and inner border class)
+- [x] Test all changes - TypeScript compiles clean, app runs

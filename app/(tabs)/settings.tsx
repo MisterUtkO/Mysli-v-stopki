@@ -15,6 +15,7 @@ import { useRouter } from "expo-router";
 import * as Clipboard from "expo-clipboard";
 import { Image } from "expo-image";
 import { ScreenContainer } from "@/components/screen-container";
+import { ScreenTransition } from "@/components/screen-transition";
 import { useTaskContext } from "@/lib/context/task-context";
 import { useI18n } from "@/lib/context/i18n-context";
 import { useThemeContext } from "@/lib/theme-provider";
@@ -245,40 +246,41 @@ export default function SettingsScreen() {
   const sectionStyle = "bg-surface rounded-2xl p-4 border border-border";
 
   return (
-    <ScreenContainer className="p-4">
-      <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
-        <View className="gap-4">
-          <Text className="text-foreground font-bold" style={{ fontSize: 28, lineHeight: 34, marginBottom: 2 }}>
-            {t.settings.title}
-          </Text>
+    <ScreenTransition>
+      <ScreenContainer className="p-4">
+        <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+          <View className="gap-4">
+            <Text className="text-foreground font-bold" style={{ fontSize: 28, lineHeight: 34, marginBottom: 2 }}>
+              {t.settings.title}
+            </Text>
 
-          {/* Language */}
-          <View className={sectionStyle}>
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-                <Text style={{ fontSize: 22 }}>🌐</Text>
-                <Text className="text-foreground font-semibold" style={{ fontSize: 16 }}>{t.settings.language}</Text>
+            {/* Language */}
+            <View className={sectionStyle}>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                  <Text style={{ fontSize: 22 }}>🌐</Text>
+                  <Text className="text-foreground font-semibold" style={{ fontSize: 16 }}>{t.settings.language}</Text>
+                </View>
+                <Pressable
+                  onPress={handleLanguageToggle}
+                  style={({ pressed }) => [{ backgroundColor: "#0a7ea4", borderRadius: 12, paddingHorizontal: 14, paddingVertical: 7, opacity: pressed ? 0.7 : 1 }]}
+                >
+                  <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 14 }}>
+                    {language === "en" ? "РУС" : "ENG"}
+                  </Text>
+                </Pressable>
               </View>
-              <Pressable
-                onPress={handleLanguageToggle}
-                style={({ pressed }) => [{ backgroundColor: "#0a7ea4", borderRadius: 12, paddingHorizontal: 14, paddingVertical: 7, opacity: pressed ? 0.7 : 1 }]}
-              >
-                <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 14 }}>
-                  {language === "en" ? "РУС" : "ENG"}
-                </Text>
-              </Pressable>
             </View>
-          </View>
 
-          {/* Theme */}
-          <View className={sectionStyle}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 10 }}>
-              <Text style={{ fontSize: 22 }}>
-                {themeOptions.find(o => o.key === colorScheme)?.emoji || "🎨"}
-              </Text>
-              <Text className="text-foreground font-semibold" style={{ fontSize: 16 }}>{t.settings.theme}</Text>
-            </View>
-            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+            {/* Theme */}
+            <View className={sectionStyle}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                <Text style={{ fontSize: 22 }}>
+                  {themeOptions.find(o => o.key === colorScheme)?.emoji || "🎨"}
+                </Text>
+                <Text className="text-foreground font-semibold" style={{ fontSize: 16 }}>{t.settings.theme}</Text>
+              </View>
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
               {themeOptions.map((opt) => {
                 const isActive = colorScheme === opt.key;
                 const isLocked = opt.key === "amoled" && !hasExplorerAchievement;
@@ -700,8 +702,9 @@ export default function SettingsScreen() {
               v1.0.3 • SDVGNote
             </Text>
           </View>
-        </View>
-      </ScrollView>
-    </ScreenContainer>
+          </View>
+        </ScrollView>
+      </ScreenContainer>
+    </ScreenTransition>
   );
 }
