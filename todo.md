@@ -522,3 +522,11 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Swipe-right cycles task status: not_started → in_progress → completed → not_started (already working)
 - [x] Fix double borders on Matrix screen task cards (removed AnimatedTaskBorder, TaskCardGlow, and inner border class)
 - [x] Test all changes - TypeScript compiles clean, app runs
+
+
+## Phase 36: Swipe Hint, Haptic Feedback, Animation Tuning
+- [x] Add swipe hint animation for first-time users (arrow overlay with animated arrow)
+- [x] Add haptic feedback (vibration) on swipe status change (Medium for status, Warning for delete)
+- [x] Status circle icon updates correctly after swipe (uses task.status from context)
+- [x] Tune screen transition animation speed (250ms with ease-out/ease-in curves)
+- [x] Test all changes (10 tests passed)

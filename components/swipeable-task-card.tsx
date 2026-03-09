@@ -11,6 +11,7 @@ import {
   UIManager,
 } from "react-native";
 import { useRouter } from "expo-router";
+import * as Haptics from "expo-haptics";
 import type { Task, TaskStatus } from "@/lib/domain/types";
 import { AnimatedEmoji } from "@/components/animated-emoji";
 import { AnimatedTaskBorder } from "@/components/animated-task-border";
@@ -190,6 +191,9 @@ export function SwipeableTaskCard({
         
         if (isSwipeLeft) {
           // Swipe left → Delete
+          if (Platform.OS !== "web") {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+          }
           Animated.timing(translateX, {
             toValue: -100,
             duration: 150,
@@ -205,6 +209,9 @@ export function SwipeableTaskCard({
           });
         } else if (isSwipeRight) {
           // Swipe right → Change status
+          if (Platform.OS !== "web") {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          }
           Animated.timing(translateX, {
             toValue: 100,
             duration: 150,

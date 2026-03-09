@@ -16,6 +16,7 @@ import { ScreenTransition } from "@/components/screen-transition";
 import { useTaskContext } from "@/lib/context/task-context";
 import { useI18n } from "@/lib/context/i18n-context";
 import { SwipeableTaskCard } from "@/components/swipeable-task-card";
+import { SwipeHint } from "@/components/swipe-hint";
 import { syncTaskToCalendar, formatTaskForCalendar } from "@/lib/calendar-sync";
 import type { Task, TaskStatus } from "@/lib/domain/types";
 import { useState, useRef, useMemo, useCallback } from "react";
@@ -351,6 +352,7 @@ export default function HomeScreen() {
           </View>
         ) : (
           <ScrollView showsVerticalScrollIndicator={false}>
+            <SwipeHint isRu={isRu} hasTask={filteredTasks.length > 0} />
             <View style={{ gap: 8, paddingBottom: 16, paddingTop: 8 }}>
               {filteredTasks.map((task) => (
                 <SwipeableTaskCard
