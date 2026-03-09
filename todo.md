@@ -514,3 +514,4 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Refactor OnboardingTutorial to support manual trigger via context
 - [x] Add 'Show Tutorial' button in Settings screen
 - [x] Test tutorial trigger from Settings button
+- [x] Fix crash when clicking tutorial button (hook call in wrong place)

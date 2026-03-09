@@ -38,6 +38,7 @@ export default function SettingsScreen() {
   const { colorScheme, setColorScheme } = useThemeContext();
   const { triggerCustomFlag, unlocked } = useAchievements();
   const colors = useColors();
+  const { showOnboarding } = useOnboarding();
 
   const [exporting, setExporting] = useState(false);
   const [copiedCard, setCopiedCard] = useState(false);
@@ -662,7 +663,6 @@ export default function SettingsScreen() {
           {/* Tutorial Button */}
           <Pressable
             onPress={() => {
-              const { showOnboarding } = useOnboarding();
               showOnboarding();
             }}
             style={({ pressed }) => [{
