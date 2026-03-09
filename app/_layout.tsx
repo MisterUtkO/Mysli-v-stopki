@@ -22,6 +22,7 @@ import { TaskProvider } from "@/lib/context/task-context";
 import { I18nProvider } from "@/lib/context/i18n-context";
 import { AchievementProvider, useAchievements } from "@/lib/context/achievement-context";
 import { AchievementCelebration } from "@/components/achievement-celebration";
+import { OnboardingTutorial } from "@/components/onboarding-tutorial";
 import { useTaskContext } from "@/lib/context/task-context";
 import { useI18n } from "@/lib/context/i18n-context";
 import { initializeNotifications } from "@/lib/services/notification-scheduler";
@@ -151,7 +152,8 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <I18nProvider>
             <TaskProvider>
-              <AchievementProvider>
+                <AchievementProvider>
+                <OnboardingTutorial />
                 <AchievementChecker />
                 <Stack screenOptions={{ headerShown: false }}>
                   <Stack.Screen name="(tabs)" />

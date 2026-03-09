@@ -495,3 +495,10 @@ All features have been implemented, tested, and verified. The app is ready for u
 
 ## Phase 31: Restore Missing Features
 - [x] Restore home screen selection in Settings
+
+
+## Phase 32: Onboarding & Transitions
+- [x] Create onboarding tutorial screens explaining app features
+- [x] Implement onboarding flow with skip and next buttons
+- [ ] Add smooth fade transitions between tab screens
+- [x] Test onboarding and transitions on all screens
