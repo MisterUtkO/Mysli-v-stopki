@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, forwardRef, useImperativeHandle } from "react";
 import {
   View,
   Text,
@@ -14,8 +14,10 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useI18n } from "@/lib/context/i18n-context";
 import { useColors } from "@/hooks/use-colors";
+import { useTaskContext } from "@/lib/context/task-context";
+import { KANBAN_STORAGE_KEY, getTaskStatusFromKanban } from "@/lib/kanban-sync";
 
-const STORAGE_KEY = "@sdvgnote_kanban";
+const STORAGE_KEY = KANBAN_STORAGE_KEY;
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
 const STICKER_COLORS = [
@@ -53,10 +55,15 @@ const defaultData: KanbanData = {
   ],
 };
 
-export function KanbanBoard() {
+export interface KanbanBoardRef {
+  reload: () => void;
+}
+
+export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoardInner(_props, ref) {
   const { t, language } = useI18n();
   const colors = useColors();
   const isRu = language === "ru";
+  const { updateTask } = useTaskContext();
 
   const [data, setData] = useState<KanbanData>(defaultData);
   const [loaded, setLoaded] = useState(false);
@@ -85,29 +92,34 @@ export function KanbanBoard() {
   const [renamingColumn, setRenamingColumn] = useState<{ id: string; title: string } | null>(null);
   const [renameText, setRenameText] = useState("");
 
-  // Load data
-  React.useEffect(() => {
-    const load = async () => {
-      try {
-        const stored = await AsyncStorage.getItem(STORAGE_KEY);
-        if (stored) {
-          setData(JSON.parse(stored));
-        } else {
-          setData({
-            columns: [
-              { id: "col_1", title: isRu ? "Начать" : "Start", stickers: [] },
-              { id: "col_2", title: isRu ? "В процессе" : "In Progress", stickers: [] },
-              { id: "col_3", title: isRu ? "Готово" : "Done", stickers: [] },
-            ],
-          });
-        }
-      } catch (e) {
-        console.log("Failed to load kanban:", e);
+  // Load / reload data (called on mount and on tab focus)
+  const loadData = React.useCallback(async () => {
+    try {
+      const stored = await AsyncStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        setData(JSON.parse(stored));
+      } else {
+        setData({
+          columns: [
+            { id: "col_1", title: isRu ? "Начать" : "Start", stickers: [] },
+            { id: "col_2", title: isRu ? "В процессе" : "In Progress", stickers: [] },
+            { id: "col_3", title: isRu ? "Готово" : "Done", stickers: [] },
+          ],
+        });
       }
-      setLoaded(true);
-    };
-    load();
-  }, []);
+    } catch (e) {
+      console.log("Failed to load kanban:", e);
+    }
+    setLoaded(true);
+  }, [isRu]);
+
+  // Load data on mount
+  React.useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  // Expose reload() to parent via ref
+  useImperativeHandle(ref, () => ({ reload: loadData }), [loadData]);
 
   const saveData = useCallback(async (newData: KanbanData) => {
     setData(newData);
@@ -184,7 +196,7 @@ export function KanbanBoard() {
     saveData({ columns: newColumns });
   };
 
-  // Move sticker to another column
+  // Move sticker to another column (with reverse sync to task status)
   const handleMoveSticker = (fromColId: string, sticker: KanbanSticker, targetColumnId: string) => {
     if (fromColId === targetColumnId) return;
     const newColumns = data.columns.map((col) => {
@@ -197,6 +209,28 @@ export function KanbanBoard() {
       return col;
     });
     saveData({ columns: newColumns });
+
+    // Reverse sync: if this sticker was created from a task, update the task status
+    if (sticker.id.startsWith("task_")) {
+      const targetColIndex = newColumns.findIndex((c) => c.id === targetColumnId);
+      const STATUS_MAP: Record<number, "not_started" | "in_progress" | "completed"> = {
+        0: "not_started",
+        1: "in_progress",
+        2: "completed",
+      };
+      const newStatus = STATUS_MAP[targetColIndex];
+      if (newStatus) {
+        // Format: task_<uuid-with-dashes>_<timestamp>
+        // The taskId is everything between "task_" and the last "_<timestamp>"
+        const withoutPrefix = sticker.id.replace(/^task_/, "");
+        const taskId = withoutPrefix.replace(/_\d+$/, "");
+        if (taskId) {
+          updateTask(taskId, { status: newStatus }).catch((e) =>
+            console.error("[KanbanBoard] Failed to reverse-sync task status:", e)
+          );
+        }
+      }
+    }
   };
 
   // Move sticker left/right with arrow buttons
@@ -702,7 +736,7 @@ export function KanbanBoard() {
       </Modal>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   modalOverlay: {

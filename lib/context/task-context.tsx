@@ -25,6 +25,7 @@ import {
   formatTaskForCalendar,
   deleteCalendarEventByTaskId,
 } from "@/lib/calendar-sync";
+import { syncTaskToKanban, removeTaskFromKanban } from "@/lib/kanban-sync";
 import {
   scheduleTaskReminder,
   rescheduleTaskReminder,
@@ -280,6 +281,16 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         }
       }
     }
+
+    // Forward-sync to Kanban: update sticker text and column if task is on board
+    const updatedTask = updatedTasks.find(t => t.id === id);
+    if (updatedTask) {
+      try {
+        await syncTaskToKanban(updatedTask);
+      } catch (e) {
+        console.error("[TaskContext] Failed to sync task to kanban:", e);
+      }
+    }
   };
 
   const deleteTask = async (id: string): Promise<void> => {
@@ -307,6 +318,14 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       console.log("[TaskContext] Task removed from calendar");
     } catch (error) {
       console.error("[TaskContext] Failed to remove task from calendar:", error);
+    }
+
+    // Remove linked sticker from Kanban
+    try {
+      await removeTaskFromKanban(id);
+      console.log("[TaskContext] Task sticker removed from kanban");
+    } catch (e) {
+      console.error("[TaskContext] Failed to remove task from kanban:", e);
     }
   };
 

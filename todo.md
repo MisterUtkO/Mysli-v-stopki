@@ -592,3 +592,10 @@ All features have been implemented, tested, and verified. The app is ready for u
 ## Phase 45: Fix Kanban Column Routing
 
 - [x] Fix: tasks always land in "Начать" (col_1) regardless of status — now routes by column position (index) instead of hardcoded col id
+
+## Phase 46: Two-Way Task ↔ Kanban Sync
+
+- [x] Task title/status changes automatically update linked kanban sticker (text + column position)
+- [x] Task deletion removes linked kanban sticker
+- [x] Sticker column move (drag) updates linked task status
+- [x] Kanban board refreshes on tab focus (no restart needed to see changes)
