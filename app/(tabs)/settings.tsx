@@ -25,6 +25,7 @@ import { getThemeNeonColor } from "@/lib/theme-neon-colors";
 import type { MotivationalSettings } from "@/lib/domain/types";
 import type { ColorScheme } from "@/lib/_core/theme";
 import { useState } from "react";
+import { useOnboarding } from "@/components/onboarding-tutorial";
 
 
 type NotifFrequency = "never" | "hourly" | "daily" | "weekly" | "always";
@@ -655,6 +656,25 @@ export default function SettingsScreen() {
           >
             <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16, textAlign: "center" }}>
               ❤️ {isRu ? "Поддержать разработчика" : "Support Developer"}
+            </Text>
+          </Pressable>
+
+          {/* Tutorial Button */}
+          <Pressable
+            onPress={() => {
+              const { showOnboarding } = useOnboarding();
+              showOnboarding();
+            }}
+            style={({ pressed }) => [{
+              backgroundColor: colors.primary,
+              borderRadius: 12,
+              paddingVertical: 12,
+              paddingHorizontal: 16,
+              opacity: pressed ? 0.7 : 1,
+            }]}
+          >
+            <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16, textAlign: "center" }}>
+              {isRu ? "📚 Показать обучение" : "📚 Show Tutorial"}
             </Text>
           </Pressable>
 

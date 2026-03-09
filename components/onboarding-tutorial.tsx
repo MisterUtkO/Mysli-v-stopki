@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, createContext, useContext, useEffect } from "react";
 import { View, Text, Pressable, ScrollView, Modal } from "react-native";
 import { useColors } from "@/hooks/use-colors";
 import { useI18n } from "@/lib/context/i18n-context";
@@ -50,24 +50,81 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
   },
 ];
 
-export function OnboardingTutorial() {
-  const [currentStep, setCurrentStep] = useState(0);
+interface OnboardingContextType {
+  showOnboarding: () => void;
+}
+
+const OnboardingContext = createContext<OnboardingContextType | undefined>(
+  undefined
+);
+
+export function useOnboarding() {
+  const context = useContext(OnboardingContext);
+  if (!context) {
+    throw new Error(
+      "useOnboarding must be used within OnboardingTutorialProvider"
+    );
+  }
+  return context;
+}
+
+export function OnboardingTutorialProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const [visible, setVisible] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
+
+  const showOnboarding = () => {
+    setCurrentStep(0);
+    setVisible(true);
+  };
+
+  // Check if user has seen onboarding on mount
+  useEffect(() => {
+    const checkAndShowOnboarding = async () => {
+      try {
+        const hasSeenOnboarding = await AsyncStorage.getItem(
+          "hasSeenOnboarding"
+        );
+        if (!hasSeenOnboarding) {
+          setVisible(true);
+        }
+      } catch (error) {
+        console.error("Error checking onboarding status:", error);
+      }
+    };
+
+    checkAndShowOnboarding();
+  }, []);
+
+  return (
+    <OnboardingContext.Provider value={{ showOnboarding }}>
+      <OnboardingTutorialModal
+        visible={visible}
+        setVisible={setVisible}
+        currentStep={currentStep}
+        setCurrentStep={setCurrentStep}
+      />
+      {children}
+    </OnboardingContext.Provider>
+  );
+}
+
+function OnboardingTutorialModal({
+  visible,
+  setVisible,
+  currentStep,
+  setCurrentStep,
+}: {
+  visible: boolean;
+  setVisible: (visible: boolean) => void;
+  currentStep: number;
+  setCurrentStep: (step: number) => void;
+}) {
   const colors = useColors();
   const { t } = useI18n();
-
-  const checkAndShowOnboarding = async () => {
-    try {
-      const hasSeenOnboarding = await AsyncStorage.getItem(
-        "hasSeenOnboarding"
-      );
-      if (!hasSeenOnboarding) {
-        setVisible(true);
-      }
-    } catch (error) {
-      console.error("Error checking onboarding status:", error);
-    }
-  };
 
   const handleSkip = async () => {
     try {
@@ -87,7 +144,7 @@ export function OnboardingTutorial() {
   };
 
   const step = ONBOARDING_STEPS[currentStep];
-  
+
   // Get translated text using the key path (e.g., "onboarding.welcome")
   const getTranslation = (key: string) => {
     const keys = key.split(".");
@@ -100,10 +157,6 @@ export function OnboardingTutorial() {
 
   const stepTitle = getTranslation(step.titleKey);
   const stepDescription = getTranslation(step.descriptionKey);
-
-  React.useEffect(() => {
-    checkAndShowOnboarding();
-  }, []);
 
   return (
     <Modal
