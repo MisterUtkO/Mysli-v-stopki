@@ -577,3 +577,7 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Add exact time picker for motivational reminders
 - [x] Fix DST bug in calculateStreakDays (accept 23-25h as one day)
 - [x] All 99 tests passed, TypeScript clean
+
+## Phase 43: UI Text Fix
+
+- [x] Fix "Cal" abbreviation in task card — replaced with localized text "в календарь" (RU) / "to calendar" (EN)

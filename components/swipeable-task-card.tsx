@@ -515,7 +515,7 @@ export function SwipeableTaskCard({
                           opacity: pressed ? 0.7 : 1,
                         }]}
                       >
-                        <Text style={{ fontSize: 13, fontWeight: "600", color: "#3B82F6" }}>Cal</Text>
+                        <Text style={{ fontSize: 11, fontWeight: "600", color: "#3B82F6" }}>{isRu ? "в календарь" : "to calendar"}</Text>
                       </Pressable>
                     )}
 
