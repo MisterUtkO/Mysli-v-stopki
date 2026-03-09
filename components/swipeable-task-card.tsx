@@ -7,7 +7,9 @@ import {
   Platform,
   LayoutAnimation,
   UIManager,
+  Alert,
 } from "react-native";
+import { addTaskToKanban } from "@/lib/kanban-sync";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -477,7 +479,7 @@ export function SwipeableTaskCard({
                     </View>
                   )}
 
-                  <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 10, gap: 8 }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", flexWrap: "wrap", marginTop: 10, gap: 6 }}>
                     <Pressable
                       onPress={() => {
                         triggerFlash(task.status);
@@ -518,6 +520,32 @@ export function SwipeableTaskCard({
                         <Text style={{ fontSize: 11, fontWeight: "600", color: "#3B82F6" }}>{isRu ? "в календарь" : "to calendar"}</Text>
                       </Pressable>
                     )}
+
+                    <Pressable
+                      onPress={async () => {
+                        if (Platform.OS !== "web") {
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        }
+                        const added = await addTaskToKanban(task, isRu);
+                        Alert.alert(
+                          added
+                            ? (isRu ? "Добавлено" : "Added")
+                            : (isRu ? "Уже есть" : "Already added"),
+                          added
+                            ? (isRu ? `"​${task.title}"​ добавлено в канбан` : `"​${task.title}"​ added to Kanban`)
+                            : (isRu ? "Задача уже есть на доске" : "Task is already on the board")
+                        );
+                      }}
+                      style={({ pressed }) => [{
+                        paddingHorizontal: 10,
+                        paddingVertical: 6,
+                        borderRadius: 8,
+                        backgroundColor: "#8B5CF6" + (pressed ? "99" : "33"),
+                        opacity: pressed ? 0.7 : 1,
+                      }]}
+                    >
+                      <Text style={{ fontSize: 11, fontWeight: "600", color: "#8B5CF6" }}>{isRu ? "в канбан" : "to kanban"}</Text>
+                    </Pressable>
 
                     <Pressable
                       onPress={() => router.push(`/task-detail/${task.id}`)}

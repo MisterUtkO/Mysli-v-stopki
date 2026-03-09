@@ -581,3 +581,10 @@ All features have been implemented, tested, and verified. The app is ready for u
 ## Phase 43: UI Text Fix
 
 - [x] Fix "Cal" abbreviation in task card — replaced with localized text "в календарь" (RU) / "to calendar" (EN)
+
+## Phase 44: Kanban Sync
+
+- [x] Rename Kanban default columns to match Tasks screen statuses: "Начать" / "В процессе" / "Готово" (RU) and "Start" / "In Progress" / "Done" (EN)
+- [x] Add "в канбан" / "to kanban" button on task cards (next to "в календарь") to copy task to Kanban board
+- [x] When copying to Kanban, place sticker in the matching column based on task status
+- [x] Sticker in Kanban shows only the task title (no extra details)

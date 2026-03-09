@@ -47,7 +47,7 @@ interface KanbanData {
 
 const defaultData: KanbanData = {
   columns: [
-    { id: "col_1", title: "To Do", stickers: [] },
+    { id: "col_1", title: "Start", stickers: [] },
     { id: "col_2", title: "In Progress", stickers: [] },
     { id: "col_3", title: "Done", stickers: [] },
   ],
@@ -95,7 +95,7 @@ export function KanbanBoard() {
         } else {
           setData({
             columns: [
-              { id: "col_1", title: isRu ? "Сделать" : "To Do", stickers: [] },
+              { id: "col_1", title: isRu ? "Начать" : "Start", stickers: [] },
               { id: "col_2", title: isRu ? "В процессе" : "In Progress", stickers: [] },
               { id: "col_3", title: isRu ? "Готово" : "Done", stickers: [] },
             ],
