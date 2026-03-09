@@ -588,3 +588,7 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Add "в канбан" / "to kanban" button on task cards (next to "в календарь") to copy task to Kanban board
 - [x] When copying to Kanban, place sticker in the matching column based on task status
 - [x] Sticker in Kanban shows only the task title (no extra details)
+
+## Phase 45: Fix Kanban Column Routing
+
+- [x] Fix: tasks always land in "Начать" (col_1) regardless of status — now routes by column position (index) instead of hardcoded col id
