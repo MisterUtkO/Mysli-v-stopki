@@ -244,7 +244,7 @@ export default function AboutScreen() {
               : "Made with ❤️ for productivity"}
           </Text>
           <Text className="text-xs text-muted text-center mt-2">
-            © 2026 Eisenhower Priority App
+            © 2026 SDVGNote
           </Text>
         </View>
       </ScrollView>

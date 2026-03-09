@@ -31,7 +31,7 @@ const config: ExpoConfig = {
   name: env.appName,
   slug: env.appSlug,
   version: "1.0.1",
-  description: "A task prioritization app based on the Eisenhower Matrix",
+  description: "A task management app for organizing and prioritizing your work",
   orientation: "portrait",
   icon: "./assets/images/icon.png",
   scheme: env.scheme,

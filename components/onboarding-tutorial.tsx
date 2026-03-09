@@ -1,5 +1,5 @@
-import React, { useState, createContext, useContext, useEffect } from "react";
-import { View, Text, Pressable, ScrollView, Modal } from "react-native";
+import React, { useState, createContext, useContext, useEffect, useRef } from "react";
+import { View, Text, Pressable, ScrollView, Modal, PanResponder } from "react-native";
 import { useColors } from "@/hooks/use-colors";
 import { useI18n } from "@/lib/context/i18n-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -125,6 +125,26 @@ function OnboardingTutorialModal({
 }) {
   const colors = useColors();
   const { t } = useI18n();
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        // Detect horizontal swipe
+        return Math.abs(gestureState.dx) > 20 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        const swipeThreshold = 50;
+        // Swipe left → next step
+        if (gestureState.dx < -swipeThreshold) {
+          handleNext();
+        }
+        // Swipe right → previous step
+        if (gestureState.dx > swipeThreshold) {
+          handlePrevious();
+        }
+      },
+    })
+  ).current;
 
   const handleSkip = async () => {
     try {
@@ -140,6 +160,12 @@ function OnboardingTutorialModal({
       setCurrentStep(currentStep + 1);
     } else {
       handleSkip();
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
     }
   };
 
@@ -172,6 +198,7 @@ function OnboardingTutorialModal({
           justifyContent: "center",
           alignItems: "center",
         }}
+        {...panResponder.panHandlers}
       >
         <View
           style={{
@@ -238,6 +265,27 @@ function OnboardingTutorialModal({
 
             {/* Buttons */}
             <View style={{ flexDirection: "row", gap: 12 }}>
+              {currentStep > 0 && (
+                <Pressable
+                  onPress={handlePrevious}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 12,
+                    borderRadius: 8,
+                    alignItems: "center",
+                    backgroundColor: colors.surface,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontWeight: "600",
+                      color: colors.muted,
+                    }}
+                  >
+                    {t.onboarding.previous || "← Back"}
+                  </Text>
+                </Pressable>
+              )}
               <Pressable
                 onPress={handleSkip}
                 style={{

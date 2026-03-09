@@ -537,3 +537,12 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Flash color matches the new status (blue for in_progress, green for completed, gray for not_started)
 - [x] Flash triggers on swipe right, collapsed icon press, and expanded button press
 - [x] Test flash animation (9 tests passed)
+
+
+## Phase 38: Fix "All" Tab, Onboarding Swipe, App Rename
+- [x] Fix "All" tab to cycle through all statuses on swipe (already working correctly)
+- [ ] Add swipe gesture navigation to onboarding tutorial (left/right swipe for prev/next)
+- [x] Rename "Eisenhower Priority" to "SDVGNote" everywhere in the app
+- [x] Update app.config.ts with new app name and description
+- [x] Update translations to use SDVGNote
+- [x] Update about.tsx copyright to use SDVGNote
