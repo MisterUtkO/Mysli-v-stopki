@@ -192,6 +192,7 @@ export interface Translations {
     tipsDescription: string;
     skip: string;
     next: string;
+    previous: string;
     getStarted: string;
   };
 }
@@ -373,6 +374,7 @@ const EN: Translations = {
     tipsDescription: "Create tasks with clear titles, set priorities, and review your progress regularly. Start with one task and build momentum!",
     skip: "Skip",
     next: "Next",
+    previous: "Back",
     getStarted: "Get Started",
   },
 };
@@ -554,6 +556,7 @@ const RU: Translations = {
     tipsDescription: "Создавайте задачи с четкими названиями, устанавливайте приоритеты и регулярно проверяйте свой прогресс. Начните с одной задачи и наберите темп!",
     skip: "Пропустить",
     next: "Далее",
+    previous: "Назад",
     getStarted: "Начать",
   },
 };

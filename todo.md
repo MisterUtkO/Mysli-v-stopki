@@ -553,3 +553,12 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Fix status cycle loop: not_started → in_progress → completed → not_started
 - [x] Ensure swipe works on all tabs (All, Start, In Progress, Done)
 - [x] Test swipe on all task views (6 tests passed)
+
+
+## Phase 40: Swipe System Rewrite
+- [x] Rewrite SwipeableTaskCard using react-native-gesture-handler Gesture API
+- [x] Replace PanResponder with Gesture.Pan() + useSharedValue + useAnimatedStyle
+- [x] activeOffsetX/failOffsetY properly resolves Pressable touch conflicts
+- [x] Status cycle works: not_started → in_progress → completed → not_started
+- [x] Added 'previous' translation to onboarding (EN: Back, RU: Назад)
+- [x] 14 tests passed
