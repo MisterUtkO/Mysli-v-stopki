@@ -600,9 +600,17 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Sticker column move (drag) updates linked task status
 - [x] Kanban board refreshes on tab focus (no restart needed to see changes)
 
-## Phase 47: Kanban Drag-and-Drop
+## Phase 47: Kanban Drag-and-Drop (v1 - Basic)
 
 - [x] Long-press on sticker activates drag mode (short press still opens info)
 - [x] Dragged sticker follows finger across the board
 - [x] Column drop zones highlight when sticker is dragged over them
 - [x] Dropping sticker in a different column moves it and updates linked task status
+
+## Phase 48: Kanban Drag-and-Drop (v2 - Enhanced)
+
+- [x] Sticker visually detaches/lifts when long-press activates (scale up, shadow grows)
+- [x] Drop zones show dashed borders for all possible positions (between stickers + at end)
+- [x] Auto-scroll board horizontally when dragging near left/right edges
+- [x] Support vertical reordering: drop sticker between other stickers in same column
+- [x] Reverse sync updates task status when dropped in different column

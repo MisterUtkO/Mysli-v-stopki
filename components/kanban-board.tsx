@@ -17,6 +17,7 @@ import Animated, {
   withTiming,
   withSpring,
   runOnJS,
+  Easing,
 } from "react-native-reanimated";
 import {
   GestureDetector,
@@ -32,6 +33,9 @@ import { KANBAN_STORAGE_KEY } from "@/lib/kanban-sync";
 
 const STORAGE_KEY = KANBAN_STORAGE_KEY;
 const SCREEN_WIDTH = Dimensions.get("window").width;
+const SCREEN_HEIGHT = Dimensions.get("window").height;
+const SCROLL_EDGE_THRESHOLD = 60; // Trigger auto-scroll when within 60px of edge
+const SCROLL_SPEED = 8; // Pixels per frame
 
 const STICKER_COLORS = [
   "#FFEB3B", "#FF9800", "#F44336", "#E91E63", "#9C27B0",
@@ -64,11 +68,20 @@ interface ColumnLayout {
   id: string;
   x: number;
   width: number;
+  y: number;
+  height: number;
+}
+
+interface DropZone {
+  columnId: string;
+  position: number; // Index in column.stickers, or column.stickers.length for end
+  type: "between" | "end";
 }
 
 interface DragState {
   sticker: KanbanSticker;
   fromColId: string;
+  fromIndex: number;
   startX: number;
   startY: number;
 }
@@ -94,6 +107,7 @@ interface DraggableStickerProps {
   stickerIndex: number;
   totalInCol: number;
   totalCols: number;
+  isDragging: boolean;
   onPress: () => void;
   onDragStart: (state: DragState, pageX: number, pageY: number) => void;
   onMoveLeft: () => void;
@@ -110,6 +124,7 @@ function DraggableSticker({
   stickerIndex,
   totalInCol,
   totalCols,
+  isDragging,
   onPress,
   onDragStart,
   onMoveLeft,
@@ -119,36 +134,40 @@ function DraggableSticker({
   colors,
 }: DraggableStickerProps) {
   const scale = useSharedValue(1);
-  const isDragging = useSharedValue(false);
+  const isBeingDragged = useSharedValue(false);
 
   const animStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
-    opacity: isDragging.value ? 0.3 : 1,
+    opacity: isBeingDragged.value ? 0.2 : 1,
   }));
 
   const rotation = (parseInt(sticker.id.slice(-2), 16) % 5 - 2) * 0.5;
 
   const startDrag = useCallback(
     (pageX: number, pageY: number) => {
-      isDragging.value = true;
-      onDragStart({ sticker, fromColId: columnId, startX: pageX, startY: pageY }, pageX, pageY);
+      isBeingDragged.value = true;
+      scale.value = withSpring(1.12, { damping: 10, mass: 1 });
+      onDragStart(
+        { sticker, fromColId: columnId, fromIndex: stickerIndex, startX: pageX, startY: pageY },
+        pageX,
+        pageY
+      );
       if (Platform.OS !== "web") {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       }
     },
-    [sticker, columnId, onDragStart, isDragging]
+    [sticker, columnId, stickerIndex, onDragStart, isBeingDragged, scale]
   );
 
   const resetDrag = useCallback(() => {
-    isDragging.value = false;
+    isBeingDragged.value = false;
     scale.value = withSpring(1);
-  }, [isDragging, scale]);
+  }, [isBeingDragged, scale]);
 
   // Long-press + pan gesture
   const longPress = Gesture.LongPress()
     .minDuration(400)
     .onStart((e) => {
-      scale.value = withTiming(1.08, { duration: 150 });
       runOnJS(startDrag)(e.absoluteX, e.absoluteY);
     });
 
@@ -252,6 +271,27 @@ function DraggableSticker({
   );
 }
 
+// ─── Drop Zone Indicator ───────────────────────────────────────────────────────
+
+interface DropZoneIndicatorProps {
+  colors: ReturnType<typeof import("@/hooks/use-colors").useColors>;
+  isRu: boolean;
+}
+
+function DropZoneIndicator({ colors, isRu }: DropZoneIndicatorProps) {
+  return (
+    <View style={{
+      height: 32, borderRadius: 4, borderWidth: 2, borderStyle: "dashed",
+      borderColor: colors.primary, backgroundColor: `${colors.primary}08`,
+      justifyContent: "center", alignItems: "center", marginVertical: 2,
+    }}>
+      <Text style={{ color: colors.primary, fontSize: 10, fontWeight: "600" }}>
+        {isRu ? "↓ Отпустить" : "↓ Drop"}
+      </Text>
+    </View>
+  );
+}
+
 // ─── Main Board ───────────────────────────────────────────────────────────────
 
 export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoardInner(_props, ref) {
@@ -291,10 +331,11 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
   const [dragging, setDragging] = useState<DragState | null>(null);
   const [dragX, setDragX] = useState(0);
   const [dragY, setDragY] = useState(0);
-  const [hoveredColId, setHoveredColId] = useState<string | null>(null);
+  const [hoveredDropZone, setHoveredDropZone] = useState<DropZone | null>(null);
   const columnLayouts = useRef<ColumnLayout[]>([]);
   const scrollViewRef = useRef<ScrollView>(null);
   const boardOffsetX = useRef(0);
+  const autoScrollInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // ─── Data loading ───────────────────────────────────────────────────────────
 
@@ -395,17 +436,31 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
     saveData({ columns: newColumns });
   };
 
-  const handleMoveSticker = useCallback((fromColId: string, sticker: KanbanSticker, targetColumnId: string) => {
-    if (fromColId === targetColumnId) return;
+  const handleMoveSticker = useCallback((fromColId: string, fromIndex: number, sticker: KanbanSticker, targetColumnId: string, targetIndex?: number) => {
     const newColumns = data.columns.map((col) => {
-      if (col.id === fromColId) return { ...col, stickers: col.stickers.filter((s) => s.id !== sticker.id) };
-      if (col.id === targetColumnId) return { ...col, stickers: [...col.stickers, sticker] };
+      if (col.id === fromColId && col.id === targetColumnId) {
+        // Reorder within same column
+        const newStickers = [...col.stickers];
+        const [removed] = newStickers.splice(fromIndex, 1);
+        const insertIdx = targetIndex ?? newStickers.length;
+        newStickers.splice(insertIdx, 0, removed);
+        return { ...col, stickers: newStickers };
+      }
+      if (col.id === fromColId) {
+        return { ...col, stickers: col.stickers.filter((s) => s.id !== sticker.id) };
+      }
+      if (col.id === targetColumnId) {
+        const newStickers = [...col.stickers];
+        const insertIdx = targetIndex ?? newStickers.length;
+        newStickers.splice(insertIdx, 0, sticker);
+        return { ...col, stickers: newStickers };
+      }
       return col;
     });
     saveData({ columns: newColumns });
 
-    // Reverse sync to task
-    if (sticker.id.startsWith("task_")) {
+    // Reverse sync to task (only if moving to different column)
+    if (fromColId !== targetColumnId && sticker.id.startsWith("task_")) {
       const targetColIndex = newColumns.findIndex((c) => c.id === targetColumnId);
       const STATUS_MAP: Record<number, "not_started" | "in_progress" | "completed"> = {
         0: "not_started",
@@ -425,12 +480,12 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
     }
   }, [data.columns, saveData, updateTask]);
 
-  const handleMoveArrow = (columnId: string, sticker: KanbanSticker, direction: "left" | "right") => {
+  const handleMoveArrow = (columnId: string, stickerIndex: number, sticker: KanbanSticker, direction: "left" | "right") => {
     const colIndex = data.columns.findIndex((c) => c.id === columnId);
     if (colIndex < 0) return;
     const targetIndex = direction === "left" ? colIndex - 1 : colIndex + 1;
     if (targetIndex < 0 || targetIndex >= data.columns.length) return;
-    handleMoveSticker(columnId, sticker, data.columns[targetIndex].id);
+    handleMoveSticker(columnId, stickerIndex, sticker, data.columns[targetIndex].id);
   };
 
   const handleSwapVertical = (columnId: string, stickerId: string, direction: "up" | "down") => {
@@ -447,47 +502,130 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
     saveData({ columns: newColumns });
   };
 
-  // ─── Drag-and-drop ──────────────────────────────────────────────────────────
+  // ─── Drag-and-drop with auto-scroll ────────────────────────────────────────
+
+  const startAutoScroll = useCallback((direction: "left" | "right") => {
+    if (autoScrollInterval.current) clearInterval(autoScrollInterval.current);
+    autoScrollInterval.current = setInterval(() => {
+      scrollViewRef.current?.scrollTo({
+        x: direction === "left" ? Math.max(0, boardOffsetX.current - SCROLL_SPEED) : boardOffsetX.current + SCROLL_SPEED,
+        animated: false,
+      });
+    }, 16);
+  }, []);
+
+  const stopAutoScroll = useCallback(() => {
+    if (autoScrollInterval.current) {
+      clearInterval(autoScrollInterval.current);
+      autoScrollInterval.current = null;
+    }
+  }, []);
 
   const handleDragStart = useCallback((state: DragState, pageX: number, pageY: number) => {
     setDragging(state);
     setDragX(pageX);
     setDragY(pageY);
-    setHoveredColId(state.fromColId);
-  }, []);
+    stopAutoScroll();
+  }, [stopAutoScroll]);
 
-  const getColIdAtX = useCallback((pageX: number): string | null => {
-    // Adjust for board horizontal scroll offset
+  const getDropZonesAtX = useCallback((pageX: number): DropZone[] => {
     const relX = pageX - boardOffsetX.current;
+    const zones: DropZone[] = [];
+
     for (const layout of columnLayouts.current) {
-      if (relX >= layout.x && relX <= layout.x + layout.width) {
-        return layout.id;
+      // Check if x is within column bounds (with some tolerance)
+      if (relX >= layout.x - 20 && relX <= layout.x + layout.width + 20) {
+        const col = data.columns.find((c) => c.id === layout.id);
+        if (col) {
+          // Add zones for each position in column
+          for (let i = 0; i <= col.stickers.length; i++) {
+            zones.push({
+              columnId: layout.id,
+              position: i,
+              type: i === col.stickers.length ? "end" : "between",
+            });
+          }
+        }
       }
     }
-    return null;
-  }, []);
+
+    return zones;
+  }, [data.columns]);
+
+  const getClosestDropZone = useCallback((pageX: number, pageY: number): DropZone | null => {
+    const zones = getDropZonesAtX(pageX);
+    if (zones.length === 0) return null;
+
+    // Find the closest zone based on Y position
+    let closest = zones[0];
+    let minDist = Infinity;
+
+    for (const zone of zones) {
+      const col = data.columns.find((c) => c.id === zone.columnId);
+      if (!col) continue;
+
+      // Estimate Y position of this drop zone
+      const layout = columnLayouts.current.find((l) => l.id === zone.columnId);
+      if (!layout) continue;
+
+      const estimatedY = layout.y + 60 + zone.position * 50; // Rough estimate
+      const dist = Math.abs(pageY - estimatedY);
+
+      if (dist < minDist) {
+        minDist = dist;
+        closest = zone;
+      }
+    }
+
+    return closest;
+  }, [data.columns, getDropZonesAtX]);
 
   const handleDragMove = useCallback((pageX: number, pageY: number) => {
     setDragX(pageX);
     setDragY(pageY);
-    const colId = getColIdAtX(pageX);
-    setHoveredColId(colId);
-  }, [getColIdAtX]);
+
+    // Check for auto-scroll
+    if (pageX < SCROLL_EDGE_THRESHOLD) {
+      startAutoScroll("left");
+    } else if (pageX > SCREEN_WIDTH - SCROLL_EDGE_THRESHOLD) {
+      startAutoScroll("right");
+    } else {
+      stopAutoScroll();
+    }
+
+    // Find closest drop zone
+    const zone = getClosestDropZone(pageX, pageY);
+    setHoveredDropZone(zone);
+  }, [startAutoScroll, stopAutoScroll, getClosestDropZone]);
 
   const handleDragEnd = useCallback((pageX: number) => {
-    if (!dragging) return;
-    const targetColId = getColIdAtX(pageX);
-    if (targetColId && targetColId !== dragging.fromColId) {
-      handleMoveSticker(dragging.fromColId, dragging.sticker, targetColId);
-      if (Platform.OS !== "web") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
+    stopAutoScroll();
+    if (!dragging || !hoveredDropZone) {
+      setDragging(null);
+      setHoveredDropZone(null);
+      return;
     }
-    setDragging(null);
-    setHoveredColId(null);
-  }, [dragging, getColIdAtX, handleMoveSticker]);
 
-  // Board-level pan gesture to track drag movement and end
+    const { columnId: targetColId, position: targetIndex } = hoveredDropZone;
+    const { fromColId, fromIndex, sticker } = dragging;
+
+    // Check if it's a meaningful move
+    if (fromColId === targetColId && fromIndex === targetIndex) {
+      setDragging(null);
+      setHoveredDropZone(null);
+      return;
+    }
+
+    handleMoveSticker(fromColId, fromIndex, sticker, targetColId, targetIndex);
+    if (Platform.OS !== "web") {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+
+    setDragging(null);
+    setHoveredDropZone(null);
+  }, [dragging, hoveredDropZone, handleMoveSticker, stopAutoScroll]);
+
+  // Board-level pan gesture
   const boardPan = Gesture.Pan()
     .enabled(dragging !== null)
     .onUpdate((e) => {
@@ -497,8 +635,9 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
       runOnJS(handleDragEnd)(e.absoluteX);
     })
     .onFinalize(() => {
+      runOnJS(stopAutoScroll)();
       runOnJS(setDragging)(null);
-      runOnJS(setHoveredColId)(null);
+      runOnJS(setHoveredDropZone)(null);
     });
 
   // ─── Zoom ───────────────────────────────────────────────────────────────────
@@ -563,125 +702,125 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
             ref={scrollViewRef}
           >
             <View style={{ flexDirection: "row", gap: 10, transform: [{ scale }] }}>
-              {data.columns.map((column, colIndex) => {
-                const isHovered = hoveredColId === column.id && dragging !== null && dragging.fromColId !== column.id;
-                return (
-                  <View
-                    key={column.id}
-                    onLayout={(e) => {
-                      const { x, width } = e.nativeEvent.layout;
-                      const existing = columnLayouts.current.findIndex((l) => l.id === column.id);
-                      const entry = { id: column.id, x, width };
-                      if (existing >= 0) {
-                        columnLayouts.current[existing] = entry;
-                      } else {
-                        columnLayouts.current.push(entry);
-                      }
-                    }}
-                    style={{
-                      width: COLUMN_WIDTH,
-                      backgroundColor: isHovered ? `${colors.primary}20` : colors.surface,
-                      borderRadius: 14,
-                      borderWidth: isHovered ? 2 : 1,
-                      borderColor: isHovered ? colors.primary : colors.border,
-                      overflow: "hidden",
-                      flex: 1,
-                      minHeight: 300,
-                    }}
-                  >
-                    {/* Column header */}
-                    <View style={{
-                      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-                      paddingHorizontal: 10, paddingVertical: 8,
-                      borderBottomWidth: 1, borderBottomColor: colors.border,
-                      backgroundColor: isHovered ? `${colors.primary}30` : `${colors.primary}15`,
-                    }}>
-                      <Text style={{ fontSize: 14, fontWeight: "800", color: colors.foreground, flex: 1 }} numberOfLines={1}>
-                        {column.title}
+              {data.columns.map((column, colIndex) => (
+                <View
+                  key={column.id}
+                  onLayout={(e) => {
+                    const { x, y, width, height } = e.nativeEvent.layout;
+                    const existing = columnLayouts.current.findIndex((l) => l.id === column.id);
+                    const entry = { id: column.id, x, y, width, height };
+                    if (existing >= 0) {
+                      columnLayouts.current[existing] = entry;
+                    } else {
+                      columnLayouts.current.push(entry);
+                    }
+                  }}
+                  style={{
+                    width: COLUMN_WIDTH,
+                    backgroundColor: colors.surface,
+                    borderRadius: 14,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    overflow: "hidden",
+                    flex: 1,
+                    minHeight: 300,
+                  }}
+                >
+                  {/* Column header */}
+                  <View style={{
+                    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+                    paddingHorizontal: 10, paddingVertical: 8,
+                    borderBottomWidth: 1, borderBottomColor: colors.border,
+                    backgroundColor: `${colors.primary}15`,
+                  }}>
+                    <Text style={{ fontSize: 14, fontWeight: "800", color: colors.foreground, flex: 1 }} numberOfLines={1}>
+                      {column.title}
+                    </Text>
+                    <View style={{ flexDirection: "row", gap: 6, alignItems: "center" }}>
+                      <Text style={{ fontSize: 11, color: colors.muted, fontWeight: "600", backgroundColor: `${colors.primary}20`, paddingHorizontal: 6, paddingVertical: 1, borderRadius: 8 }}>
+                        {column.stickers.length}
                       </Text>
-                      <View style={{ flexDirection: "row", gap: 6, alignItems: "center" }}>
-                        <Text style={{ fontSize: 11, color: colors.muted, fontWeight: "600", backgroundColor: `${colors.primary}20`, paddingHorizontal: 6, paddingVertical: 1, borderRadius: 8 }}>
-                          {column.stickers.length}
-                        </Text>
-                        <Pressable
-                          onPress={() => { setRenamingColumn({ id: column.id, title: column.title }); setRenameText(column.title); }}
-                          style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1, padding: 2 }]}
-                        >
-                          <Text style={{ fontSize: 13 }}>✏️</Text>
-                        </Pressable>
-                        <Pressable
-                          onPress={() => handleDeleteColumn(column.id)}
-                          style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1, padding: 2 }]}
-                        >
-                          <Text style={{ fontSize: 13 }}>🗑</Text>
-                        </Pressable>
-                      </View>
+                      <Pressable
+                        onPress={() => { setRenamingColumn({ id: column.id, title: column.title }); setRenameText(column.title); }}
+                        style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1, padding: 2 }]}
+                      >
+                        <Text style={{ fontSize: 13 }}>✏️</Text>
+                      </Pressable>
+                      <Pressable
+                        onPress={() => handleDeleteColumn(column.id)}
+                        style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1, padding: 2 }]}
+                      >
+                        <Text style={{ fontSize: 13 }}>🗑</Text>
+                      </Pressable>
                     </View>
-
-                    {/* Stickers */}
-                    <ScrollView
-                      style={{ flex: 1, paddingHorizontal: 6, paddingTop: 6 }}
-                      showsVerticalScrollIndicator={false}
-                      scrollEnabled={!dragging}
-                    >
-                      {column.stickers.length === 0 ? (
-                        <Text style={{ color: colors.muted, fontSize: 12, fontStyle: "italic", textAlign: "center", paddingVertical: 12 }}>
-                          {isHovered
-                            ? (isRu ? "Отпустите здесь" : "Drop here")
-                            : t.matrix.emptyColumn}
-                        </Text>
-                      ) : (
-                        column.stickers.map((sticker, stickerIndex) => (
-                          <DraggableSticker
-                            key={sticker.id}
-                            sticker={sticker}
-                            columnId={column.id}
-                            colIndex={colIndex}
-                            stickerIndex={stickerIndex}
-                            totalInCol={column.stickers.length}
-                            totalCols={data.columns.length}
-                            colors={colors}
-                            onPress={() => setEditingSticker({ columnId: column.id, sticker })}
-                            onDragStart={handleDragStart}
-                            onMoveLeft={() => colIndex > 0 && handleMoveArrow(column.id, sticker, "left")}
-                            onMoveRight={() => colIndex < data.columns.length - 1 && handleMoveArrow(column.id, sticker, "right")}
-                            onMoveUp={() => stickerIndex > 0 && handleSwapVertical(column.id, sticker.id, "up")}
-                            onMoveDown={() => stickerIndex < column.stickers.length - 1 && handleSwapVertical(column.id, sticker.id, "down")}
-                          />
-                        ))
-                      )}
-                      {/* Drop zone indicator when dragging over non-empty column */}
-                      {isHovered && column.stickers.length > 0 && (
-                        <View style={{
-                          height: 48, borderRadius: 6, borderWidth: 2, borderStyle: "dashed",
-                          borderColor: colors.primary, backgroundColor: `${colors.primary}10`,
-                          justifyContent: "center", alignItems: "center", marginBottom: 6,
-                        }}>
-                          <Text style={{ color: colors.primary, fontSize: 12, fontWeight: "700" }}>
-                            {isRu ? "↓ Отпустите здесь" : "↓ Drop here"}
-                          </Text>
-                        </View>
-                      )}
-                      <View style={{ height: 6 }} />
-                    </ScrollView>
-
-                    {/* Add sticker button */}
-                    <Pressable
-                      onPress={() => { setAddStickerColumnId(column.id); setShowAddSticker(true); }}
-                      style={({ pressed }) => [{
-                        flexDirection: "row", alignItems: "center", justifyContent: "center",
-                        paddingVertical: 10, borderTopWidth: 1, borderTopColor: colors.border,
-                        backgroundColor: `${colors.primary}15`,
-                        opacity: pressed ? 0.6 : 1,
-                      }]}
-                    >
-                      <Text style={{ fontSize: 14, color: colors.primary, fontWeight: "800" }}>
-                        + {t.matrix.newSticker}
-                      </Text>
-                    </Pressable>
                   </View>
-                );
-              })}
+
+                  {/* Stickers with drop zones */}
+                  <ScrollView
+                    style={{ flex: 1, paddingHorizontal: 6, paddingTop: 6 }}
+                    showsVerticalScrollIndicator={false}
+                    scrollEnabled={!dragging}
+                  >
+                    {column.stickers.length === 0 ? (
+                      <View>
+                        <DropZoneIndicator colors={colors} isRu={isRu} />
+                        <Text style={{ color: colors.muted, fontSize: 12, fontStyle: "italic", textAlign: "center", paddingVertical: 12 }}>
+                          {t.matrix.emptyColumn}
+                        </Text>
+                      </View>
+                    ) : (
+                      <>
+                        {/* Drop zone before first sticker */}
+                        {dragging && hoveredDropZone?.columnId === column.id && hoveredDropZone?.position === 0 && (
+                          <DropZoneIndicator colors={colors} isRu={isRu} />
+                        )}
+
+                        {column.stickers.map((sticker, stickerIndex) => (
+                          <View key={sticker.id}>
+                            <DraggableSticker
+                              sticker={sticker}
+                              columnId={column.id}
+                              colIndex={colIndex}
+                              stickerIndex={stickerIndex}
+                              totalInCol={column.stickers.length}
+                              totalCols={data.columns.length}
+                              isDragging={dragging?.sticker.id === sticker.id}
+                              colors={colors}
+                              onPress={() => setEditingSticker({ columnId: column.id, sticker })}
+                              onDragStart={handleDragStart}
+                              onMoveLeft={() => colIndex > 0 && handleMoveArrow(column.id, stickerIndex, sticker, "left")}
+                              onMoveRight={() => colIndex < data.columns.length - 1 && handleMoveArrow(column.id, stickerIndex, sticker, "right")}
+                              onMoveUp={() => stickerIndex > 0 && handleSwapVertical(column.id, sticker.id, "up")}
+                              onMoveDown={() => stickerIndex < column.stickers.length - 1 && handleSwapVertical(column.id, sticker.id, "down")}
+                            />
+
+                            {/* Drop zone after this sticker */}
+                            {dragging && hoveredDropZone?.columnId === column.id && hoveredDropZone?.position === stickerIndex + 1 && (
+                              <DropZoneIndicator colors={colors} isRu={isRu} />
+                            )}
+                          </View>
+                        ))}
+                      </>
+                    )}
+                    <View style={{ height: 6 }} />
+                  </ScrollView>
+
+                  {/* Add sticker button */}
+                  <Pressable
+                    onPress={() => { setAddStickerColumnId(column.id); setShowAddSticker(true); }}
+                    style={({ pressed }) => [{
+                      flexDirection: "row", alignItems: "center", justifyContent: "center",
+                      paddingVertical: 10, borderTopWidth: 1, borderTopColor: colors.border,
+                      backgroundColor: `${colors.primary}15`,
+                      opacity: pressed ? 0.6 : 1,
+                    }]}
+                  >
+                    <Text style={{ fontSize: 14, color: colors.primary, fontWeight: "800" }}>
+                      + {t.matrix.newSticker}
+                    </Text>
+                  </Pressable>
+                </View>
+              ))}
             </View>
           </ScrollView>
         </GestureDetector>
@@ -697,11 +836,11 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
               width: 100,
               zIndex: 9999,
               shadowColor: "#000",
-              shadowOffset: { width: 0, height: 8 },
-              shadowOpacity: 0.35,
-              shadowRadius: 12,
-              elevation: 20,
-              transform: [{ rotate: "-3deg" }, { scale: 1.1 }],
+              shadowOffset: { width: 0, height: 12 },
+              shadowOpacity: 0.4,
+              shadowRadius: 16,
+              elevation: 25,
+              transform: [{ rotate: "-5deg" }, { scale: 1.15 }],
             }}
           >
             <View style={{
@@ -963,7 +1102,7 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
                         key={col.id}
                         onPress={() => {
                           if (!isCurrent) {
-                            handleMoveSticker(movingSticker.columnId, movingSticker.sticker, col.id);
+                            handleMoveSticker(movingSticker.columnId, 0, movingSticker.sticker, col.id);
                             setMovingSticker(null);
                           }
                         }}
