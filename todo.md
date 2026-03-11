@@ -614,3 +614,8 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Auto-scroll board horizontally when dragging near left/right edges
 - [x] Support vertical reordering: drop sticker between other stickers in same column
 - [x] Reverse sync updates task status when dropped in different column
+
+## Phase 49: Fix Kanban Drag-and-Drop Detection
+
+- [x] Fix: stickers not droppable into all columns (especially "Done") — improved drop zone detection
+- [x] Simplify drop zone logic: now finds closest column by distance to column center, not strict bounds

@@ -532,19 +532,30 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
     const relX = pageX - boardOffsetX.current;
     const zones: DropZone[] = [];
 
+    // Find the closest column to the drag position
+    let closestLayout: ColumnLayout | null = null;
+    let minDistX = Infinity;
+
     for (const layout of columnLayouts.current) {
-      // Check if x is within column bounds (with some tolerance)
-      if (relX >= layout.x - 20 && relX <= layout.x + layout.width + 20) {
-        const col = data.columns.find((c) => c.id === layout.id);
-        if (col) {
-          // Add zones for each position in column
-          for (let i = 0; i <= col.stickers.length; i++) {
-            zones.push({
-              columnId: layout.id,
-              position: i,
-              type: i === col.stickers.length ? "end" : "between",
-            });
-          }
+      // Calculate distance from drag position to column center
+      const colCenterX = layout.x + layout.width / 2;
+      const distX = Math.abs(relX - colCenterX);
+      if (distX < minDistX) {
+        minDistX = distX;
+        closestLayout = layout;
+      }
+    }
+
+    // Add drop zones for the closest column
+    if (closestLayout) {
+      const col = data.columns.find((c) => c.id === closestLayout!.id);
+      if (col) {
+        for (let i = 0; i <= col.stickers.length; i++) {
+          zones.push({
+            columnId: closestLayout.id,
+            position: i,
+            type: i === col.stickers.length ? "end" : "between",
+          });
         }
       }
     }
@@ -556,7 +567,12 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
     const zones = getDropZonesAtX(pageX);
     if (zones.length === 0) return null;
 
-    // Find the closest zone based on Y position
+    // If only one zone (single column), find closest by Y
+    if (zones.length === 1) {
+      return zones[0];
+    }
+
+    // Find the closest zone based on Y position within the column
     let closest = zones[0];
     let minDist = Infinity;
 
@@ -564,11 +580,11 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
       const col = data.columns.find((c) => c.id === zone.columnId);
       if (!col) continue;
 
-      // Estimate Y position of this drop zone
+      // Estimate Y position of this drop zone (rough: header ~50px + sticker height ~50px)
       const layout = columnLayouts.current.find((l) => l.id === zone.columnId);
       if (!layout) continue;
 
-      const estimatedY = layout.y + 60 + zone.position * 50; // Rough estimate
+      const estimatedY = layout.y + 50 + zone.position * 50;
       const dist = Math.abs(pageY - estimatedY);
 
       if (dist < minDist) {
