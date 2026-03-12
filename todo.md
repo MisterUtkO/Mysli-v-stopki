@@ -617,5 +617,15 @@ All features have been implemented, tested, and verified. The app is ready for u
 
 ## Phase 49: Fix Kanban Drag-and-Drop Detection
 
+<<<<<<< Updated upstream
 - [x] Fix: stickers not droppable into all columns (especially "Done") — improved drop zone detection
 - [x] Simplify drop zone logic: now finds closest column by distance to column center, not strict bounds
+=======
+- [ ] Fix: stickers not droppable into all columns (especially "Done") — improve drop zone detection
+- [ ] Simplify drop zone logic: use direct column position instead of complex coordinate calculations
+
+## Phase 50: Support Developer Page
+
+- [x] Remove bank card data from Settings screen
+- [x] Create new Support Developer page with card info, copy button, disclaimer, thank you message
+>>>>>>> Stashed changes

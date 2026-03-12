@@ -690,45 +690,7 @@ export default function SettingsScreen() {
           </Pressable>
           <Pressable
             onPress={() => {
-              // First, copy card number to clipboard
-              const cardNumber = "2200 7006 3018 0684";
-              Clipboard.setStringAsync(cardNumber);
-              setCopiedCard(true);
-              setTimeout(() => setCopiedCard(false), 2000);
-              
-              // Then show bank app options
-              const bankApps = [
-                { name: isRu ? "Сбербанк" : "Sberbank", url: "sberbank://" },
-                { name: isRu ? "Яндекс.Касса" : "Yandex.Kassa", url: "https://yandex.ru/kassa/" },
-                { name: isRu ? "Телеграм" : "Telegram", url: "https://t.me/misterutko" },
-              ];
-              
-              Alert.alert(
-                isRu ? "❤️ Спасибо за поддержку!" : "❤️ Thank you for support!",
-                isRu
-                  ? "Номер карты скопирован. Выберите приложение банка для перевода:"
-                  : "Card number copied. Choose your bank app to transfer:",
-                [
-                  ...bankApps.map((app) => ({
-                    text: app.name,
-                    onPress: () => {
-                      Linking.openURL(app.url).catch(() => {
-                        Alert.alert(
-                          isRu ? "Ошибка" : "Error",
-                          isRu
-                            ? `Не удалось открыть ${app.name}. Пожалуйста, установите приложение.`
-                            : `Failed to open ${app.name}. Please install the app.`
-                        );
-                      });
-                    },
-                  })),
-                  {
-                    text: isRu ? "Отмена" : "Cancel",
-                    onPress: () => {},
-                    style: "cancel",
-                  },
-                ]
-              );
+              router.push("/support-developer");
             }}
             style={({ pressed }) => [{
               backgroundColor: colors.success,
