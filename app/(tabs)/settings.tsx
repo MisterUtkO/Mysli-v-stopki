@@ -42,7 +42,7 @@ export default function SettingsScreen() {
   const { showOnboarding } = useOnboarding();
 
   const [exporting, setExporting] = useState(false);
-  const [copiedCard, setCopiedCard] = useState(false);
+
   const [aboutTapCount, setAboutTapCount] = useState(0);
   const [amoledTapCount, setAmoledTapCount] = useState(0);
 
@@ -192,39 +192,7 @@ export default function SettingsScreen() {
     );
   };
 
-  const handleCardNumberCopy = async () => {
-    const cardNumber = "2200 7006 3018 0684";
-    let copied = false;
 
-    if (Platform.OS === "web") {
-      try {
-        await navigator.clipboard.writeText(cardNumber);
-        copied = true;
-      } catch {
-        try {
-          const textArea = document.createElement("textarea");
-          textArea.value = cardNumber;
-          document.body.appendChild(textArea);
-          textArea.focus();
-          textArea.select();
-          copied = document.execCommand("copy");
-          document.body.removeChild(textArea);
-        } catch {
-          copied = false;
-        }
-      }
-    }
-    if (copied) {
-      setCopiedCard(true);
-      setTimeout(() => setCopiedCard(false), 2500);
-      triggerCustomFlag("copy_card", tasks);
-    } else {
-      Alert.alert(
-        isRu ? "Номер карты" : "Card number",
-        cardNumber + "\n\n" + (isRu ? "Скопируйте вручную" : "Copy manually")
-      );
-    }
-  };
 
   const frequencyOptions: { value: NotifFrequency; label: string }[] = [
     { value: "never", label: isRu ? "Никогда" : "Never" },
@@ -723,21 +691,7 @@ export default function SettingsScreen() {
             </Text>
           </Pressable>
 
-          {/* Card */}
-          <Pressable
-            onPress={handleCardNumberCopy}
-            style={({ pressed }) => [{
-              backgroundColor: copiedCard ? colors.success : colors.primary,
-              borderRadius: 12,
-              paddingVertical: 12,
-              paddingHorizontal: 16,
-              opacity: pressed ? 0.7 : 1,
-            }]}
-          >
-            <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16, textAlign: "center" }}>
-              {copiedCard ? "✅ Copied!" : "💳 2200 7006 3018 0684 Tap to copy"}
-            </Text>
-          </Pressable>
+
 
           {/* Footer */}
           <View style={{ alignItems: "center", marginTop: 20, marginBottom: 20 }}>

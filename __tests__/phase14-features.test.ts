@@ -99,25 +99,10 @@ describe("Settings type", () => {
   });
 });
 
-// Test 5: Clipboard copy has web fallback
-describe("Clipboard copy in settings", () => {
-  const settingsSource = fs.readFileSync(path.join(projectRoot, "app/(tabs)/settings.tsx"), "utf-8");
+// Test 5: Clipboard copy moved to support-developer page
+// (Card copy button removed from settings.tsx)
 
-  it("should have web clipboard fallback", () => {
-    expect(settingsSource).toContain("navigator.clipboard.writeText");
-  });
-
-  it("should have legacy execCommand fallback", () => {
-    expect(settingsSource).toContain('document.execCommand("copy")');
-  });
-
-  it("should show alert if all copy methods fail", () => {
-    expect(settingsSource).toContain("Copy manually");
-    expect(settingsSource).toContain("Скопируйте вручную");
-  });
-});
-
-// Test 6: Settings has 4 theme options
+// Test 6: Settings has 5 theme options
 describe("Settings theme selector", () => {
   const settingsSource = fs.readFileSync(path.join(projectRoot, "app/(tabs)/settings.tsx"), "utf-8");
 
