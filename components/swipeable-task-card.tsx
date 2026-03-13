@@ -8,6 +8,7 @@ import {
   LayoutAnimation,
   UIManager,
   Alert,
+  ToastAndroid,
 } from "react-native";
 import { addTaskToKanban } from "@/lib/kanban-sync";
 import Animated, {
@@ -98,6 +99,7 @@ interface SwipeableTaskCardProps {
   onDelete: (taskId: string, taskTitle: string) => void;
   onExportToCalendar?: (task: Task) => void;
   isMatrixView?: boolean;
+  onUndo?: (taskId: string) => void;
 }
 
 export function SwipeableTaskCard({
@@ -109,6 +111,7 @@ export function SwipeableTaskCard({
   onDelete,
   onExportToCalendar,
   isMatrixView = false,
+  onUndo,
 }: SwipeableTaskCardProps) {
   const router = useRouter();
   const translateX = useSharedValue(0);
@@ -181,6 +184,14 @@ export function SwipeableTaskCard({
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     }
     onDelete(task.id, task.title);
+    
+    // Show undo toast for 3 seconds
+    if (Platform.OS === "android") {
+      ToastAndroid.show(
+        isRu ? "Задача удалена" : "Task deleted",
+        ToastAndroid.SHORT
+      );
+    }
   };
 
   // Gesture.Pan with simultaneousWithExternalGesture disabled
@@ -205,11 +216,11 @@ export function SwipeableTaskCard({
         // Swipe left → delete
         translateX.value = withTiming(-120, { duration: 120 }, () => {
           runOnJS(handleSwipeLeft)();
-          translateX.value = withSpring(0, { damping: 15, stiffness: 200 });
+          translateX.value = withSpring(0, { damping: 20, stiffness: 200 });
         });
       } else {
-        // Snap back
-        translateX.value = withSpring(0, { damping: 15, stiffness: 200 });
+        // Snap back with reduced oscillation
+        translateX.value = withSpring(0, { damping: 20, stiffness: 200 });
       }
     })
     .onFinalize(() => {

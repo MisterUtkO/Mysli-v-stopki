@@ -629,3 +629,8 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Remove bank card data from Settings screen
 - [x] Create new Support Developer page with card info, copy button, disclaimer, thank you message
 >>>>>>> Stashed changes
+
+## Phase 51: Task Interaction & Deletion UX
+
+- [x] Add undo toast after task deletion — shows "Task deleted" notification on Android
+- [x] Reduce swipe oscillation amplitude (damping: 15 → 20, stiffness: 200) for smoother snap-back
