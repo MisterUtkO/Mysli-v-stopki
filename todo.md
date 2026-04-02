@@ -634,3 +634,10 @@ All features have been implemented, tested, and verified. The app is ready for u
 
 - [x] Add undo toast after task deletion — shows "Task deleted" notification on Android
 - [x] Reduce swipe oscillation amplitude (damping: 15 → 20, stiffness: 200) for smoother snap-back
+
+## Phase 52: Responsive Design Fixes
+
+- [x] Fix onboarding modal overflow on small screens — adaptive padding, font sizes, card width
+- [x] Add flexWrap to buttons so they wrap on narrow screens
+- [x] Add minWidth constraints to buttons to prevent text clipping
+- [x] All 110 tests pass

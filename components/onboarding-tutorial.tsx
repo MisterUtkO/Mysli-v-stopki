@@ -13,8 +13,26 @@ import { useColors } from "@/hooks/use-colors";
 import { useI18n } from "@/lib/context/i18n-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 const SWIPE_THRESHOLD = 60;
+
+// Adaptive values based on screen size
+const getAdaptiveValues = () => {
+  const isSmallScreen = SCREEN_WIDTH < 380;
+  const isMediumScreen = SCREEN_WIDTH >= 380 && SCREEN_WIDTH < 480;
+  
+  return {
+    containerPaddingHorizontal: isSmallScreen ? 16 : 24,
+    cardMaxWidth: isSmallScreen ? SCREEN_WIDTH * 0.9 : 360,
+    contentPadding: isSmallScreen ? 20 : 28,
+    iconFontSize: isSmallScreen ? 40 : 52,
+    titleFontSize: isSmallScreen ? 18 : 22,
+    descriptionFontSize: isSmallScreen ? 13 : 15,
+    descriptionMinHeight: isSmallScreen ? 60 : 88,
+    buttonFontSize: isSmallScreen ? 12 : 14,
+    buttonPaddingVertical: isSmallScreen ? 10 : 13,
+  };
+};
 
 interface OnboardingStep {
   id: string;
@@ -224,7 +242,7 @@ function OnboardingTutorialModal({
           backgroundColor: "rgba(0, 0, 0, 0.75)",
           justifyContent: "center",
           alignItems: "center",
-          paddingHorizontal: 24,
+          paddingHorizontal: getAdaptiveValues().containerPaddingHorizontal,
         }}
       >
         <GestureDetector gesture={panGesture}>
@@ -232,7 +250,7 @@ function OnboardingTutorialModal({
             style={[
               {
                 width: "100%",
-                maxWidth: 360,
+                maxWidth: getAdaptiveValues().cardMaxWidth,
                 borderRadius: 24,
                 backgroundColor: colors.background,
                 overflow: "hidden",
@@ -241,21 +259,21 @@ function OnboardingTutorialModal({
             ]}
           >
             {/* Content area — fixed height, no ScrollView to avoid layout issues */}
-            <View style={{ padding: 28 }}>
+            <View style={{ padding: getAdaptiveValues().contentPadding }}>
               {/* Icon */}
               <View style={{ alignItems: "center", marginBottom: 16 }}>
-                <Text style={{ fontSize: 52 }}>{step.icon}</Text>
+                <Text style={{ fontSize: getAdaptiveValues().iconFontSize }}>{step.icon}</Text>
               </View>
 
               {/* Title */}
               <Text
                 style={{
-                  fontSize: 22,
+                  fontSize: getAdaptiveValues().titleFontSize,
                   fontWeight: "700",
                   textAlign: "center",
                   marginBottom: 12,
                   color: colors.foreground,
-                  lineHeight: 28,
+                  lineHeight: getAdaptiveValues().titleFontSize * 1.3,
                 }}
                 numberOfLines={2}
               >
@@ -265,11 +283,11 @@ function OnboardingTutorialModal({
               {/* Description */}
               <Text
                 style={{
-                  fontSize: 15,
+                  fontSize: getAdaptiveValues().descriptionFontSize,
                   textAlign: "center",
-                  lineHeight: 22,
+                  lineHeight: getAdaptiveValues().descriptionFontSize * 1.5,
                   color: colors.muted,
-                  minHeight: 88,
+                  minHeight: getAdaptiveValues().descriptionMinHeight,
                 }}
               >
                 {stepDescription}
@@ -313,20 +331,21 @@ function OnboardingTutorialModal({
               </View>
 
               {/* Buttons */}
-              <View style={{ flexDirection: "row", gap: 10 }}>
+              <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
                 {currentStep > 0 ? (
                   <Pressable
                     onPress={goToPrevious}
                     style={({ pressed }) => ({
                       flex: 1,
-                      paddingVertical: 13,
+                      minWidth: "45%",
+                      paddingVertical: getAdaptiveValues().buttonPaddingVertical,
                       borderRadius: 10,
                       alignItems: "center",
                       backgroundColor: colors.surface,
                       opacity: pressed ? 0.7 : 1,
                     })}
                   >
-                    <Text style={{ fontWeight: "600", color: colors.muted, fontSize: 14 }}>
+                    <Text style={{ fontWeight: "600", color: colors.muted, fontSize: getAdaptiveValues().buttonFontSize }}>
                       {t.onboarding?.previous || "← Назад"}
                     </Text>
                   </Pressable>
@@ -335,14 +354,15 @@ function OnboardingTutorialModal({
                     onPress={handleSkip}
                     style={({ pressed }) => ({
                       flex: 1,
-                      paddingVertical: 13,
+                      minWidth: "45%",
+                      paddingVertical: getAdaptiveValues().buttonPaddingVertical,
                       borderRadius: 10,
                       alignItems: "center",
                       backgroundColor: colors.surface,
                       opacity: pressed ? 0.7 : 1,
                     })}
                   >
-                    <Text style={{ fontWeight: "600", color: colors.muted, fontSize: 14 }}>
+                    <Text style={{ fontWeight: "600", color: colors.muted, fontSize: getAdaptiveValues().buttonFontSize }}>
                       {t.onboarding?.skip || "Пропустить"}
                     </Text>
                   </Pressable>
@@ -352,14 +372,15 @@ function OnboardingTutorialModal({
                   onPress={goToNext}
                   style={({ pressed }) => ({
                     flex: 1,
-                    paddingVertical: 13,
+                    minWidth: "45%",
+                    paddingVertical: getAdaptiveValues().buttonPaddingVertical,
                     borderRadius: 10,
                     alignItems: "center",
                     backgroundColor: colors.primary,
                     opacity: pressed ? 0.85 : 1,
                   })}
                 >
-                  <Text style={{ fontWeight: "700", color: "white", fontSize: 14 }}>
+                  <Text style={{ fontWeight: "700", color: "white", fontSize: getAdaptiveValues().buttonFontSize }}>
                     {currentStep === ONBOARDING_STEPS.length - 1
                       ? (t.onboarding?.getStarted || "Начать")
                       : (t.onboarding?.next || "Далее →")}
