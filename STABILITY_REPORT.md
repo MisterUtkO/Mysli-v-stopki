@@ -1,4 +1,4 @@
-# Stability Report — Eisenhower Priority App
+# Stability Report — SDVGNote
 
 **Date:** April 4, 2026  
 **Version:** 74e77174  
@@ -143,7 +143,7 @@ The application is **stable and production-ready**. All core features are implem
 
 **Status: ✅ STABLE & READY**
 
-The Eisenhower Priority App is fully functional with:
+SDVGNote is fully functional with:
 - 110 passing tests
 - Zero TypeScript errors
 - All features implemented and verified

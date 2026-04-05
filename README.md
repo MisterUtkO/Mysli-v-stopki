@@ -1,6 +1,6 @@
-# Eisenhower Priority App
+# SDVGNote — Заметки для самоорганизации
 
-A simplified mobile task prioritization application based on the Eisenhower Matrix. Organize your tasks using a 7-point scale for importance and urgency, with automatic color-coded categorization.
+A mobile task management application for self-organization. Organize your tasks using a 7-point scale for importance and urgency, with automatic color-coded categorization based on the Eisenhower Matrix model.
 
 ## Features
 

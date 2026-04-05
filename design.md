@@ -1,7 +1,7 @@
-# Eisenhower Priority App — Design Plan
+# SDVGNote — Заметки для самоорганизации | Design Plan
 
 ## Overview
-A mobile-first task prioritization application using the Eisenhower Matrix (Important/Urgent quadrants) with advanced 10-point metric scoring. Optimized for portrait orientation (9:16) and one-handed usage on iOS and Android.
+A mobile-first task management application for self-organization using the Eisenhower Matrix model (Important/Urgent quadrants) with advanced 10-point metric scoring. Optimized for portrait orientation (9:16) and one-handed usage on iOS and Android.
 
 ## Screen List
 
