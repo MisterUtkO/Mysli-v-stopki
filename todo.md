@@ -665,20 +665,15 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Add interactive undo button in toast after task deletion (restore deleted task) — toast notification already shows on Android, restoreTask() function available in TaskContext
 
 
-## Phase 56: Local Version Management System
+## Phase 56: Simplified Version Management System (v1.0.5.1)
 
-- [x] Created AppVersionProvider context for centralized version management
-- [x] Updated app.config.ts with versionName (0.0.4) and versionCode (4)
-- [x] Created release_notes.json with multilingual changelog (RU/EN)
-- [x] Created ReleaseNotesRepository for loading local changelog
-- [x] Implemented About screen with version and changelog display (not in tab bar)
-- [x] Removed About tab from tab navigation (kept About screen for future use)
-- [x] Created AppVersionFooter component for Settings screen
-- [x] Updated Settings screen to use AppVersionFooter instead of hardcoded version
-- [x] Added AppVersionProvider to app layout
+- [x] Updated app.config.ts to version 1.0.5.1 (current Manus build version)
+- [x] Simplified AppVersionProvider to use single version string from app.config.ts
+- [x] Updated AppVersionFooter to display version in Settings footer
+- [x] Simplified About screen to show version
+- [x] Tab bar layout unchanged: Home, Matrix, Kanban, Achievements, Settings
 - [x] All 115 tests passing, 0 TypeScript errors
 - [x] Dev server running stable
-- [x] Tab bar layout unchanged visually and functionally
 
 **Notes:**
 - Version is now centralized in app.config.ts (single source of truth)

@@ -695,7 +695,7 @@ export default function SettingsScreen() {
 
 
           {/* Footer with Version */}
-          <AppVersionFooter showBuild={true} />
+          <AppVersionFooter />
           </View>
         </ScrollView>
       </ScreenContainer>
