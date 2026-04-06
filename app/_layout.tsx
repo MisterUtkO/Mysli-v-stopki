@@ -23,6 +23,7 @@ import { I18nProvider } from "@/lib/context/i18n-context";
 import { AchievementProvider, useAchievements } from "@/lib/context/achievement-context";
 import { AchievementCelebration } from "@/components/achievement-celebration";
 import { OnboardingTutorialProvider } from "@/components/onboarding-tutorial";
+import { AppVersionProvider } from "@/lib/context/app-version-context";
 import { useTaskContext } from "@/lib/context/task-context";
 import { useI18n } from "@/lib/context/i18n-context";
 import { initializeNotifications } from "@/lib/services/notification-scheduler";
@@ -150,24 +151,26 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <trpc.Provider client={trpcClient} queryClient={queryClient}>
         <QueryClientProvider client={queryClient}>
-          <I18nProvider>
-            <TaskProvider>
+          <AppVersionProvider>
+            <I18nProvider>
+              <TaskProvider>
                 <AchievementProvider>
-                <OnboardingTutorialProvider>
-                <AchievementChecker />
-                <Stack screenOptions={{ headerShown: false }}>
-                  <Stack.Screen name="(tabs)" />
-                  <Stack.Screen name="add-task" options={{ presentation: "modal", title: "Add Task" }} />
-                  <Stack.Screen name="task-detail/[id]" options={{ presentation: "modal", title: "Task Details" }} />
-                  <Stack.Screen name="statistics" options={{ presentation: "modal", title: "Statistics" }} />
-                  <Stack.Screen name="about" options={{ presentation: "modal", title: "About" }} />
-                  <Stack.Screen name="oauth/callback" />
-                </Stack>
-                <StatusBar style="auto" hidden={Platform.OS !== "web"} />
-                </OnboardingTutorialProvider>
+                  <OnboardingTutorialProvider>
+                    <AchievementChecker />
+                    <Stack screenOptions={{ headerShown: false }}>
+                      <Stack.Screen name="(tabs)" />
+                      <Stack.Screen name="add-task" options={{ presentation: "modal", title: "Add Task" }} />
+                      <Stack.Screen name="task-detail/[id]" options={{ presentation: "modal", title: "Task Details" }} />
+                      <Stack.Screen name="statistics" options={{ presentation: "modal", title: "Statistics" }} />
+                      <Stack.Screen name="about" options={{ presentation: "modal", title: "About" }} />
+                      <Stack.Screen name="oauth/callback" />
+                    </Stack>
+                    <StatusBar style="auto" hidden={Platform.OS !== "web"} />
+                  </OnboardingTutorialProvider>
                 </AchievementProvider>
-            </TaskProvider>
-          </I18nProvider>
+              </TaskProvider>
+            </I18nProvider>
+          </AppVersionProvider>
         </QueryClientProvider>
       </trpc.Provider>
     </GestureHandlerRootView>

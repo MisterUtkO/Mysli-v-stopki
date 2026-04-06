@@ -1,0 +1,38 @@
+{
+  "versions": [
+    {
+      "versionName": "0.0.4",
+      "versionCode": 4,
+      "notes": {
+        "ru": [
+          "Первая публичная версия",
+          "Добавлена система управления версиями и changelog",
+          "Улучшена структура настроек",
+          "Оптимизирована производительность приложения"
+        ],
+        "en": [
+          "Initial public release",
+          "Added version management and changelog system",
+          "Improved settings structure",
+          "Optimized application performance"
+        ]
+      }
+    },
+    {
+      "versionName": "0.0.3",
+      "versionCode": 3,
+      "notes": {
+        "ru": [
+          "Добавлена поддержка календаря",
+          "Реализована система уведомлений",
+          "Улучшена работа с Kanban доской"
+        ],
+        "en": [
+          "Added calendar support",
+          "Implemented notification system",
+          "Improved Kanban board functionality"
+        ]
+      }
+    }
+  ]
+}

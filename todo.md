@@ -663,3 +663,25 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Implement full-text search for tasks (search icon in header filters by title/description) — already implemented in index.tsx
 - [x] Add color coding for Kanban stickers based on task quadrant (Q1=red, Q2=orange, Q3=blue, Q4=green) — added getQuadrantColor() function to kanban-sync.ts, 5 new tests passing
 - [x] Add interactive undo button in toast after task deletion (restore deleted task) — toast notification already shows on Android, restoreTask() function available in TaskContext
+
+
+## Phase 56: Local Version Management System
+
+- [x] Created AppVersionProvider context for centralized version management
+- [x] Updated app.config.ts with versionName (0.0.4) and versionCode (4)
+- [x] Created release_notes.json with multilingual changelog (RU/EN)
+- [x] Created ReleaseNotesRepository for loading local changelog
+- [x] Implemented About screen with version and changelog display
+- [x] Added About tab to tab navigation
+- [x] Created AppVersionFooter component for Settings screen
+- [x] Updated Settings screen to use AppVersionFooter instead of hardcoded version
+- [x] Added AppVersionProvider to app layout
+- [x] All 115 tests passing, 0 TypeScript errors
+- [x] Dev server running stable
+
+**Notes:**
+- Version is now centralized in app.config.ts (single source of truth)
+- Changelog is stored locally in assets/release_notes.json (no network required)
+- Version automatically propagates to About screen, Settings footer, and all logs
+- Supports language-aware changelog (Russian and English)
+- Ready for next version update: just change versionName and versionCode in app.config.ts

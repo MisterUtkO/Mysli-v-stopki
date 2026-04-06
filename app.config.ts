@@ -25,12 +25,15 @@ const env = {
   scheme: schemeFromBundleId,
   iosBundleId: bundleId,
   androidPackage: bundleId,
+  // Version configuration (single source of truth)
+  versionName: "0.0.4",
+  versionCode: 4,
 };
 
 const config: ExpoConfig = {
   name: env.appName,
   slug: env.appSlug,
-  version: "1.0.1",
+  version: env.versionName,
   description: "A task management app for organizing and prioritizing your work",
   orientation: "portrait",
   icon: "./assets/images/icon.png",

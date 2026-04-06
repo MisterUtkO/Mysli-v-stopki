@@ -27,6 +27,7 @@ import type { MotivationalSettings } from "@/lib/domain/types";
 import type { ColorScheme } from "@/lib/_core/theme";
 import { useState } from "react";
 import { useOnboarding } from "@/components/onboarding-tutorial";
+import { AppVersionFooter } from "@/components/app-version-footer";
 
 
 type NotifFrequency = "never" | "hourly" | "daily" | "weekly" | "always";
@@ -693,12 +694,8 @@ export default function SettingsScreen() {
 
 
 
-          {/* Footer */}
-          <View style={{ alignItems: "center", marginTop: 20, marginBottom: 20 }}>
-            <Text className="text-muted" style={{ fontSize: 12 }}>
-              v1.0.3 • SDVGNote
-            </Text>
-          </View>
+          {/* Footer with Version */}
+          <AppVersionFooter showBuild={true} />
           </View>
         </ScrollView>
       </ScreenContainer>
