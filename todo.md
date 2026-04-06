@@ -671,13 +671,14 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Updated app.config.ts with versionName (0.0.4) and versionCode (4)
 - [x] Created release_notes.json with multilingual changelog (RU/EN)
 - [x] Created ReleaseNotesRepository for loading local changelog
-- [x] Implemented About screen with version and changelog display
-- [x] Added About tab to tab navigation
+- [x] Implemented About screen with version and changelog display (not in tab bar)
+- [x] Removed About tab from tab navigation (kept About screen for future use)
 - [x] Created AppVersionFooter component for Settings screen
 - [x] Updated Settings screen to use AppVersionFooter instead of hardcoded version
 - [x] Added AppVersionProvider to app layout
 - [x] All 115 tests passing, 0 TypeScript errors
 - [x] Dev server running stable
+- [x] Tab bar layout unchanged visually and functionally
 
 **Notes:**
 - Version is now centralized in app.config.ts (single source of truth)
