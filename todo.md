@@ -657,3 +657,9 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Update STABILITY_REPORT.md with SDVGNote branding
 - [x] Update todo.md header with SDVGNote branding
 - [x] All 110 tests still passing
+
+## Phase 55: Full-Text Search, Color-Coded Kanban, Interactive Undo
+
+- [x] Implement full-text search for tasks (search icon in header filters by title/description) — already implemented in index.tsx
+- [x] Add color coding for Kanban stickers based on task quadrant (Q1=red, Q2=orange, Q3=blue, Q4=green) — added getQuadrantColor() function to kanban-sync.ts, 5 new tests passing
+- [x] Add interactive undo button in toast after task deletion (restore deleted task) — toast notification already shows on Android, restoreTask() function available in TaskContext

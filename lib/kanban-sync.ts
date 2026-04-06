@@ -91,8 +91,23 @@ const DEFAULT_COLUMNS_RU: KanbanColumn[] = [
 // ─── Public API ───────────────────────────────────────────────────────────────
 
 /**
+ * Get the color for a sticker based on task quadrant.
+ * Q1 (red), Q2 (orange), Q3 (blue), Q4 (green)
+ */
+function getQuadrantColor(quadrant: string): { bgColor: string; textColor: string } {
+  const colorMap: Record<string, { bgColor: string; textColor: string }> = {
+    Q1: { bgColor: "#EF4444", textColor: "#FFFFFF" },  // red
+    Q2: { bgColor: "#F97316", textColor: "#FFFFFF" },  // orange
+    Q3: { bgColor: "#3B82F6", textColor: "#FFFFFF" },  // blue
+    Q4: { bgColor: "#22C55E", textColor: "#FFFFFF" },  // green
+  };
+  return colorMap[quadrant] || { bgColor: "#FFEB3B", textColor: "#000000" }; // fallback to yellow
+}
+
+/**
  * Copy a task to the Kanban board as a new sticker.
  * Sticker is placed in the column whose index matches the task status.
+ * Sticker color is based on the task's quadrant (Q1=red, Q2=orange, Q3=blue, Q4=green).
  * Returns false if the task is already on the board.
  */
 export async function addTaskToKanban(task: Task, isRu: boolean): Promise<boolean> {
@@ -112,11 +127,12 @@ export async function addTaskToKanban(task: Task, isRu: boolean): Promise<boolea
     const targetCol = data.columns[targetIndex] ?? data.columns[0];
     if (!targetCol) return false;
 
+    const { bgColor, textColor } = getQuadrantColor(task.quadrant);
     const sticker: KanbanSticker = {
       id: `${prefix}_${Date.now()}`,
       text: task.title,
-      bgColor: "#FFEB3B",
-      textColor: "#000000",
+      bgColor,
+      textColor,
     };
 
     const newColumns = data.columns.map((col) =>
@@ -134,6 +150,7 @@ export async function addTaskToKanban(task: Task, isRu: boolean): Promise<boolea
 /**
  * Update the sticker that was created from a task.
  * - Updates the sticker text to the new task title.
+ * - Updates the sticker color based on the task's quadrant.
  * - Moves the sticker to the column matching the new task status.
  * Does nothing if the task has no linked sticker on the board.
  */
@@ -160,9 +177,10 @@ export async function syncTaskToKanban(task: Task): Promise<void> {
     if (!foundSticker || currentColIndex === -1) return; // not on board
 
     const targetIndex = STATUS_TO_INDEX[task.status];
+    const { bgColor, textColor } = getQuadrantColor(task.quadrant);
 
-    // Update sticker text and move to correct column if needed
-    const updatedSticker: KanbanSticker = { ...foundSticker, text: task.title };
+    // Update sticker text, color, and move to correct column if needed
+    const updatedSticker: KanbanSticker = { ...foundSticker, text: task.title, bgColor, textColor };
 
     const newColumns = data.columns.map((col, idx) => {
       if (idx === currentColIndex && idx === targetIndex) {

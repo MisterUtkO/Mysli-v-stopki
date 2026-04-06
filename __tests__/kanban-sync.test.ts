@@ -170,3 +170,59 @@ describe("isTaskOnKanban", () => {
     expect(await isTaskOnKanban(task.id)).toBe(false);
   });
 });
+
+
+describe("Color-coded stickers by quadrant", () => {
+  it("uses red color for Q1 tasks", async () => {
+    const task = makeTask({ quadrant: "Q1" });
+    await addTaskToKanban(task, false);
+
+    const data = JSON.parse(store[KANBAN_STORAGE_KEY]);
+    const sticker = data.columns[0].stickers[0];
+    expect(sticker.bgColor).toBe("#EF4444"); // red
+    expect(sticker.textColor).toBe("#FFFFFF"); // white text
+  });
+
+  it("uses orange color for Q2 tasks", async () => {
+    const task = makeTask({ quadrant: "Q2" });
+    await addTaskToKanban(task, false);
+
+    const data = JSON.parse(store[KANBAN_STORAGE_KEY]);
+    const sticker = data.columns[0].stickers[0];
+    expect(sticker.bgColor).toBe("#F97316"); // orange
+    expect(sticker.textColor).toBe("#FFFFFF");
+  });
+
+  it("uses blue color for Q3 tasks", async () => {
+    const task = makeTask({ quadrant: "Q3" });
+    await addTaskToKanban(task, false);
+
+    const data = JSON.parse(store[KANBAN_STORAGE_KEY]);
+    const sticker = data.columns[0].stickers[0];
+    expect(sticker.bgColor).toBe("#3B82F6"); // blue
+    expect(sticker.textColor).toBe("#FFFFFF");
+  });
+
+  it("uses green color for Q4 tasks", async () => {
+    const task = makeTask({ quadrant: "Q4" });
+    await addTaskToKanban(task, false);
+
+    const data = JSON.parse(store[KANBAN_STORAGE_KEY]);
+    const sticker = data.columns[0].stickers[0];
+    expect(sticker.bgColor).toBe("#22C55E"); // green
+    expect(sticker.textColor).toBe("#FFFFFF");
+  });
+
+  it("updates sticker color when task quadrant changes", async () => {
+    const task = makeTask({ quadrant: "Q1" });
+    await addTaskToKanban(task, false);
+
+    // Change quadrant from Q1 to Q2
+    const updated = { ...task, quadrant: "Q2" as const };
+    await syncTaskToKanban(updated);
+
+    const data = JSON.parse(store[KANBAN_STORAGE_KEY]);
+    const sticker = data.columns[0].stickers[0];
+    expect(sticker.bgColor).toBe("#F97316"); // should now be orange
+  });
+});

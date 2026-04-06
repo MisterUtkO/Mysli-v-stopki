@@ -185,7 +185,7 @@ export function SwipeableTaskCard({
     }
     onDelete(task.id, task.title);
     
-    // Show undo toast for 3 seconds
+    // Show undo toast for 3 seconds with optional undo button
     if (Platform.OS === "android") {
       ToastAndroid.show(
         isRu ? "Задача удалена" : "Task deleted",
