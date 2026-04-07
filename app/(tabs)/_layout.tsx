@@ -120,13 +120,6 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <IconSymbol size={26} name="gear" color={color} />,
         }}
       />
-      <Tabs.Screen
-        name="trash"
-        options={{
-          title: isRu ? "Корзина" : "Trash",
-          href: null, // Hide from tab bar
-        }}
-      />
     </Tabs>
   );
 }
