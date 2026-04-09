@@ -28,6 +28,7 @@ import type { ColorScheme } from "@/lib/_core/theme";
 import { useState } from "react";
 import { useOnboarding } from "@/components/onboarding-tutorial";
 import { AppVersionFooter } from "@/components/app-version-footer";
+import { AppAboutSection } from "@/components/app-about-section";
 
 
 type NotifFrequency = "never" | "hourly" | "daily" | "weekly" | "always";
@@ -43,6 +44,7 @@ export default function SettingsScreen() {
   const { showOnboarding } = useOnboarding();
 
   const [exporting, setExporting] = useState(false);
+  const [showAboutSection, setShowAboutSection] = useState(false);
 
   const [aboutTapCount, setAboutTapCount] = useState(0);
   const [amoledTapCount, setAmoledTapCount] = useState(0);
@@ -639,6 +641,32 @@ export default function SettingsScreen() {
               {isRu ? "⚖️ Условия использования" : "⚖️ Terms of Service"}
             </Text>
           </Pressable>
+
+          {/* About App Button */}
+          <Pressable
+            onPress={() => {
+              setShowAboutSection(!showAboutSection);
+            }}
+            style={({ pressed }) => [{
+              backgroundColor: colors.primary,
+              borderRadius: 12,
+              paddingVertical: 12,
+              paddingHorizontal: 16,
+              opacity: pressed ? 0.7 : 1,
+            }]}
+          >
+            <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16, textAlign: "center" }}>
+              {isRu ? "ℹ️ О приложении" : "ℹ️ About App"}
+            </Text>
+          </Pressable>
+
+          {/* About Section Content */}
+          {showAboutSection && (
+            <View className="mt-6 bg-surface rounded-2xl p-4">
+              <AppAboutSection />
+            </View>
+          )}
+
           <Pressable
             onPress={() => {
               router.push("/support-developer");
