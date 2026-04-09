@@ -29,6 +29,9 @@ import { useState } from "react";
 import { useOnboarding } from "@/components/onboarding-tutorial";
 import { AppVersionFooter } from "@/components/app-version-footer";
 import { AppAboutSection } from "@/components/app-about-section";
+import { QuadrantColorsSettings } from "@/components/customization/quadrant-colors-settings";
+import { NotificationSettings } from "@/components/customization/notification-settings";
+import { DeadlineHighlightSettings } from "@/components/customization/deadline-highlight-settings";
 
 
 type NotifFrequency = "never" | "hourly" | "daily" | "weekly" | "always";
@@ -45,6 +48,7 @@ export default function SettingsScreen() {
 
   const [exporting, setExporting] = useState(false);
   const [showAboutSection, setShowAboutSection] = useState(false);
+  const [showCustomizationModal, setShowCustomizationModal] = useState<'quadrant' | 'notification' | 'deadline' | null>(null);
 
   const [aboutTapCount, setAboutTapCount] = useState(0);
   const [amoledTapCount, setAmoledTapCount] = useState(0);
@@ -667,6 +671,54 @@ export default function SettingsScreen() {
             </View>
           )}
 
+          {/* Customization Settings Buttons */}
+          <View style={{ gap: 8, marginTop: 16 }}>
+            <Pressable
+              onPress={() => setShowCustomizationModal('quadrant')}
+              style={({ pressed }) => [{
+                backgroundColor: colors.primary,
+                borderRadius: 12,
+                paddingVertical: 12,
+                paddingHorizontal: 16,
+                opacity: pressed ? 0.7 : 1,
+              }]}
+            >
+              <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16, textAlign: "center" }}>
+                {isRu ? "🎨 Цвета квадрантов" : "🎨 Quadrant Colors"}
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => setShowCustomizationModal('notification')}
+              style={({ pressed }) => [{
+                backgroundColor: colors.primary,
+                borderRadius: 12,
+                paddingVertical: 12,
+                paddingHorizontal: 16,
+                opacity: pressed ? 0.7 : 1,
+              }]}
+            >
+              <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16, textAlign: "center" }}>
+                {isRu ? "🔔 Уведомления" : "🔔 Notifications"}
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => setShowCustomizationModal('deadline')}
+              style={({ pressed }) => [{
+                backgroundColor: colors.primary,
+                borderRadius: 12,
+                paddingVertical: 12,
+                paddingHorizontal: 16,
+                opacity: pressed ? 0.7 : 1,
+              }]}
+            >
+              <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16, textAlign: "center" }}>
+                {isRu ? "⏰ Подсветка сроков" : "⏰ Deadline Highlighting"}
+              </Text>
+            </Pressable>
+          </View>
+
           <Pressable
             onPress={() => {
               router.push("/support-developer");
@@ -708,6 +760,64 @@ export default function SettingsScreen() {
           <AppVersionFooter />
           </View>
         </ScrollView>
+
+        {/* Customization Modals */}
+        <Modal
+          visible={showCustomizationModal === 'quadrant'}
+          animationType="slide"
+          presentationStyle="fullScreen"
+          onRequestClose={() => setShowCustomizationModal(null)}
+        >
+          <View style={{ flex: 1, backgroundColor: colors.background }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 }}>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: colors.foreground }}>
+                {isRu ? 'Цвета квадрантов' : 'Quadrant Colors'}
+              </Text>
+              <Pressable onPress={() => setShowCustomizationModal(null)}>
+                <Text style={{ fontSize: 24, color: colors.foreground }}>✕</Text>
+              </Pressable>
+            </View>
+            <QuadrantColorsSettings />
+          </View>
+        </Modal>
+
+        <Modal
+          visible={showCustomizationModal === 'notification'}
+          animationType="slide"
+          presentationStyle="fullScreen"
+          onRequestClose={() => setShowCustomizationModal(null)}
+        >
+          <View style={{ flex: 1, backgroundColor: colors.background }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 }}>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: colors.foreground }}>
+                {isRu ? 'Уведомления' : 'Notifications'}
+              </Text>
+              <Pressable onPress={() => setShowCustomizationModal(null)}>
+                <Text style={{ fontSize: 24, color: colors.foreground }}>✕</Text>
+              </Pressable>
+            </View>
+            <NotificationSettings />
+          </View>
+        </Modal>
+
+        <Modal
+          visible={showCustomizationModal === 'deadline'}
+          animationType="slide"
+          presentationStyle="fullScreen"
+          onRequestClose={() => setShowCustomizationModal(null)}
+        >
+          <View style={{ flex: 1, backgroundColor: colors.background }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 }}>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: colors.foreground }}>
+                {isRu ? 'Подсветка сроков' : 'Deadline Highlighting'}
+              </Text>
+              <Pressable onPress={() => setShowCustomizationModal(null)}>
+                <Text style={{ fontSize: 24, color: colors.foreground }}>✕</Text>
+              </Pressable>
+            </View>
+            <DeadlineHighlightSettings />
+          </View>
+        </Modal>
       </ScreenContainer>
     </ScreenTransition>
   );
