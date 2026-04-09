@@ -558,24 +558,6 @@ export default function SettingsScreen() {
             </View>
           </Pressable>
 
-          {/* About Button */}
-          <Pressable
-            onPress={() => {
-              router.push("/about");
-            }}
-            style={({ pressed }) => [{
-              backgroundColor: colors.primary,
-              borderRadius: 12,
-              paddingVertical: 12,
-              paddingHorizontal: 16,
-              opacity: pressed ? 0.7 : 1,
-            }]}
-          >
-            <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16, textAlign: "center" }}>
-              ℹ️ {isRu ? "О приложении" : "About"}
-            </Text>
-          </Pressable>
-
           {/* Support Developer - Copy card and show bank app chooser */}
 
           {/* Home Screen Selection */}

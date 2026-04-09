@@ -215,25 +215,7 @@ export default function HomeScreen() {
               <Text style={{ fontSize: 18, color: searchVisible ? "#FFFFFF" : "#9CA3AF" }}>🔍</Text>
             </Pressable>
 
-            {/* Trash icon */}
-            <Pressable
-              onPress={() => router.push("/trash")}
-              style={({ pressed }) => [
-                {
-                  width: 40,
-                  height: 40,
-                  borderRadius: 20,
-                  backgroundColor: deletedTasksCount > 0 ? "#EF4444" : "transparent",
-                  borderWidth: deletedTasksCount > 0 ? 0 : 1.5,
-                  borderColor: "#9CA3AF",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  opacity: pressed ? 0.6 : 1,
-                },
-              ]}
-            >
-              <Text style={{ fontSize: 18 }}>🗑️</Text>
-            </Pressable>
+
           </View>
         </View>
 
