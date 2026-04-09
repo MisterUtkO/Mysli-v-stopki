@@ -20,7 +20,7 @@ const schemeFromBundleId = `manus${timestamp}`;
 
 const env = {
   appName: "SDVGNote",
-  appSlug: "eisenhower-priority-app",
+  appSlug: "sdvgnote",
   logoUrl: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663313035753/KfjtyBDjUhyBeBJN.png",
   scheme: schemeFromBundleId,
   iosBundleId: bundleId,
