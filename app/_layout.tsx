@@ -162,7 +162,6 @@ export default function RootLayout() {
                       <Stack.Screen name="add-task" options={{ presentation: "modal", title: "Add Task" }} />
                       <Stack.Screen name="task-detail/[id]" options={{ presentation: "modal", title: "Task Details" }} />
                       <Stack.Screen name="statistics" options={{ presentation: "modal", title: "Statistics" }} />
-                      <Stack.Screen name="about" options={{ presentation: "modal", title: "About" }} />
                       <Stack.Screen name="oauth/callback" />
                     </Stack>
                     <StatusBar style="auto" hidden={Platform.OS !== "web"} />
