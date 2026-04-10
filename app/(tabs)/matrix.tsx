@@ -1,10 +1,11 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { View, Text, ScrollView, Dimensions, FlatList, Pressable, Modal } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { ScreenTransition } from "@/components/screen-transition";
 import { useTaskContext } from "@/lib/context/task-context";
 import { useColors } from "@/hooks/use-colors";
 import { useI18n } from "@/lib/context/i18n-context";
+import { useCustomization } from "@/lib/context/customization-context";
 import { SwipeableTaskCard } from "@/components/swipeable-task-card";
 import { TaskPopupBubble } from "@/components/task-popup-bubble";
 import { cn } from "@/lib/utils";
@@ -53,6 +54,7 @@ export default function MatrixScreen() {
   const { tasks, updateTask, deleteTask } = useTaskContext();
   const colors = useColors();
   const { t, language } = useI18n();
+  const customization = useCustomization();
   const isRu = language === "ru";
   const QUADRANT_CONFIG = getQuadrantConfig(isRu);
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
@@ -147,8 +149,12 @@ export default function MatrixScreen() {
 
   const renderQuadrant = (quadrant: QuadrantKey) => {
     const config = QUADRANT_CONFIG[quadrant];
-    const quadrantTaskList = quadrantTasks[quadrant];
+    const quadrantTaskList = quadrantTasks[quadrant] || [];
     const hasScroll = scrollStates[quadrant];
+    
+    // Use customized color from CustomizationContext if available
+    const quadrantColorKey = quadrant.toLowerCase() as keyof typeof customization.quadrantColors;
+    const quadrantColor = customization?.quadrantColors?.[quadrantColorKey] || config.color;
 
     return (
       <View
@@ -156,11 +162,11 @@ export default function MatrixScreen() {
         style={{
           width: quadrantWidth,
           height: quadrantHeight,
-          backgroundColor: config.color,
+          backgroundColor: quadrantColor,
           borderWidth: 2,
-          borderColor: config.color,
+          borderColor: quadrantColor,
           overflow: "hidden",
-          shadowColor: config.color,
+          shadowColor: quadrantColor,
           shadowOffset: { width: 0, height: 0 },
           shadowOpacity: 0.6,
           shadowRadius: 8,
