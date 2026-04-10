@@ -215,6 +215,16 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     const newTask = await dbCreateTask(taskWithScoring);
     const updatedTasks = await getAllTasks();
     setTasks(updatedTasks);
+    
+    // Trigger vibration and sound notification
+    try {
+      const { useCustomization } = await import('@/lib/context/customization-context');
+      // Note: useCustomization is a hook, can't be used here directly
+      // Will be handled at component level instead
+    } catch (error) {
+      console.error('[TaskContext] Failed to trigger notification:', error);
+    }
+    
     // Reschedule notifications with new task
     console.log("[TaskContext] Task created, rescheduling notifications");
     await rescheduleNotifications(updatedTasks, settings);

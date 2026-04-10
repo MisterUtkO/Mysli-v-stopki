@@ -11,6 +11,7 @@ import {
   ToastAndroid,
 } from "react-native";
 import { addTaskToKanban } from "@/lib/kanban-sync";
+import { useCustomization } from "@/lib/context/customization-context";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -243,7 +244,26 @@ export function SwipeableTaskCard({
     opacity: flashOpacity.value,
   }));
 
-  const priorityColor = getPriorityGradientColor(task.importance, task.urgency);
+  const { quadrantColors, deadlineHighlightSettings } = useCustomization();
+  
+  // Get quadrant-based color from customization
+  const getQuadrantColor = () => {
+    if (task.importance >= 5 && task.urgency >= 5) return quadrantColors.q1;
+    if (task.importance >= 5 && task.urgency < 5) return quadrantColors.q2;
+    if (task.importance < 5 && task.urgency >= 5) return quadrantColors.q3;
+    return quadrantColors.q4;
+  };
+  
+  // Check if task is overdue or expiring soon
+  const isOverdue = isTaskOverdue(task);
+  const isExpiringSoon = task.dueDate && !isOverdue && 
+    (new Date(task.dueDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24) <= deadlineHighlightSettings.expiringThresholdDays;
+  
+  const priorityColor = getQuadrantColor();
+  let highlightColor = priorityColor;
+  if (isOverdue) highlightColor = deadlineHighlightSettings.expiredTaskColor;
+  else if (isExpiringSoon) highlightColor = deadlineHighlightSettings.expiringTaskColor;
+  
   const bgTint = getPriorityBgTint(task.importance, task.urgency);
   const hasAttachments = task.attachments && task.attachments.length > 0;
 
@@ -278,12 +298,14 @@ export function SwipeableTaskCard({
               <View
                 style={{
                   borderLeftWidth: 3,
-                  borderLeftColor: priorityColor,
+                  borderLeftColor: highlightColor,
                   borderRadius: 8,
                   overflow: "hidden",
                   backgroundColor: bgTint,
                   paddingHorizontal: 10,
                   paddingVertical: 8,
+                  borderWidth: (isOverdue || isExpiringSoon) && deadlineHighlightSettings.animationEnabled ? 1 : 0,
+                  borderColor: highlightColor,
                 }}
                 className="bg-surface"
               >

@@ -63,11 +63,49 @@ const FEATURES: Feature[] = [
     descRu: "Получайте напоминания о важных задачах",
     descEn: "Get reminders about important tasks",
   },
+  {
+    emoji: "🎨",
+    titleRu: "Кастомизация цветов",
+    titleEn: "Color Customization",
+    descRu: "Выбирайте свои цвета для каждого квадранта",
+    descEn: "Choose your own colors for each quadrant",
+  },
+  {
+    emoji: "📢",
+    titleRu: "Звук и вибрация",
+    titleEn: "Sound & Vibration",
+    descRu: "Настраивайте звуки и вибрацию уведомлений",
+    descEn: "Customize notification sounds and vibrations",
+  },
+  {
+    emoji: "⏰",
+    titleRu: "Подсветка сроков",
+    titleEn: "Deadline Highlighting",
+    descRu: "Выделяйте задачи с истёкшим и истекающим сроком",
+    descEn: "Highlight tasks with expired and expiring deadlines",
+  },
 ];
 
 const CHANGELOG: ChangelogEntry[] = [
   {
     version: "1.0.5.1",
+    dateRu: "10 апреля 2026",
+    dateEn: "April 10, 2026",
+    changesRu: [
+      "🎨 Кастомизация цветов квадрантов (Q1/Q2/Q3/Q4)",
+      "📢 Настройки звука и вибрации с предустановками",
+      "⏰ Подсветка задач с истёкшим и истекающим сроком",
+      "✨ Применение кастомизации ко всем экранам",
+    ],
+    changesEn: [
+      "🎨 Quadrant color customization (Q1/Q2/Q3/Q4)",
+      "📢 Sound and vibration settings with presets",
+      "⏰ Deadline task highlighting (expired and expiring)",
+      "✨ Applied customization across all screens",
+    ],
+  },
+  {
+    version: "1.0.5.0",
     dateRu: "9 апреля 2026",
     dateEn: "April 9, 2026",
     changesRu: [
@@ -84,7 +122,7 @@ const CHANGELOG: ChangelogEntry[] = [
     ],
   },
   {
-    version: "1.0.5.0",
+    version: "1.0.4.0",
     dateRu: "1 апреля 2026",
     dateEn: "April 1, 2026",
     changesRu: [
