@@ -44,10 +44,6 @@ const config: ExpoConfig = {
     bundleIdentifier: env.iosBundleId,
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
-      NSCalendarsUsageDescription: "Allow $(PRODUCT_NAME) to access your calendar for task scheduling.",
-      NSRemindersUsageDescription: "Allow $(PRODUCT_NAME) to send you reminders about your tasks.",
-      NSPhotoLibraryUsageDescription: "Allow $(PRODUCT_NAME) to access your photo library.",
-      NSDocumentsFolderUsageDescription: "Allow $(PRODUCT_NAME) to access your documents for data export.",
       UIStatusBarHidden: false,
     },
   },
@@ -66,9 +62,6 @@ const config: ExpoConfig = {
       "POST_NOTIFICATIONS",
       "READ_CALENDAR",
       "WRITE_CALENDAR",
-      "READ_EXTERNAL_STORAGE",
-      "WRITE_EXTERNAL_STORAGE",
-      "SCHEDULE_EXACT_ALARM",
     ],
     intentFilters: [
       {

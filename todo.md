@@ -720,3 +720,10 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Apply customized colors to all four quadrants (Q1, Q2, Q3, Q4) on Matrix screen
 - [x] Verify TypeScript types and context integration
 - [x] All 115 tests passing, 0 TypeScript errors
+
+## Phase 61: Clean Up Unused Permissions
+
+- [x] Audit app.config.ts for unused permissions
+- [x] Remove unused iOS infoPlist entries (Calendar, Reminders, Photos, Documents)
+- [x] Remove unused Android permissions (READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE, SCHEDULE_EXACT_ALARM)
+- [x] Keep only: POST_NOTIFICATIONS, READ_CALENDAR, WRITE_CALENDAR (Android), RECORD_AUDIO (from expo-audio plugin)
