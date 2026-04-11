@@ -1,4 +1,3 @@
-"use client";
 import {
   View,
   Text,
@@ -58,8 +57,6 @@ export default function SettingsScreen() {
 
   const isRu = language === "ru";
 
-
-
   // Motivational state
   const motivational = settings.motivational || { enabled: false, text: "", frequency: "daily" as MotivFrequency, exactTime: undefined };
   const [motivText, setMotivText] = useState(motivational.text);
@@ -93,87 +90,61 @@ export default function SettingsScreen() {
     { key: "amoled" as const, emoji: "🖤", labelEn: "AMOLED", labelRu: "AMOLED" },
     { key: "pastel" as const, emoji: "🌸", labelEn: "Pastel", labelRu: "Пастель" },
     { key: "notebook" as const, emoji: "📓", labelEn: "Notebook", labelRu: "Тетрадь" },
-
   ];
 
   const handleThemeChange = async (theme: "light" | "dark" | "amoled" | "pastel" | "notebook") => {
     if (theme === "amoled" && !hasExplorerAchievement) {
-      // Count taps on AMOLED button to unlock achievement
-      const newCount = amoledTapCount + 1;
-      setAmoledTapCount(newCount);
-      
-      if (newCount >= 10) {
-        triggerCustomFlag("persistent_explorer", tasks);
-        setAmoledTapCount(0);
-        Alert.alert(
-          isRu ? "🎉 Достижение разблокировано!" : "🎉 Achievement Unlocked!",
-          isRu
-            ? "Вы разблокировали AMOLED тему! Теперь вы можете использовать эту тему."
-            : "You unlocked the AMOLED theme! You can now use this theme."
-        );
-      } else {
-        Alert.alert(
-          isRu ? "🔒 Заблокировано" : "🔒 Locked",
-          isRu
-            ? `Нажмите ещё ${10 - newCount} раз на AMOLED, чтобы разблокировать тему.`
-            : `Tap AMOLED ${10 - newCount} more times to unlock the theme.`
-        );
-      }
+      Alert.alert(
+        isRu ? "Заблокировано" : "Locked",
+        isRu ? "Разблокируйте эту тему, выполнив достижение 'Упорный исследователь'" : "Unlock this theme by completing the 'Persistent Explorer' achievement"
+      );
       return;
     }
-    await setColorScheme(theme);
+    setColorScheme(theme);
     await updateSettings({ theme });
   };
 
-  const handleNotificationsToggle = async () => {
-    const newValue = !settings.notificationsEnabled;
-    await updateSettings({ notificationsEnabled: newValue });
+  const handleNotificationsToggle = async (value: boolean) => {
+    await updateSettings({ notificationsEnabled: value });
   };
 
-  const handleFrequencyChange = async (frequency: NotifFrequency) => {
-    await updateSettings({ notificationFrequency: frequency });
+  const handleFrequencyChange = async (freq: NotifFrequency) => {
+    await updateSettings({ notificationFrequency: freq });
   };
 
-  const handleMotivationalToggle = async () => {
-    const newValue = !motivational.enabled;
-    await updateSettings({
-      motivational: { ...motivational, enabled: newValue },
-    });
+  const handleMotivationalToggle = async (value: boolean) => {
+    await updateSettings({ motivational: { ...motivational, enabled: value } });
+  };
+
+  const handleMotivationalTextChange = (text: string) => {
+    setMotivText(text);
   };
 
   const handleMotivationalFrequencyChange = async (freq: MotivFrequency) => {
-    await updateSettings({
-      motivational: { ...motivational, frequency: freq },
-    });
-  };
-
-  const handleMotivationalTextChange = async (text: string) => {
-    setMotivText(text);
-    await updateSettings({
-      motivational: { ...motivational, text },
-    });
+    await updateSettings({ motivational: { ...motivational, frequency: freq } });
   };
 
   const handleExactTimeChange = async (hour: number, minute: number) => {
     const timeStr = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
-    await updateSettings({
-      motivational: { ...motivational, exactTime: timeStr },
-    });
+    await updateSettings({ motivational: { ...motivational, exactTime: timeStr } });
+  };
+
+  const handleMotivationalSave = async () => {
+    await updateSettings({ motivational: { ...motivational, text: motivText } });
+    Alert.alert(isRu ? "Сохранено" : "Saved", isRu ? "Мотивационное сообщение обновлено" : "Motivational message updated");
   };
 
   const handleExportTasks = async () => {
     setExporting(true);
     try {
       const data = await exportTasks();
-      if (Platform.OS === "web") {
-        const element = document.createElement("a");
-        const file = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-        element.href = URL.createObjectURL(file);
-        element.download = `tasks-export-${new Date().toISOString().split("T")[0]}.json`;
-        document.body.appendChild(element);
-        element.click();
-        document.body.removeChild(element);
-      }
+      const element = document.createElement("a");
+      element.setAttribute("href", `data:text/plain;charset=utf-8,${encodeURIComponent(data)}`);
+      element.setAttribute("download", `tasks-export-${new Date().toISOString().split("T")[0]}.json`);
+      element.style.display = "none";
+      document.body.appendChild(element);
+      element.click();
+      document.body.removeChild(element);
       Alert.alert(isRu ? "Успешно" : "Success", isRu ? "Данные экспортированы" : "Data exported");
     } catch (error) {
       Alert.alert(isRu ? "Ошибка" : "Error", isRu ? "Не удалось экспортировать" : "Failed to export");
@@ -182,24 +153,23 @@ export default function SettingsScreen() {
     }
   };
 
-  const handleClearAllData = async () => {
+  const handleClearAllData = () => {
     Alert.alert(
-      isRu ? "Очистить все?" : "Clear all?",
-      isRu ? "Это удалит все задачи и настройки. Это действие необратимо." : "This will delete all tasks and settings. This is irreversible.",
+      isRu ? "Очистить все данные?" : "Clear all data?",
+      isRu ? "Это действие необратимо. Все задачи будут удалены." : "This action is irreversible. All tasks will be deleted.",
       [
-        { text: isRu ? "Отмена" : "Cancel", onPress: () => {} },
+        { text: isRu ? "Отмена" : "Cancel", onPress: () => {}, style: "cancel" },
         {
-          text: isRu ? "Очистить" : "Clear",
+          text: isRu ? "Удалить" : "Delete",
           onPress: async () => {
             await clearAllData();
-            Alert.alert(isRu ? "Готово" : "Done", isRu ? "Все данные удалены" : "All data cleared");
+            Alert.alert(isRu ? "Удалено" : "Deleted", isRu ? "Все данные удалены" : "All data deleted");
           },
+          style: "destructive",
         },
       ]
     );
   };
-
-
 
   const frequencyOptions: { value: NotifFrequency; label: string }[] = [
     { value: "never", label: isRu ? "Никогда" : "Never" },
@@ -219,26 +189,31 @@ export default function SettingsScreen() {
   ];
 
   const sectionStyle = "bg-surface rounded-2xl p-4 border border-border";
+  const sectionTitleStyle = "text-foreground font-bold text-lg mb-4 mt-6";
 
   return (
     <ScreenTransition>
       <ScreenContainer className="p-4">
         <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
           <View className="gap-4">
-            <Text className="text-foreground font-bold" style={{ fontSize: 28, lineHeight: 34, marginBottom: 2 }}>
+            <Text className="text-foreground font-bold" style={{ fontSize: 28, lineHeight: 34, marginBottom: 8 }}>
               {t.settings.title}
             </Text>
 
-            {/* Language */}
+            {/* ========== SECTION 1: LANGUAGE ========== */}
+            <Text className={sectionTitleStyle}>{isRu ? "1. Язык" : "1. Language"}</Text>
             <View className={sectionStyle}>
               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-                  <Text style={{ fontSize: 22 }}>🌐</Text>
-                  <Text className="text-foreground font-semibold" style={{ fontSize: 16 }}>{t.settings.language}</Text>
+                  <Text style={{ fontSize: 24 }}>🌐</Text>
+                  <View>
+                    <Text className="text-foreground font-semibold" style={{ fontSize: 16 }}>{t.settings.language}</Text>
+                    <Text className="text-muted" style={{ fontSize: 12 }}>{isRu ? "Выберите язык интерфейса" : "Choose interface language"}</Text>
+                  </View>
                 </View>
                 <Pressable
                   onPress={handleLanguageToggle}
-                  style={({ pressed }) => [{ backgroundColor: "#0a7ea4", borderRadius: 12, paddingHorizontal: 14, paddingVertical: 7, opacity: pressed ? 0.7 : 1 }]}
+                  style={({ pressed }) => [{ backgroundColor: "#0a7ea4", borderRadius: 12, paddingHorizontal: 16, paddingVertical: 8, opacity: pressed ? 0.7 : 1 }]}
                 >
                   <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 14 }}>
                     {language === "en" ? "РУС" : "ENG"}
@@ -247,289 +222,157 @@ export default function SettingsScreen() {
               </View>
             </View>
 
-            {/* Theme */}
+            {/* ========== SECTION 2: THEME ========== */}
+            <Text className={sectionTitleStyle}>{isRu ? "2. Тема оформления" : "2. Theme"}</Text>
             <View className={sectionStyle}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 10 }}>
-                <Text style={{ fontSize: 22 }}>
-                  {themeOptions.find(o => o.key === colorScheme)?.emoji || "🎨"}
-                </Text>
-                <Text className="text-foreground font-semibold" style={{ fontSize: 16 }}>{t.settings.theme}</Text>
-              </View>
+              <Text className="text-muted" style={{ fontSize: 13, marginBottom: 12 }}>
+                {isRu ? "Выберите цветовую схему приложения" : "Choose the app color scheme"}
+              </Text>
               <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-              {themeOptions.map((opt) => {
-                const isActive = colorScheme === opt.key;
-                const isLocked = opt.key === "amoled" && !hasExplorerAchievement;
-                const themeNeonColor = getThemeNeonColor(opt.key as ColorScheme);
+                {themeOptions.map((opt) => {
+                  const isActive = colorScheme === opt.key;
+                  const isLocked = opt.key === "amoled" && !hasExplorerAchievement;
+                  const themeNeonColor = getThemeNeonColor(opt.key as ColorScheme);
 
-                return (
-                  <Pressable
-                    key={opt.key}
-                    onPress={() => handleThemeChange(opt.key)}
-                    style={({ pressed }) => [{
-                      flex: 1,
-                      minWidth: 70,
-                      backgroundColor: isActive ? (opt.key === "amoled" ? "#000000" : colors.surface) : isLocked ? `${colors.border}80` : colors.surface,
-                      borderRadius: 12,
-                      paddingVertical: 10,
-                      alignItems: "center",
-                      borderWidth: isActive ? 3 : 1,
-                      borderColor: isActive ? themeNeonColor : colors.border,
-                      opacity: pressed ? 0.7 : isLocked ? 0.5 : 1,
-                      shadowColor: isActive ? themeNeonColor : 'transparent',
-                      shadowOpacity: isActive ? 1 : 0,
-                      shadowRadius: isActive ? 16 : 0,
-                      shadowOffset: { width: 0, height: 0 },
-                      elevation: isActive ? 16 : 0,
-                    }]}
-                  >
-                    <Text style={{ fontSize: 20, marginBottom: 4 }}>{isLocked ? "🔒" : opt.emoji}</Text>
-                    <Text style={{
-                      fontSize: 12,
-                      fontWeight: isActive ? "800" : "600",
-                      color: isActive ? themeNeonColor : isLocked ? colors.muted : colors.foreground,
-                    }}>
-                      {isRu ? opt.labelRu : opt.labelEn}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </View>
-
-
-
-          {/* Task Notifications */}
-          <View className={sectionStyle}>
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-                <Text style={{ fontSize: 22 }}>🔔</Text>
-                <Text className="text-foreground font-semibold" style={{ fontSize: 16 }}>
-                  {isRu ? "Уведомления о задачах" : "Task Notifications"}
-                </Text>
+                  return (
+                    <Pressable
+                      key={opt.key}
+                      onPress={() => handleThemeChange(opt.key)}
+                      style={({ pressed }) => [{
+                        flex: 1,
+                        minWidth: 70,
+                        backgroundColor: isActive ? (opt.key === "amoled" ? "#000000" : colors.surface) : isLocked ? `${colors.border}80` : colors.surface,
+                        borderRadius: 12,
+                        paddingVertical: 10,
+                        alignItems: "center",
+                        borderWidth: isActive ? 3 : 1,
+                        borderColor: isActive ? themeNeonColor : colors.border,
+                        opacity: pressed ? 0.7 : isLocked ? 0.5 : 1,
+                        shadowColor: isActive ? themeNeonColor : 'transparent',
+                        shadowOpacity: isActive ? 1 : 0,
+                        shadowRadius: isActive ? 16 : 0,
+                        shadowOffset: { width: 0, height: 0 },
+                        elevation: isActive ? 16 : 0,
+                      }]}
+                    >
+                      <Text style={{ fontSize: 20, marginBottom: 4 }}>{isLocked ? "🔒" : opt.emoji}</Text>
+                      <Text style={{
+                        fontSize: 12,
+                        fontWeight: isActive ? "800" : "600",
+                        color: isActive ? themeNeonColor : isLocked ? colors.muted : colors.foreground,
+                      }}>
+                        {isRu ? opt.labelRu : opt.labelEn}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
               </View>
-              <Switch
-                value={settings.notificationsEnabled}
-                onValueChange={handleNotificationsToggle}
-                trackColor={{ false: colors.border, true: colors.primary }}
-              />
             </View>
-            {settings.notificationsEnabled && (
-              <View style={{ gap: 8, marginTop: 8 }}>
-                {frequencyOptions.map((opt) => (
+
+            {/* ========== SECTION 3: START SCREEN ========== */}
+            <Text className={sectionTitleStyle}>{isRu ? "3. Начальный экран" : "3. Start Screen"}</Text>
+            <View className={sectionStyle}>
+              <Text className="text-muted" style={{ fontSize: 13, marginBottom: 12 }}>
+                {isRu ? "Выберите, какой экран открывается при запуске" : "Choose which screen opens on startup"}
+              </Text>
+              <View style={{ gap: 8 }}>
+                {[
+                  { value: "index", label: isRu ? "Задачи" : "Tasks", emoji: "📋" },
+                  { value: "matrix", label: isRu ? "Матрица" : "Matrix", emoji: "📊" },
+                  { value: "kanban", label: isRu ? "Канбан" : "Kanban", emoji: "📌" },
+                  { value: "achievements", label: isRu ? "Достижения" : "Achievements", emoji: "🏆" },
+                ].map((screen) => (
                   <Pressable
-                    key={opt.value}
-                    onPress={() => handleFrequencyChange(opt.value)}
+                    key={screen.value}
+                    onPress={() => updateSettings({ startScreen: screen.value as any })}
                     style={({ pressed }) => [{
-                      paddingVertical: 8,
-                      paddingHorizontal: 12,
-                      borderRadius: 8,
-                      backgroundColor: (settings.notificationFrequency as string) === opt.value ? colors.primary : colors.background,
+                      paddingVertical: 12,
+                      paddingHorizontal: 14,
+                      borderRadius: 10,
+                      backgroundColor: (settings.startScreen as string) === screen.value ? colors.primary : colors.background,
+                      borderWidth: 2,
+                      borderColor: (settings.startScreen as string) === screen.value ? colors.primary : colors.border,
                       opacity: pressed ? 0.7 : 1,
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 10,
                     }]}
                   >
-                    <Text style={{ color: (settings.notificationFrequency as string) === opt.value ? "#FFF" : colors.foreground, fontWeight: "600", fontSize: 14 }}>
-                      {opt.label}
+                    <Text style={{ fontSize: 18 }}>{screen.emoji}</Text>
+                    <Text style={{ color: (settings.startScreen as string) === screen.value ? "#FFF" : colors.foreground, fontWeight: "600", fontSize: 15 }}>
+                      {screen.label}
                     </Text>
+                    {(settings.startScreen as string) === screen.value && (
+                      <Text style={{ marginLeft: "auto", fontSize: 16 }}>✓</Text>
+                    )}
                   </Pressable>
                 ))}
               </View>
-            )}
-          </View>
-
-          {/* Test Notification */}
-          <Pressable
-            onPress={() => {
-              if (Platform.OS !== "web") {
-                sendTestNotification(isRu);
-              } else {
-                Alert.alert(isRu ? "Уведомление" : "Notification", isRu ? "Тестовое уведомление отправлено" : "Test notification sent");
-              }
-            }}
-            style={({ pressed }) => [{
-              backgroundColor: colors.primary,
-              borderRadius: 12,
-              paddingVertical: 12,
-              alignItems: "center",
-              opacity: pressed ? 0.7 : 1,
-            }]}
-          >
-            <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16 }}>
-              🔔 {isRu ? "Тест" : "Test"}
-            </Text>
-          </Pressable>
-
-          {/* Motivational */}
-          <View className={sectionStyle}>
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-                <Text style={{ fontSize: 22 }}>💪</Text>
-                <Text className="text-foreground font-semibold" style={{ fontSize: 16 }}>
-                  {isRu ? "Мотивация" : "Motivation"}
-                </Text>
-              </View>
-              <Switch
-                value={motivational.enabled}
-                onValueChange={handleMotivationalToggle}
-                trackColor={{ false: colors.border, true: colors.primary }}
-              />
             </View>
-            {motivational.enabled && (
-              <View style={{ gap: 8, marginTop: 8 }}>
-                <TextInput
-                  placeholder={isRu ? "Ваше сообщение..." : "Your message..."}
-                  value={motivText}
-                  onChangeText={handleMotivationalTextChange}
-                  placeholderTextColor={colors.muted}
-                  style={{
-                    borderWidth: 1,
-                    borderColor: colors.border,
-                    borderRadius: 8,
-                    paddingHorizontal: 12,
-                    paddingVertical: 10,
-                    color: colors.foreground,
-                    minHeight: 80,
-                    textAlignVertical: "top",
-                  }}
-                  multiline
+
+            {/* ========== SECTION 4: TASK NOTIFICATIONS ========== */}
+            <Text className={sectionTitleStyle}>{isRu ? "4. Уведомления о задачах" : "4. Task Notifications"}</Text>
+            
+            {/* Task Notifications Toggle */}
+            <View className={sectionStyle}>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1 }}>
+                  <Text style={{ fontSize: 24 }}>🔔</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text className="text-foreground font-semibold" style={{ fontSize: 16 }}>
+                      {isRu ? "Включить уведомления" : "Enable Notifications"}
+                    </Text>
+                    <Text className="text-muted" style={{ fontSize: 12 }}>
+                      {isRu ? "Получайте напоминания о задачах" : "Get task reminders"}
+                    </Text>
+                  </View>
+                </View>
+                <Switch
+                  value={settings.notificationsEnabled}
+                  onValueChange={handleNotificationsToggle}
+                  trackColor={{ false: colors.border, true: colors.primary }}
                 />
-                <View style={{ gap: 6 }}>
-                  {motivFreqOptions.map((opt) => (
+              </View>
+
+              {settings.notificationsEnabled && (
+                <View style={{ gap: 8, marginTop: 8, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.border }}>
+                  <Text className="text-muted" style={{ fontSize: 12, marginBottom: 4 }}>
+                    {isRu ? "Частота уведомлений:" : "Notification frequency:"}
+                  </Text>
+                  {frequencyOptions.map((opt) => (
                     <Pressable
                       key={opt.value}
-                      onPress={() => handleMotivationalFrequencyChange(opt.value)}
+                      onPress={() => handleFrequencyChange(opt.value)}
                       style={({ pressed }) => [{
-                        paddingVertical: 8,
+                        paddingVertical: 10,
                         paddingHorizontal: 12,
                         borderRadius: 8,
-                        backgroundColor: motivational.frequency === opt.value ? colors.primary : colors.background,
+                        backgroundColor: (settings.notificationFrequency as string) === opt.value ? colors.primary : colors.background,
+                        borderWidth: 1,
+                        borderColor: (settings.notificationFrequency as string) === opt.value ? colors.primary : colors.border,
                         opacity: pressed ? 0.7 : 1,
                       }]}
                     >
-                      <Text style={{ color: motivational.frequency === opt.value ? "#FFF" : colors.foreground, fontWeight: "600", fontSize: 14 }}>
+                      <Text style={{ color: (settings.notificationFrequency as string) === opt.value ? "#FFF" : colors.foreground, fontWeight: "600", fontSize: 14 }}>
                         {opt.label}
                       </Text>
                     </Pressable>
                   ))}
                 </View>
+              )}
+            </View>
 
-                {/* Exact Time Picker */}
-                <View style={{ marginTop: 4 }}>
-                  <Text className="text-muted" style={{ fontSize: 13, marginBottom: 6 }}>
-                    {isRu ? "Точное время уведомления:" : "Exact notification time:"}
-                  </Text>
-                  <Pressable
-                    onPress={() => setShowTimePicker(!showTimePicker)}
-                    style={({ pressed }) => [{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      paddingVertical: 10,
-                      paddingHorizontal: 14,
-                      borderRadius: 10,
-                      borderWidth: 1,
-                      borderColor: showTimePicker ? colors.primary : colors.border,
-                      backgroundColor: colors.background,
-                      opacity: pressed ? 0.7 : 1,
-                    }]}
-                  >
-                    <Text style={{ color: colors.foreground, fontWeight: "600", fontSize: 15 }}>
-                      ⏰ {String(pickerHour).padStart(2, "0")}:{String(pickerMinute).padStart(2, "0")}
-                    </Text>
-                    <Text style={{ color: colors.muted, fontSize: 13 }}>
-                      {showTimePicker ? "▲" : "▼"}
-                    </Text>
-                  </Pressable>
-
-                  {showTimePicker && (
-                    <View style={{ marginTop: 10, padding: 12, borderRadius: 12, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}>
-                      {/* Hour selector */}
-                      <Text className="text-muted" style={{ fontSize: 12, marginBottom: 6 }}>
-                        {isRu ? "Час (0–23):" : "Hour (0–23):"}
-                      </Text>
-                      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
-                        {Array.from({ length: 24 }, (_, i) => i).map((h) => (
-                          <Pressable
-                            key={h}
-                            onPress={() => {
-                              setPickerHour(h);
-                              handleExactTimeChange(h, pickerMinute);
-                            }}
-                            style={({ pressed }) => [{
-                              width: 36,
-                              height: 36,
-                              borderRadius: 8,
-                              alignItems: "center",
-                              justifyContent: "center",
-                              backgroundColor: pickerHour === h ? colors.primary : colors.background,
-                              borderWidth: 1,
-                              borderColor: pickerHour === h ? colors.primary : colors.border,
-                              opacity: pressed ? 0.7 : 1,
-                            }]}
-                          >
-                            <Text style={{ color: pickerHour === h ? "#FFF" : colors.foreground, fontWeight: "600", fontSize: 13 }}>
-                              {String(h).padStart(2, "0")}
-                            </Text>
-                          </Pressable>
-                        ))}
-                      </View>
-
-                      {/* Minute selector */}
-                      <Text className="text-muted" style={{ fontSize: 12, marginBottom: 6 }}>
-                        {isRu ? "Минуты:" : "Minutes:"}
-                      </Text>
-                      <View style={{ flexDirection: "row", gap: 6 }}>
-                        {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((m) => (
-                          <Pressable
-                            key={m}
-                            onPress={() => {
-                              setPickerMinute(m);
-                              handleExactTimeChange(pickerHour, m);
-                            }}
-                            style={({ pressed }) => [{
-                              flex: 1,
-                              paddingVertical: 8,
-                              borderRadius: 8,
-                              alignItems: "center",
-                              backgroundColor: pickerMinute === m ? colors.primary : colors.background,
-                              borderWidth: 1,
-                              borderColor: pickerMinute === m ? colors.primary : colors.border,
-                              opacity: pressed ? 0.7 : 1,
-                            }]}
-                          >
-                            <Text style={{ color: pickerMinute === m ? "#FFF" : colors.foreground, fontWeight: "600", fontSize: 11 }}>
-                              :{String(m).padStart(2, "0")}
-                            </Text>
-                          </Pressable>
-                        ))}
-                      </View>
-                    </View>
-                  )}
-                </View>
-              </View>
-            )}
-          </View>
-
-          {/* Data Management */}
-          <View style={{ gap: 8 }}>
+            {/* Test Notification Button */}
             <Pressable
-              onPress={handleExportTasks}
-              disabled={exporting}
+              onPress={() => {
+                if (Platform.OS !== "web") {
+                  sendTestNotification(isRu);
+                } else {
+                  Alert.alert(isRu ? "Уведомление" : "Notification", isRu ? "Тестовое уведомление отправлено" : "Test notification sent");
+                }
+              }}
               style={({ pressed }) => [{
                 backgroundColor: colors.primary,
-                borderRadius: 12,
-                paddingVertical: 12,
-                alignItems: "center",
-                opacity: pressed || exporting ? 0.7 : 1,
-              }]}
-            >
-              <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16 }}>
-                📤 {isRu ? "Экспортировать" : "Export data"}
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={handleClearAllData}
-              style={({ pressed }) => [{
-                backgroundColor: colors.error,
                 borderRadius: 12,
                 paddingVertical: 12,
                 alignItems: "center",
@@ -537,227 +380,412 @@ export default function SettingsScreen() {
               }]}
             >
               <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16 }}>
-                🗑 {isRu ? "Очистить все" : "Clear all data"}
+                🔔 {isRu ? "Отправить тестовое уведомление" : "Send Test Notification"}
               </Text>
             </Pressable>
-          </View>
 
-          {/* Telegram Link */}
-          <Pressable
-            onPress={() => {
-              Linking.openURL("https://t.me/misterutko").catch(() => {
-                Alert.alert(isRu ? "Ошибка" : "Error", isRu ? "Не удалось открыть Telegram" : "Failed to open Telegram");
-              });
-            }}
-            style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
-          >
+            {/* ========== SECTION 5: MOTIVATION ========== */}
+            <Text className={sectionTitleStyle}>{isRu ? "5. Мотивационные сообщения" : "5. Motivation"}</Text>
             <View className={sectionStyle}>
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-                  <Text style={{ fontSize: 22 }}>✈️</Text>
-                  <View>
-                    <Text className="text-foreground font-semibold" style={{ fontSize: 16 }}>@misterutko</Text>
-                    <Text className="text-muted" style={{ fontSize: 12 }}>SDVGNote Creator</Text>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1 }}>
+                  <Text style={{ fontSize: 24 }}>💪</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text className="text-foreground font-semibold" style={{ fontSize: 16 }}>
+                      {isRu ? "Включить мотивацию" : "Enable Motivation"}
+                    </Text>
+                    <Text className="text-muted" style={{ fontSize: 12 }}>
+                      {isRu ? "Периодические вдохновляющие сообщения" : "Periodic inspiring messages"}
+                    </Text>
                   </View>
                 </View>
+                <Switch
+                  value={motivational.enabled}
+                  onValueChange={handleMotivationalToggle}
+                  trackColor={{ false: colors.border, true: colors.primary }}
+                />
               </View>
-            </View>
-          </Pressable>
 
-          {/* Support Developer - Copy card and show bank app chooser */}
+              {motivational.enabled && (
+                <View style={{ gap: 12, marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.border }}>
+                  <View>
+                    <Text className="text-muted" style={{ fontSize: 12, marginBottom: 6 }}>
+                      {isRu ? "Ваше сообщение:" : "Your message:"}
+                    </Text>
+                    <TextInput
+                      placeholder={isRu ? "Введите вдохновляющее сообщение..." : "Enter an inspiring message..."}
+                      value={motivText}
+                      onChangeText={handleMotivationalTextChange}
+                      placeholderTextColor={colors.muted}
+                      style={{
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                        borderRadius: 10,
+                        paddingHorizontal: 12,
+                        paddingVertical: 10,
+                        color: colors.foreground,
+                        minHeight: 80,
+                        textAlignVertical: "top",
+                        fontSize: 14,
+                      }}
+                      multiline
+                    />
+                  </View>
 
-          {/* Home Screen Selection */}
-          <View className={sectionStyle}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 10 }}>
-              <Text style={{ fontSize: 22 }}>🏠</Text>
-              <Text className="text-foreground font-semibold" style={{ fontSize: 16 }}>
-                {isRu ? "Начальный экран" : "Home Screen"}
-              </Text>
+                  <View>
+                    <Text className="text-muted" style={{ fontSize: 12, marginBottom: 6 }}>
+                      {isRu ? "Частота:" : "Frequency:"}
+                    </Text>
+                    <View style={{ gap: 6 }}>
+                      {motivFreqOptions.map((opt) => (
+                        <Pressable
+                          key={opt.value}
+                          onPress={() => handleMotivationalFrequencyChange(opt.value)}
+                          style={({ pressed }) => [{
+                            paddingVertical: 10,
+                            paddingHorizontal: 12,
+                            borderRadius: 8,
+                            backgroundColor: motivational.frequency === opt.value ? colors.primary : colors.background,
+                            borderWidth: 1,
+                            borderColor: motivational.frequency === opt.value ? colors.primary : colors.border,
+                            opacity: pressed ? 0.7 : 1,
+                          }]}
+                        >
+                          <Text style={{ color: motivational.frequency === opt.value ? "#FFF" : colors.foreground, fontWeight: "600", fontSize: 14 }}>
+                            {opt.label}
+                          </Text>
+                        </Pressable>
+                      ))}
+                    </View>
+                  </View>
+
+                  {/* Exact Time Picker */}
+                  <View>
+                    <Text className="text-muted" style={{ fontSize: 12, marginBottom: 6 }}>
+                      {isRu ? "Точное время:" : "Exact time:"}
+                    </Text>
+                    <Pressable
+                      onPress={() => setShowTimePicker(!showTimePicker)}
+                      style={({ pressed }) => [{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        paddingVertical: 12,
+                        paddingHorizontal: 14,
+                        borderRadius: 10,
+                        borderWidth: 2,
+                        borderColor: showTimePicker ? colors.primary : colors.border,
+                        backgroundColor: colors.background,
+                        opacity: pressed ? 0.7 : 1,
+                      }]}
+                    >
+                      <Text style={{ color: colors.foreground, fontWeight: "600", fontSize: 16 }}>
+                        ⏰ {String(pickerHour).padStart(2, "0")}:{String(pickerMinute).padStart(2, "0")}
+                      </Text>
+                      <Text style={{ color: colors.muted, fontSize: 14 }}>
+                        {showTimePicker ? "▲" : "▼"}
+                      </Text>
+                    </Pressable>
+
+                    {showTimePicker && (
+                      <View style={{ marginTop: 12, padding: 14, borderRadius: 12, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}>
+                        {/* Hour selector */}
+                        <Text className="text-muted" style={{ fontSize: 12, marginBottom: 8, fontWeight: "600" }}>
+                          {isRu ? "Час (0–23):" : "Hour (0–23):"}
+                        </Text>
+                        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginBottom: 14 }}>
+                          {Array.from({ length: 24 }, (_, i) => i).map((h) => (
+                            <Pressable
+                              key={h}
+                              onPress={() => {
+                                setPickerHour(h);
+                                handleExactTimeChange(h, pickerMinute);
+                              }}
+                              style={({ pressed }) => [{
+                                width: 38,
+                                height: 38,
+                                borderRadius: 8,
+                                alignItems: "center",
+                                justifyContent: "center",
+                                backgroundColor: pickerHour === h ? colors.primary : colors.background,
+                                borderWidth: 1,
+                                borderColor: pickerHour === h ? colors.primary : colors.border,
+                                opacity: pressed ? 0.7 : 1,
+                              }]}
+                            >
+                              <Text style={{ color: pickerHour === h ? "#FFF" : colors.foreground, fontWeight: "600", fontSize: 12 }}>
+                                {String(h).padStart(2, "0")}
+                              </Text>
+                            </Pressable>
+                          ))}
+                        </View>
+
+                        {/* Minute selector */}
+                        <Text className="text-muted" style={{ fontSize: 12, marginBottom: 8, fontWeight: "600" }}>
+                          {isRu ? "Минуты:" : "Minutes:"}
+                        </Text>
+                        <View style={{ flexDirection: "row", gap: 6 }}>
+                          {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((m) => (
+                            <Pressable
+                              key={m}
+                              onPress={() => {
+                                setPickerMinute(m);
+                                handleExactTimeChange(pickerHour, m);
+                              }}
+                              style={({ pressed }) => [{
+                                flex: 1,
+                                paddingVertical: 10,
+                                borderRadius: 8,
+                                alignItems: "center",
+                                backgroundColor: pickerMinute === m ? colors.primary : colors.background,
+                                borderWidth: 1,
+                                borderColor: pickerMinute === m ? colors.primary : colors.border,
+                                opacity: pressed ? 0.7 : 1,
+                              }]}
+                            >
+                              <Text style={{ color: pickerMinute === m ? "#FFF" : colors.foreground, fontWeight: "600", fontSize: 11 }}>
+                                :{String(m).padStart(2, "0")}
+                              </Text>
+                            </Pressable>
+                          ))}
+                        </View>
+                      </View>
+                    )}
+                  </View>
+
+                  <Pressable
+                    onPress={handleMotivationalSave}
+                    style={({ pressed }) => [{
+                      backgroundColor: colors.success,
+                      borderRadius: 10,
+                      paddingVertical: 12,
+                      alignItems: "center",
+                      opacity: pressed ? 0.7 : 1,
+                      marginTop: 4,
+                    }]}
+                  >
+                    <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 15 }}>
+                      {isRu ? "✓ Сохранить" : "✓ Save"}
+                    </Text>
+                  </Pressable>
+                </View>
+              )}
             </View>
+
+            {/* ========== SECTION 6: CUSTOMIZATION ========== */}
+            <Text className={sectionTitleStyle}>{isRu ? "6. Кастомизация" : "6. Customization"}</Text>
             <View style={{ gap: 8 }}>
-              {[
-                { value: "index", label: isRu ? "Задачи" : "Tasks", emoji: "📋" },
-                { value: "matrix", label: isRu ? "Матрица" : "Matrix", emoji: "📊" },
-                { value: "kanban", label: isRu ? "Канбан" : "Kanban", emoji: "📌" },
-                { value: "achievements", label: isRu ? "Достижения" : "Achievements", emoji: "🏆" },
-              ].map((screen) => (
-                <Pressable
-                  key={screen.value}
-                  onPress={() => updateSettings({ startScreen: screen.value as any })}
-                  style={({ pressed }) => [{
-                    paddingVertical: 10,
-                    paddingHorizontal: 12,
-                    borderRadius: 8,
-                    backgroundColor: (settings.startScreen as string) === screen.value ? colors.primary : colors.background,
-                    borderWidth: 1,
-                    borderColor: (settings.startScreen as string) === screen.value ? colors.primary : colors.border,
-                    opacity: pressed ? 0.7 : 1,
-                    flexDirection: "row",
-                    alignItems: "center",
-                    gap: 8,
-                  }]}
-                >
-                  <Text style={{ fontSize: 16 }}>{screen.emoji}</Text>
-                  <Text style={{ color: (settings.startScreen as string) === screen.value ? "#FFF" : colors.foreground, fontWeight: "600", fontSize: 14 }}>
-                    {screen.label}
-                  </Text>
-                </Pressable>
-              ))}
+              <Pressable
+                onPress={() => setShowCustomizationModal('quadrant')}
+                style={({ pressed }) => [{
+                  backgroundColor: colors.primary,
+                  borderRadius: 12,
+                  paddingVertical: 12,
+                  paddingHorizontal: 16,
+                  opacity: pressed ? 0.7 : 1,
+                }]}
+              >
+                <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16, textAlign: "center" }}>
+                  {isRu ? "🎨 Цвета квадрантов" : "🎨 Quadrant Colors"}
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => setShowCustomizationModal('notification')}
+                style={({ pressed }) => [{
+                  backgroundColor: colors.primary,
+                  borderRadius: 12,
+                  paddingVertical: 12,
+                  paddingHorizontal: 16,
+                  opacity: pressed ? 0.7 : 1,
+                }]}
+              >
+                <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16, textAlign: "center" }}>
+                  {isRu ? "🔊 Звуки и вибрация" : "🔊 Sound & Vibration"}
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => setShowCustomizationModal('deadline')}
+                style={({ pressed }) => [{
+                  backgroundColor: colors.primary,
+                  borderRadius: 12,
+                  paddingVertical: 12,
+                  paddingHorizontal: 16,
+                  opacity: pressed ? 0.7 : 1,
+                }]}
+              >
+                <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16, textAlign: "center" }}>
+                  {isRu ? "⏰ Подсветка сроков" : "⏰ Deadline Highlighting"}
+                </Text>
+              </Pressable>
             </View>
-          </View>
 
-          {/* Privacy Policy Button */}
-          <Pressable
-            onPress={() => {
-              router.push("/privacy-policy");
-            }}
-            style={({ pressed }) => [{
-              backgroundColor: colors.surface,
-              borderRadius: 12,
-              paddingVertical: 12,
-              paddingHorizontal: 16,
-              borderWidth: 1,
-              borderColor: colors.border,
-              opacity: pressed ? 0.7 : 1,
-            }]}
-          >
-            <Text style={{ color: colors.foreground, fontWeight: "600", fontSize: 14, textAlign: "center" }}>
-              {isRu ? "🔒 Политика конфиденциальности" : "🔒 Privacy Policy"}
-            </Text>
-          </Pressable>
+            {/* ========== SECTION 7: INFORMATION & SUPPORT ========== */}
+            <Text className={sectionTitleStyle}>{isRu ? "7. Информация и поддержка" : "7. Information & Support"}</Text>
 
-          {/* Terms of Service Button */}
-          <Pressable
-            onPress={() => {
-              router.push("/terms-of-service");
-            }}
-            style={({ pressed }) => [{
-              backgroundColor: colors.surface,
-              borderRadius: 12,
-              paddingVertical: 12,
-              paddingHorizontal: 16,
-              borderWidth: 1,
-              borderColor: colors.border,
-              opacity: pressed ? 0.7 : 1,
-            }]}
-          >
-            <Text style={{ color: colors.foreground, fontWeight: "600", fontSize: 14, textAlign: "center" }}>
-              {isRu ? "⚖️ Условия использования" : "⚖️ Terms of Service"}
-            </Text>
-          </Pressable>
+            {/* Tutorial Button */}
+            <Pressable
+              onPress={() => {
+                showOnboarding();
+              }}
+              style={({ pressed }) => [{
+                backgroundColor: colors.primary,
+                borderRadius: 12,
+                paddingVertical: 12,
+                paddingHorizontal: 16,
+                opacity: pressed ? 0.7 : 1,
+              }]}
+            >
+              <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16, textAlign: "center" }}>
+                {isRu ? "📚 Показать обучение" : "📚 Show Tutorial"}
+              </Text>
+            </Pressable>
 
-          {/* About App Button */}
-          <Pressable
-            onPress={() => {
-              setShowAboutSection(!showAboutSection);
-            }}
-            style={({ pressed }) => [{
-              backgroundColor: colors.primary,
-              borderRadius: 12,
-              paddingVertical: 12,
-              paddingHorizontal: 16,
-              opacity: pressed ? 0.7 : 1,
-            }]}
-          >
-            <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16, textAlign: "center" }}>
-              {isRu ? "ℹ️ О приложении" : "ℹ️ About App"}
-            </Text>
-          </Pressable>
+            {/* About App Button */}
+            <Pressable
+              onPress={() => {
+                setShowAboutSection(!showAboutSection);
+              }}
+              style={({ pressed }) => [{
+                backgroundColor: colors.primary,
+                borderRadius: 12,
+                paddingVertical: 12,
+                paddingHorizontal: 16,
+                opacity: pressed ? 0.7 : 1,
+              }]}
+            >
+              <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16, textAlign: "center" }}>
+                {isRu ? "ℹ️ О приложении" : "ℹ️ About App"}
+              </Text>
+            </Pressable>
 
-          {/* About Section Content */}
-          {showAboutSection && (
-            <View className="mt-6 bg-surface rounded-2xl p-4">
-              <AppAboutSection />
+            {/* About Section Content */}
+            {showAboutSection && (
+              <View className="mt-4 bg-surface rounded-2xl p-4">
+                <AppAboutSection />
+              </View>
+            )}
+
+            {/* Developer Contact */}
+            <Pressable
+              onPress={() => {
+                Linking.openURL("https://t.me/misterutko").catch(() => {
+                  Alert.alert(isRu ? "Ошибка" : "Error", isRu ? "Не удалось открыть Telegram" : "Failed to open Telegram");
+                });
+              }}
+              style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
+            >
+              <View className={sectionStyle}>
+                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                    <Text style={{ fontSize: 24 }}>✈️</Text>
+                    <View>
+                      <Text className="text-foreground font-semibold" style={{ fontSize: 16 }}>@misterutko</Text>
+                      <Text className="text-muted" style={{ fontSize: 12 }}>SDVGNote Creator</Text>
+                    </View>
+                  </View>
+                  <Text style={{ fontSize: 18 }}>→</Text>
+                </View>
+              </View>
+            </Pressable>
+
+            {/* Support Developer Button */}
+            <Pressable
+              onPress={() => {
+                router.push("/support-developer");
+              }}
+              style={({ pressed }) => [{
+                backgroundColor: colors.success,
+                borderRadius: 12,
+                paddingVertical: 12,
+                paddingHorizontal: 16,
+                opacity: pressed ? 0.7 : 1,
+              }]}
+            >
+              <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16, textAlign: "center" }}>
+                ❤️ {isRu ? "Поддержать разработчика" : "Support Developer"}
+              </Text>
+            </Pressable>
+
+            {/* Privacy & Legal */}
+            <View style={{ gap: 8 }}>
+              <Pressable
+                onPress={() => {
+                  router.push("/privacy-policy");
+                }}
+                style={({ pressed }) => [{
+                  backgroundColor: colors.surface,
+                  borderRadius: 12,
+                  paddingVertical: 12,
+                  paddingHorizontal: 16,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  opacity: pressed ? 0.7 : 1,
+                }]}
+              >
+                <Text style={{ color: colors.foreground, fontWeight: "600", fontSize: 14, textAlign: "center" }}>
+                  {isRu ? "🔒 Политика конфиденциальности" : "🔒 Privacy Policy"}
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => {
+                  router.push("/terms-of-service");
+                }}
+                style={({ pressed }) => [{
+                  backgroundColor: colors.surface,
+                  borderRadius: 12,
+                  paddingVertical: 12,
+                  paddingHorizontal: 16,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  opacity: pressed ? 0.7 : 1,
+                }]}
+              >
+                <Text style={{ color: colors.foreground, fontWeight: "600", fontSize: 14, textAlign: "center" }}>
+                  {isRu ? "⚖️ Условия использования" : "⚖️ Terms of Service"}
+                </Text>
+              </Pressable>
             </View>
-          )}
 
-          {/* Customization Settings Buttons */}
-          <View style={{ gap: 8, marginTop: 16 }}>
-            <Pressable
-              onPress={() => setShowCustomizationModal('quadrant')}
-              style={({ pressed }) => [{
-                backgroundColor: colors.primary,
-                borderRadius: 12,
-                paddingVertical: 12,
-                paddingHorizontal: 16,
-                opacity: pressed ? 0.7 : 1,
-              }]}
-            >
-              <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16, textAlign: "center" }}>
-                {isRu ? "🎨 Цвета квадрантов" : "🎨 Quadrant Colors"}
-              </Text>
-            </Pressable>
+            {/* ========== SECTION 8: DATA MANAGEMENT ========== */}
+            <Text className={sectionTitleStyle}>{isRu ? "8. Управление данными" : "8. Data Management"}</Text>
+            <View style={{ gap: 8 }}>
+              <Pressable
+                onPress={handleExportTasks}
+                disabled={exporting}
+                style={({ pressed }) => [{
+                  backgroundColor: colors.primary,
+                  borderRadius: 12,
+                  paddingVertical: 12,
+                  alignItems: "center",
+                  opacity: pressed || exporting ? 0.7 : 1,
+                }]}
+              >
+                <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16 }}>
+                  📤 {isRu ? "Экспортировать данные" : "Export Data"}
+                </Text>
+              </Pressable>
 
-            <Pressable
-              onPress={() => setShowCustomizationModal('notification')}
-              style={({ pressed }) => [{
-                backgroundColor: colors.primary,
-                borderRadius: 12,
-                paddingVertical: 12,
-                paddingHorizontal: 16,
-                opacity: pressed ? 0.7 : 1,
-              }]}
-            >
-              <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16, textAlign: "center" }}>
-                {isRu ? "🔔 Уведомления" : "🔔 Notifications"}
-              </Text>
-            </Pressable>
+              <Pressable
+                onPress={handleClearAllData}
+                style={({ pressed }) => [{
+                  backgroundColor: colors.error,
+                  borderRadius: 12,
+                  paddingVertical: 12,
+                  alignItems: "center",
+                  opacity: pressed ? 0.7 : 1,
+                }]}
+              >
+                <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16 }}>
+                  🗑 {isRu ? "Очистить все данные" : "Clear All Data"}
+                </Text>
+              </Pressable>
+            </View>
 
-            <Pressable
-              onPress={() => setShowCustomizationModal('deadline')}
-              style={({ pressed }) => [{
-                backgroundColor: colors.primary,
-                borderRadius: 12,
-                paddingVertical: 12,
-                paddingHorizontal: 16,
-                opacity: pressed ? 0.7 : 1,
-              }]}
-            >
-              <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16, textAlign: "center" }}>
-                {isRu ? "⏰ Подсветка сроков" : "⏰ Deadline Highlighting"}
-              </Text>
-            </Pressable>
-          </View>
-
-          <Pressable
-            onPress={() => {
-              router.push("/support-developer");
-            }}
-            style={({ pressed }) => [{
-              backgroundColor: colors.success,
-              borderRadius: 12,
-              paddingVertical: 12,
-              paddingHorizontal: 16,
-              opacity: pressed ? 0.7 : 1,
-            }]}
-          >
-            <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16, textAlign: "center" }}>
-              ❤️ {isRu ? "Поддержать разработчика" : "Support Developer"}
-            </Text>
-          </Pressable>
-
-          {/* Tutorial Button */}
-          <Pressable
-            onPress={() => {
-              showOnboarding();
-            }}
-            style={({ pressed }) => [{
-              backgroundColor: colors.primary,
-              borderRadius: 12,
-              paddingVertical: 12,
-              paddingHorizontal: 16,
-              opacity: pressed ? 0.7 : 1,
-            }]}
-          >
-            <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16, textAlign: "center" }}>
-              {isRu ? "📚 Показать обучение" : "📚 Show Tutorial"}
-            </Text>
-          </Pressable>
-
-
-
-          {/* Footer with Version */}
-          <AppVersionFooter />
+            {/* Footer with Version */}
+            <AppVersionFooter />
           </View>
         </ScrollView>
 
@@ -790,7 +818,7 @@ export default function SettingsScreen() {
           <View style={{ flex: 1, backgroundColor: colors.background }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 }}>
               <Text style={{ fontSize: 18, fontWeight: 'bold', color: colors.foreground }}>
-                {isRu ? 'Уведомления' : 'Notifications'}
+                {isRu ? 'Звуки и вибрация' : 'Sound & Vibration'}
               </Text>
               <Pressable onPress={() => setShowCustomizationModal(null)}>
                 <Text style={{ fontSize: 24, color: colors.foreground }}>✕</Text>
