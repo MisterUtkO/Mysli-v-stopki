@@ -185,13 +185,13 @@ export function SwipeableTaskCard({
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     }
     
-    // Show confirmation dialog before deleting
+    // Show small confirmation dialog
     Alert.alert(
-      isRu ? "Удалить задачу?" : "Delete task?",
-      isRu ? `\"${task.title}\" будет перемещена в корзину` : `\"${task.title}\" will be moved to trash`,
+      isRu ? "Точно удалить?" : "Sure delete?",
+      "",
       [
         {
-          text: isRu ? "Отмена" : "Cancel",
+          text: isRu ? "Нет" : "No",
           onPress: () => {
             // Snap back without deleting
             translateX.value = withSpring(0, { damping: 20, stiffness: 200 });
@@ -199,11 +199,11 @@ export function SwipeableTaskCard({
           style: "cancel",
         },
         {
-          text: isRu ? "Удалить" : "Delete",
+          text: isRu ? "Да" : "Yes",
           onPress: () => {
             onDelete(task.id, task.title);
             
-            // Show undo toast for 3 seconds with optional undo button
+            // Show toast notification
             if (Platform.OS === "android") {
               ToastAndroid.show(
                 isRu ? "Задача удалена" : "Task deleted",

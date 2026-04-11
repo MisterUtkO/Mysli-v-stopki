@@ -782,3 +782,17 @@ All features have been implemented, tested, and verified. The app is ready for u
   * Delete button (destructive style) completes the action
 - [x] Full Russian/English localization
 - [x] All 115 tests passing, 0 TypeScript errors
+
+## Phase 67: Fix Delete Confirmation - Keep Swipe Behavior
+
+- [x] Revert to original swipe delete behavior (fast swipe triggers delete)
+- [x] Add small confirmation dialog BEFORE deletion:
+  * Title: "Точно удалить?" / "Sure delete?"
+  * No message body (empty)
+  * Two buttons: "Нет" / "No" and "Да" / "Yes"
+  * "No" button snaps card back without deleting
+  * "Yes" button (destructive style) completes deletion
+- [x] Maintain haptic feedback (warning notification on swipe)
+- [x] Show toast notification on Android after deletion
+- [x] Full Russian/English localization
+- [x] All 115 tests passing, 0 TypeScript errors
