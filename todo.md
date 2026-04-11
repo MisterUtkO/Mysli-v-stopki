@@ -758,3 +758,15 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Add descriptive subtitles for each setting
 - [x] Enhance visual feedback with checkmarks and arrows
 - [x] All 115 tests passing, 0 TypeScript errors
+
+## Phase 65: Add 4 New Funny Achievements
+
+- [x] Add 4 new achievements to definitions.ts:
+  * 🍕 Pizza Break — Don't open app for 24 hours
+  * 🐢 Procrastinator — Complete task after 30+ days
+  * 🎪 Chaos Master — Create 5 tasks with same title
+  * 🧠 Brain Teaser — Create task with 500+ char description
+- [x] Update version from 1.0.6.7 to 1.0.7.0
+- [x] Add changelog entry with full localization (RU/EN)
+- [x] All 115 tests passing, 0 TypeScript errors
+- [x] Total achievements: 34

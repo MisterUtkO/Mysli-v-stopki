@@ -88,6 +88,23 @@ const FEATURES: Feature[] = [
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.0.7.0",
+    dateRu: "11 апреля 2026",
+    dateEn: "April 11, 2026",
+    changesRu: [
+      "🎉 Добавлены 4 новых забавных достижения",
+      "🍕 Пицца-перерыв, 🐢 Прокрастинатор, 🎪 Мастер хаоса, 🧠 Загадка для мозга",
+      "✨ Расширенная система достижений (34 всего)",
+      "🎨 Улучшен интерфейс экрана Настройки",
+    ],
+    changesEn: [
+      "🎉 Added 4 new funny achievements",
+      "🍕 Pizza Break, 🐢 Procrastinator, 🎪 Chaos Master, 🧠 Brain Teaser",
+      "✨ Expanded achievement system (34 total)",
+      "🎨 Improved Settings screen interface",
+    ],
+  },
+  {
     version: "1.0.6.7",
     dateRu: "11 апреля 2026",
     dateEn: "April 11, 2026",
