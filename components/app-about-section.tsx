@@ -88,7 +88,7 @@ const FEATURES: Feature[] = [
 
 const CHANGELOG: ChangelogEntry[] = [
   {
-    version: "1.0.6.0",
+    version: "1.0.6.7",
     dateRu: "11 апреля 2026",
     dateEn: "April 11, 2026",
     changesRu: [
