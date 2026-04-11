@@ -215,6 +215,51 @@ export default function HomeScreen() {
               <Text style={{ fontSize: 18, color: searchVisible ? "#FFFFFF" : "#9CA3AF" }}>🔍</Text>
             </Pressable>
 
+            {/* Trash icon - show deleted count if any */}
+            <Pressable
+              onPress={() => {
+                if (deletedTasksCount > 0) {
+                  Alert.alert(
+                    isRu ? "Корзина" : "Trash",
+                    isRu ? `${deletedTasksCount} удалённых задач` : `${deletedTasksCount} deleted tasks`
+                  );
+                }
+              }}
+              style={({ pressed }) => [
+                {
+                  width: 40,
+                  height: 40,
+                  borderRadius: 20,
+                  backgroundColor: deletedTasksCount > 0 ? "#EF4444" : "transparent",
+                  borderWidth: deletedTasksCount > 0 ? 0 : 1.5,
+                  borderColor: "#9CA3AF",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  opacity: pressed ? 0.6 : 1,
+                },
+              ]}
+            >
+              <View style={{ position: "relative", alignItems: "center", justifyContent: "center" }}>
+                <Text style={{ fontSize: 18, color: deletedTasksCount > 0 ? "#FFFFFF" : "#9CA3AF" }}>🗑️</Text>
+                {deletedTasksCount > 0 && (
+                  <View style={{
+                    position: "absolute",
+                    top: -6,
+                    right: -6,
+                    backgroundColor: "#FFFFFF",
+                    borderRadius: 8,
+                    minWidth: 16,
+                    height: 16,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}>
+                    <Text style={{ fontSize: 10, fontWeight: "700", color: "#EF4444" }}>
+                      {deletedTasksCount}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </Pressable>
 
           </View>
         </View>

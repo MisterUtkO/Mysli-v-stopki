@@ -770,3 +770,15 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Add changelog entry with full localization (RU/EN)
 - [x] All 115 tests passing, 0 TypeScript errors
 - [x] Total achievements: 34
+
+## Phase 66: Restore Trash Icon and Add Delete Confirmation
+
+- [x] Restore trash icon (🗑️) to Tasks screen header next to search icon
+- [x] Show deleted tasks count as red badge on trash icon
+- [x] Add delete confirmation dialog when swiping left:
+  * Dialog shows: "Delete task?" with task title
+  * Confirms: "will be moved to trash" (bilingual)
+  * Cancel button snaps card back without deleting
+  * Delete button (destructive style) completes the action
+- [x] Full Russian/English localization
+- [x] All 115 tests passing, 0 TypeScript errors

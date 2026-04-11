@@ -184,15 +184,37 @@ export function SwipeableTaskCard({
     if (Platform.OS !== "web") {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     }
-    onDelete(task.id, task.title);
     
-    // Show undo toast for 3 seconds with optional undo button
-    if (Platform.OS === "android") {
-      ToastAndroid.show(
-        isRu ? "Задача удалена" : "Task deleted",
-        ToastAndroid.SHORT
-      );
-    }
+    // Show confirmation dialog before deleting
+    Alert.alert(
+      isRu ? "Удалить задачу?" : "Delete task?",
+      isRu ? `\"${task.title}\" будет перемещена в корзину` : `\"${task.title}\" will be moved to trash`,
+      [
+        {
+          text: isRu ? "Отмена" : "Cancel",
+          onPress: () => {
+            // Snap back without deleting
+            translateX.value = withSpring(0, { damping: 20, stiffness: 200 });
+          },
+          style: "cancel",
+        },
+        {
+          text: isRu ? "Удалить" : "Delete",
+          onPress: () => {
+            onDelete(task.id, task.title);
+            
+            // Show undo toast for 3 seconds with optional undo button
+            if (Platform.OS === "android") {
+              ToastAndroid.show(
+                isRu ? "Задача удалена" : "Task deleted",
+                ToastAndroid.SHORT
+              );
+            }
+          },
+          style: "destructive",
+        },
+      ]
+    );
   };
 
   // Gesture.Pan with simultaneousWithExternalGesture disabled
