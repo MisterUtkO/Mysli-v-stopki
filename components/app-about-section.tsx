@@ -88,6 +88,23 @@ const FEATURES: Feature[] = [
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.0.6.0",
+    dateRu: "11 апреля 2026",
+    dateEn: "April 11, 2026",
+    changesRu: [
+      "🧹 Очистка неиспользуемых разрешений в манифесте",
+      "📱 Оптимизация прав доступа для Android и iOS",
+      "🔒 Оставлены только необходимые разрешения",
+      "⚡ Улучшена безопасность приложения",
+    ],
+    changesEn: [
+      "🧹 Cleaned up unused permissions in manifest",
+      "📱 Optimized access rights for Android and iOS",
+      "🔒 Kept only necessary permissions",
+      "⚡ Improved app security",
+    ],
+  },
+  {
     version: "1.0.5.1",
     dateRu: "10 апреля 2026",
     dateEn: "April 10, 2026",
