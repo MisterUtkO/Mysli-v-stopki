@@ -88,6 +88,29 @@ const FEATURES: Feature[] = [
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.0.8.0",
+    dateRu: "13 апреля 2026",
+    dateEn: "April 13, 2026",
+    changesRu: [
+      "📌 Добавлено 8 новых достижений (Канбан-мастер, Навигатор матрицы, Охотник за дедлайнами, Исследователь тем, Полиглот, Путешественник во времени, Король возвращений, Ночная смена)",
+      "🌟 Эмодзи достижений разблокируются в пикере эмодзи задач",
+      "🔒 Базовые эмодзи сокращены до 8 (остальные открываются через достижения)",
+      "🗂️ Просмотр файлов и фото в задачах — теперь можно открывать вложения",
+      "📌 Канбан: перетаскивание работает между всеми столбцами",
+      "🖤 AMOLED-тема: исправлен интерфейс разблокировки (10 нажатий)",
+      "🔊 Звуки и вибрация: исправлена разметка и добавлена демонстрация",
+    ],
+    changesEn: [
+      "📌 Added 8 new achievements (Kanban Master, Matrix Navigator, Deadline Hunter, Theme Explorer, Multilingual, Time Traveler, Comeback King, Night Shift)",
+      "🌟 Achievement emojis unlock in task emoji picker",
+      "🔒 Base emojis reduced to 8 (rest unlock via achievements)",
+      "🗂️ File/photo preview in tasks — attachments can now be opened",
+      "📌 Kanban: drag-and-drop works between ALL columns",
+      "🖤 AMOLED theme: fixed unlock UI (10 taps)",
+      "🔊 Sounds & Vibration: fixed layout and added demo",
+    ],
+  },
+  {
     version: "1.0.7.0",
     dateRu: "11 апреля 2026",
     dateEn: "April 11, 2026",

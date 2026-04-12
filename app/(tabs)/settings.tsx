@@ -82,6 +82,8 @@ export default function SettingsScreen() {
     const newLang = language === "en" ? "ru" : "en";
     await setLanguage(newLang);
     await updateSettings({ language: newLang });
+    // Trigger multilingual achievement
+    triggerCustomFlag("multilingual", tasks);
   };
 
   const themeOptions = [
@@ -91,6 +93,9 @@ export default function SettingsScreen() {
     { key: "pastel" as const, emoji: "🌸", labelEn: "Pastel", labelRu: "Пастель" },
     { key: "notebook" as const, emoji: "📓", labelEn: "Notebook", labelRu: "Тетрадь" },
   ];
+
+  // Track which themes have been tried for theme_explorer achievement
+  const [triedThemes, setTriedThemes] = useState<Set<string>>(new Set([settings.theme ?? "light"]));
 
   const handleThemeChange = async (theme: "light" | "dark" | "amoled" | "pastel" | "notebook") => {
     if (theme === "amoled" && !hasExplorerAchievement) {
@@ -115,6 +120,14 @@ export default function SettingsScreen() {
     }
     setColorScheme(theme);
     await updateSettings({ theme });
+    // Track theme_explorer achievement
+    const newTried = new Set(triedThemes);
+    newTried.add(theme);
+    setTriedThemes(newTried);
+    // All 5 base themes tried
+    if (newTried.size >= 5) {
+      triggerCustomFlag("theme_explorer", tasks);
+    }
   };
 
   const handleNotificationsToggle = async (value: boolean) => {

@@ -6,11 +6,13 @@ import { useTaskContext } from "@/lib/context/task-context";
 import { useI18n } from "@/lib/context/i18n-context";
 import type { Task } from "@/lib/domain/types";
 import { useMemo } from "react";
+import { useAchievements } from "@/lib/context/achievement-context";
 
 export default function TrashScreen() {
   const router = useRouter();
   const { tasks, restoreTask, permanentlyDeleteTask } = useTaskContext();
   const { t, language } = useI18n();
+  const { triggerCustomFlag } = useAchievements();
   const isRu = language === "ru";
 
   // Get deleted tasks
@@ -33,6 +35,8 @@ export default function TrashScreen() {
           onPress: async () => {
             if (restoreTask) {
               await restoreTask(taskId);
+              // Trigger comeback_king achievement
+              triggerCustomFlag("comeback_king", tasks);
               if (Platform.OS === "android") {
                 Alert.alert(
                   isRu ? "Восстановлено" : "Restored",

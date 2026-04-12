@@ -84,9 +84,40 @@ export interface QuadrantColor {
   label: string;
 }
 
-export const TASK_EMOJIS = [
-  "🔥", "🧊", "🤢", "⚡", "💎", "🎯", "🚀", "🐢", "🎨", "🔧", "📚", "💪", "🌟", "⏰", "🎪",
+// Base emojis always available to all users
+export const TASK_EMOJIS_BASE = [
+  "🔥", "⚡", "🎯", "🚀", "💎", "📚", "💪", "⏰",
 ];
+
+// Achievement IDs whose emojis get unlocked in the task emoji picker
+export const ACHIEVEMENT_EMOJI_IDS = [
+  "kanban_master",    // 📌
+  "matrix_navigator", // 🗺️
+  "deadline_hunter",  // ⏳
+  "theme_explorer",   // 🎨
+  "multilingual",     // 🌍
+  "time_traveler",    // 🕰️
+  "comeback_king",    // 🦁
+  "night_shift",      // 🌙
+  "pizza_break",      // 🍕
+  "procrastinator",   // 🐢
+  "chaos_master",     // 🎪
+  "brain_teaser",     // 🧠
+  "night_owl",        // 🦉
+  "early_bird",       // 🐦
+  "perfectionist",    // ✨
+  "zen_master",       // 🧘
+  "emoji_master",     // 😎
+  "photographer",     // 📸
+  "first_task",       // 🐣
+  "q1_master",        // 🏆
+  "month_streak",     // 👑
+  "two_hundred_done", // 🐉
+  "five_hundred_done",// 🦅
+];
+
+// Legacy export for backward compatibility
+export const TASK_EMOJIS = TASK_EMOJIS_BASE;
 
 export const QUADRANT_COLORS: Record<Quadrant, QuadrantColor> = {
   Q1: { background: "#FF6B6B", border: "#C92A2A", text: "#FFFFFF", label: "Do Now" },

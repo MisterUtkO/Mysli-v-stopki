@@ -97,6 +97,15 @@ function checkCondition(achievement: AchievementDefinition, ctx: CheckContext): 
           const activeTasks = tasks.filter((t) => t.status !== "completed");
           return tasks.length >= 5 && activeTasks.length === 0;
         }
+        case 5: {
+          // Night Shift: 5 tasks completed between 22:00 and 00:00
+          const nightCompleted = tasks.filter((t) => {
+            if (t.status !== "completed") return false;
+            const hour = new Date(t.updatedAt).getHours();
+            return hour >= 22;
+          });
+          return nightCompleted.length >= 5;
+        }
         default:
           return false;
       }
@@ -121,6 +130,48 @@ function checkCondition(achievement: AchievementDefinition, ctx: CheckContext): 
         case "persistent_explorer": {
           // Triggered via custom flag
           return ctx.customFlags?.["persistent_explorer"] === true;
+        }
+        case "kanban_master": {
+          // Triggered via custom flag when 3+ custom columns created
+          return ctx.customFlags?.["kanban_master"] === true;
+        }
+        case "matrix_navigator": {
+          // Triggered via custom flag when task moved 5+ times between quadrants
+          return ctx.customFlags?.["matrix_navigator"] === true;
+        }
+        case "deadline_hunter": {
+          // 10 tasks completed before their deadline
+          const completedBeforeDeadline = tasks.filter((t) => {
+            if (t.status !== "completed" || !t.dueDate) return false;
+            const deadline = new Date(t.dueDate).getTime();
+            return t.updatedAt <= deadline;
+          });
+          return completedBeforeDeadline.length >= 10;
+        }
+        case "theme_explorer": {
+          // Triggered via custom flag when all themes tried
+          return ctx.customFlags?.["theme_explorer"] === true;
+        }
+        case "multilingual": {
+          // Triggered via custom flag when language switched
+          return ctx.customFlags?.["multilingual"] === true;
+        }
+        case "time_traveler": {
+          // Task with deadline more than 1 year in the future
+          const oneYearFromNow = Date.now() + 365 * 24 * 60 * 60 * 1000;
+          return tasks.some((t) => {
+            if (!t.dueDate) return false;
+            return new Date(t.dueDate).getTime() > oneYearFromNow;
+          });
+        }
+        case "comeback_king": {
+          // Triggered via custom flag when task restored from trash
+          return ctx.customFlags?.["comeback_king"] === true;
+        }
+        case "night_shift": {
+          // Complete a task between 00:00 and 05:00
+          const hour = new Date().getHours();
+          return hour >= 0 && hour < 5 && tasks.some((t) => t.status === "completed");
         }
         default:
           return false;
