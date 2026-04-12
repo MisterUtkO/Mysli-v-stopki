@@ -176,26 +176,31 @@ function DraggableSticker({
   // Long-press to start drag
   const longPress = Gesture.LongPress()
     .minDuration(300)
-    .onStart((e) => {
+    .onStart((e: any) => {
       runOnJS(startDrag)(e.absoluteX, e.absoluteY);
     });
 
-  // Pan gesture for continuous drag (only when already dragging)
+  // Pan gesture for continuous drag after long-press
   const pan = Gesture.Pan()
-    .enabled(isDragging)
-    .onUpdate((e) => {
-      runOnJS(onDragMove)(e.absoluteX, e.absoluteY);
+    .onUpdate((e: any) => {
+      if (isBeingDragged.value) {
+        runOnJS(onDragMove)(e.absoluteX, e.absoluteY);
+      }
     })
-    .onEnd((e) => {
-      runOnJS(onDragEnd)(e.absoluteX, e.absoluteY);
-      runOnJS(resetDrag)();
+    .onEnd((e: any) => {
+      if (isBeingDragged.value) {
+        runOnJS(onDragEnd)(e.absoluteX, e.absoluteY);
+        runOnJS(resetDrag)();
+      }
     });
 
-  // Tap to open edit modal
+  // Tap to open edit modal (only if not dragging)
   const tap = Gesture.Tap()
     .maxDuration(300)
     .onEnd(() => {
-      runOnJS(onPress)();
+      if (!isDragging) {
+        runOnJS(onPress)();
+      }
     });
 
   const composed = Gesture.Exclusive(longPress, tap);

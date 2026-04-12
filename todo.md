@@ -817,3 +817,12 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Drop zone indicators show where sticker will land
 - [x] Success haptic on drop
 - [x] All 115 tests passing, 0 TypeScript errors
+
+
+## Phase 70: Fix Kanban Drag-and-Drop on Native Devices
+
+- [x] Refactor gesture handling to use Pan gesture directly instead of conditional enabling
+- [x] Implement LongPress (300ms) to start drag + Pan for continuous movement
+- [x] Remove requirement to re-press after long-press on native platforms
+- [x] Maintain tap functionality for editing stickers (only if not dragging)
+- [x] All 115 tests passing, 0 TypeScript errors
