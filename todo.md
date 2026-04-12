@@ -796,3 +796,13 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Show toast notification on Android after deletion
 - [x] Full Russian/English localization
 - [x] All 115 tests passing, 0 TypeScript errors
+
+## Phase 68: Implement Trash Screen with Restore Functionality
+
+- [x] Create trash screen to view and restore deleted tasks
+- [x] Update trash icon to navigate to trash screen instead of showing alert
+- [x] Show list of deleted tasks with restore buttons
+- [x] Add permanent delete option (with confirmation)
+- [x] Add clear trash button (with confirmation)
+- [x] Full Russian/English localization
+- [x] All 115 tests passing, 0 TypeScript errors

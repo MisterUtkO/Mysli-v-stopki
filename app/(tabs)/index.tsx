@@ -215,16 +215,9 @@ export default function HomeScreen() {
               <Text style={{ fontSize: 18, color: searchVisible ? "#FFFFFF" : "#9CA3AF" }}>🔍</Text>
             </Pressable>
 
-            {/* Trash icon - show deleted count if any */}
+            {/* Trash icon - navigate to trash screen */}
             <Pressable
-              onPress={() => {
-                if (deletedTasksCount > 0) {
-                  Alert.alert(
-                    isRu ? "Корзина" : "Trash",
-                    isRu ? `${deletedTasksCount} удалённых задач` : `${deletedTasksCount} deleted tasks`
-                  );
-                }
-              }}
+              onPress={() => router.push("/trash")}
               style={({ pressed }) => [
                 {
                   width: 40,
