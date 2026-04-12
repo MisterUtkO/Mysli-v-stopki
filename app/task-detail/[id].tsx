@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,6 +7,7 @@ import {
   Alert,
   Image,
 } from "react-native";
+import { useState, useEffect } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import Slider from "@react-native-community/slider";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -17,6 +17,7 @@ import { ScreenContainer } from "@/components/screen-container";
 import { useTaskContext } from "@/lib/context/task-context";
 import { useI18n } from "@/lib/context/i18n-context";
 import { EmojiPicker } from "@/components/emoji-picker";
+import { FilePreviewModal } from "@/components/file-preview-modal";
 import { determineQuadrant, calculatePriorityScore } from "@/lib/domain/scoring";
 import type { Task, NotificationFrequency, TaskAttachment } from "@/lib/domain/types";
 
@@ -58,6 +59,8 @@ export default function TaskDetailScreen() {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showFilePreview, setShowFilePreview] = useState(false);
+  const [selectedAttachment, setSelectedAttachment] = useState<TaskAttachment | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -422,8 +425,15 @@ export default function TaskDetailScreen() {
 
             {attachments.length > 0 && (
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-                {attachments.map((att, idx) => (
-                  <View key={idx} style={{ position: "relative" }}>
+                {attachments.map((att: TaskAttachment, idx: number) => (
+                  <Pressable
+                    key={idx}
+                    onPress={() => {
+                      setSelectedAttachment(att);
+                      setShowFilePreview(true);
+                    }}
+                    style={{ position: "relative" }}
+                  >
                     <View
                       style={{
                         width: 60,
@@ -463,7 +473,7 @@ export default function TaskDetailScreen() {
                     >
                       <Text style={{ color: "#FFF", fontSize: 10, fontWeight: "700" }}>✕</Text>
                     </Pressable>
-                  </View>
+                  </Pressable>
                 ))}
               </ScrollView>
             )}
@@ -601,6 +611,13 @@ export default function TaskDetailScreen() {
           </Pressable>
         </View>
       </ScrollView>
+
+      {/* File Preview Modal */}
+      <FilePreviewModal
+        visible={showFilePreview}
+        attachment={selectedAttachment}
+        onClose={() => setShowFilePreview(false)}
+      />
     </ScreenContainer>
   );
 }

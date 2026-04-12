@@ -866,11 +866,15 @@ All features have been implemented, tested, and verified. The app is ready for u
 
 ## Phase 74: File/Photo Preview for Tasks
 
-- [ ] Create file preview component
-- [ ] Add gallery view for attached photos
-- [ ] Implement file download functionality
-- [ ] Add file type icons
-- [ ] Support multiple file formats (images, PDFs, documents)
+- [x] Created file-preview-modal.tsx component
+- [x] Added gallery view for attached photos
+- [x] Implemented file download/share functionality
+- [x] Added file type icons (images, PDFs, documents)
+- [x] Support multiple file formats with proper icons
+- [x] Integrated preview modal into task detail screen
+- [x] Click on attachment thumbnail opens preview modal
+- [x] Full Russian/English localization
+- [x] All 115 tests passing
 
 ## Phase 73: Achievement Emojis Integration
 
@@ -879,14 +883,6 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [ ] Reduce initial emoji list (remove duplicates/unused ones)
 - [ ] Update emoji picker to show unlocked achievement emojis
 - [ ] Add visual indicator (🔓) for unlocked emojis
-
-## Phase 74: File/Photo Preview for Tasks
-
-- [ ] Create file preview component
-- [ ] Add gallery view for attached photos
-- [ ] Implement file download functionality
-- [ ] Add file type icons
-- [ ] Support multiple file formats (images, PDFs, documents)
 
 ## Phase 77: Version Update & Final Report
 
