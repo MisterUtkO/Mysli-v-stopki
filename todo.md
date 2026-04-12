@@ -806,3 +806,14 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Add clear trash button (with confirmation)
 - [x] Full Russian/English localization
 - [x] All 115 tests passing, 0 TypeScript errors
+
+## Phase 69: Improve Kanban Drag-and-Drop UX
+
+- [x] Implement long-press (300ms) to start drag with smooth scale animation (1.15x)
+- [x] Add continuous drag support - sticker stays lifted while dragging
+- [x] Improved visual feedback - shadow elevation, opacity changes during drag
+- [x] Haptic feedback on drag start (Medium impact)
+- [x] Auto-scroll when dragging near edges (left/right)
+- [x] Drop zone indicators show where sticker will land
+- [x] Success haptic on drop
+- [x] All 115 tests passing, 0 TypeScript errors

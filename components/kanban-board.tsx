@@ -1,4 +1,3 @@
-import React, { useState, useCallback, forwardRef, useImperativeHandle, useRef } from "react";
 import {
   View,
   Text,
@@ -30,12 +29,14 @@ import { useI18n } from "@/lib/context/i18n-context";
 import { useColors } from "@/hooks/use-colors";
 import { useTaskContext } from "@/lib/context/task-context";
 import { KANBAN_STORAGE_KEY } from "@/lib/kanban-sync";
+import { useCallback, useState, useRef, forwardRef, useImperativeHandle } from "react";
+import React from "react";
 
 const STORAGE_KEY = KANBAN_STORAGE_KEY;
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const SCREEN_HEIGHT = Dimensions.get("window").height;
-const SCROLL_EDGE_THRESHOLD = 60; // Trigger auto-scroll when within 60px of edge
-const SCROLL_SPEED = 8; // Pixels per frame
+const SCROLL_EDGE_THRESHOLD = 60;
+const SCROLL_SPEED = 8;
 
 const STICKER_COLORS = [
   "#FFEB3B", "#FF9800", "#F44336", "#E91E63", "#9C27B0",
@@ -74,7 +75,7 @@ interface ColumnLayout {
 
 interface DropZone {
   columnId: string;
-  position: number; // Index in column.stickers, or column.stickers.length for end
+  position: number;
   type: "between" | "end";
 }
 
@@ -110,6 +111,8 @@ interface DraggableStickerProps {
   isDragging: boolean;
   onPress: () => void;
   onDragStart: (state: DragState, pageX: number, pageY: number) => void;
+  onDragMove: (pageX: number, pageY: number) => void;
+  onDragEnd: (pageX: number, pageY: number) => void;
   onMoveLeft: () => void;
   onMoveRight: () => void;
   onMoveUp: () => void;
@@ -127,6 +130,8 @@ function DraggableSticker({
   isDragging,
   onPress,
   onDragStart,
+  onDragMove,
+  onDragEnd,
   onMoveLeft,
   onMoveRight,
   onMoveUp,
@@ -134,11 +139,13 @@ function DraggableSticker({
   colors,
 }: DraggableStickerProps) {
   const scale = useSharedValue(1);
+  const elevation = useSharedValue(0);
   const isBeingDragged = useSharedValue(false);
 
   const animStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
-    opacity: isBeingDragged.value ? 0.2 : 1,
+    opacity: isBeingDragged.value ? 0.7 : 1,
+    elevation: elevation.value,
   }));
 
   const rotation = (parseInt(sticker.id.slice(-2), 16) % 5 - 2) * 0.5;
@@ -146,7 +153,8 @@ function DraggableSticker({
   const startDrag = useCallback(
     (pageX: number, pageY: number) => {
       isBeingDragged.value = true;
-      scale.value = withSpring(1.12, { damping: 10, mass: 1 });
+      scale.value = withSpring(1.15, { damping: 10, mass: 1 });
+      elevation.value = 10;
       onDragStart(
         { sticker, fromColId: columnId, fromIndex: stickerIndex, startX: pageX, startY: pageY },
         pageX,
@@ -156,21 +164,34 @@ function DraggableSticker({
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       }
     },
-    [sticker, columnId, stickerIndex, onDragStart, isBeingDragged, scale]
+    [sticker, columnId, stickerIndex, onDragStart, isBeingDragged, scale, elevation]
   );
 
   const resetDrag = useCallback(() => {
     isBeingDragged.value = false;
     scale.value = withSpring(1);
-  }, [isBeingDragged, scale]);
+    elevation.value = 0;
+  }, [isBeingDragged, scale, elevation]);
 
-  // Long-press + pan gesture
+  // Long-press to start drag
   const longPress = Gesture.LongPress()
-    .minDuration(400)
+    .minDuration(300)
     .onStart((e) => {
       runOnJS(startDrag)(e.absoluteX, e.absoluteY);
     });
 
+  // Pan gesture for continuous drag (only when already dragging)
+  const pan = Gesture.Pan()
+    .enabled(isDragging)
+    .onUpdate((e) => {
+      runOnJS(onDragMove)(e.absoluteX, e.absoluteY);
+    })
+    .onEnd((e) => {
+      runOnJS(onDragEnd)(e.absoluteX, e.absoluteY);
+      runOnJS(resetDrag)();
+    });
+
+  // Tap to open edit modal
   const tap = Gesture.Tap()
     .maxDuration(300)
     .onEnd(() => {
@@ -178,10 +199,11 @@ function DraggableSticker({
     });
 
   const composed = Gesture.Exclusive(longPress, tap);
+  const withPan = Gesture.Simultaneous(composed, pan);
 
   return (
     <View style={{ marginBottom: 5 }}>
-      <GestureDetector gesture={composed}>
+      <GestureDetector gesture={withPan}>
         <Animated.View
           style={[
             animStyle,
@@ -191,10 +213,10 @@ function DraggableSticker({
               padding: 8,
               minHeight: 36,
               shadowColor: "#000",
-              shadowOffset: { width: 1, height: 2 },
-              shadowOpacity: 0.15,
-              shadowRadius: 3,
-              elevation: 3,
+              shadowOffset: { width: 2, height: 4 },
+              shadowOpacity: isDragging ? 0.3 : 0.15,
+              shadowRadius: isDragging ? 8 : 3,
+              elevation: isDragging ? 15 : 3,
               transform: [{ rotate: `${rotation}deg` }, { scale: scale.value }],
             },
           ]}
@@ -439,7 +461,6 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
   const handleMoveSticker = useCallback((fromColId: string, fromIndex: number, sticker: KanbanSticker, targetColumnId: string, targetIndex?: number) => {
     const newColumns = data.columns.map((col) => {
       if (col.id === fromColId && col.id === targetColumnId) {
-        // Reorder within same column
         const newStickers = [...col.stickers];
         const [removed] = newStickers.splice(fromIndex, 1);
         const insertIdx = targetIndex ?? newStickers.length;
@@ -532,12 +553,10 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
     const relX = pageX - boardOffsetX.current;
     const zones: DropZone[] = [];
 
-    // Find the closest column to the drag position
     let closestLayout: ColumnLayout | null = null;
     let minDistX = Infinity;
 
     for (const layout of columnLayouts.current) {
-      // Calculate distance from drag position to column center
       const colCenterX = layout.x + layout.width / 2;
       const distX = Math.abs(relX - colCenterX);
       if (distX < minDistX) {
@@ -546,7 +565,6 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
       }
     }
 
-    // Add drop zones for the closest column
     if (closestLayout) {
       const col = data.columns.find((c) => c.id === closestLayout!.id);
       if (col) {
@@ -567,12 +585,10 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
     const zones = getDropZonesAtX(pageX);
     if (zones.length === 0) return null;
 
-    // If only one zone (single column), find closest by Y
     if (zones.length === 1) {
       return zones[0];
     }
 
-    // Find the closest zone based on Y position within the column
     let closest = zones[0];
     let minDist = Infinity;
 
@@ -580,7 +596,6 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
       const col = data.columns.find((c) => c.id === zone.columnId);
       if (!col) continue;
 
-      // Estimate Y position of this drop zone (rough: header ~50px + sticker height ~50px)
       const layout = columnLayouts.current.find((l) => l.id === zone.columnId);
       if (!layout) continue;
 
@@ -600,7 +615,6 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
     setDragX(pageX);
     setDragY(pageY);
 
-    // Check for auto-scroll
     if (pageX < SCROLL_EDGE_THRESHOLD) {
       startAutoScroll("left");
     } else if (pageX > SCREEN_WIDTH - SCROLL_EDGE_THRESHOLD) {
@@ -609,12 +623,11 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
       stopAutoScroll();
     }
 
-    // Find closest drop zone
     const zone = getClosestDropZone(pageX, pageY);
     setHoveredDropZone(zone);
   }, [startAutoScroll, stopAutoScroll, getClosestDropZone]);
 
-  const handleDragEnd = useCallback((pageX: number) => {
+  const handleDragEnd = useCallback((pageX: number, pageY: number) => {
     stopAutoScroll();
     if (!dragging || !hoveredDropZone) {
       setDragging(null);
@@ -625,7 +638,6 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
     const { columnId: targetColId, position: targetIndex } = hoveredDropZone;
     const { fromColId, fromIndex, sticker } = dragging;
 
-    // Check if it's a meaningful move
     if (fromColId === targetColId && fromIndex === targetIndex) {
       setDragging(null);
       setHoveredDropZone(null);
@@ -640,21 +652,6 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
     setDragging(null);
     setHoveredDropZone(null);
   }, [dragging, hoveredDropZone, handleMoveSticker, stopAutoScroll]);
-
-  // Board-level pan gesture
-  const boardPan = Gesture.Pan()
-    .enabled(dragging !== null)
-    .onUpdate((e) => {
-      runOnJS(handleDragMove)(e.absoluteX, e.absoluteY);
-    })
-    .onEnd((e) => {
-      runOnJS(handleDragEnd)(e.absoluteX);
-    })
-    .onFinalize(() => {
-      runOnJS(stopAutoScroll)();
-      runOnJS(setDragging)(null);
-      runOnJS(setHoveredDropZone)(null);
-    });
 
   // ─── Zoom ───────────────────────────────────────────────────────────────────
 
@@ -705,451 +702,293 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
         )}
 
         {/* Board */}
-        <GestureDetector gesture={boardPan}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            scrollEnabled={!dragging}
-            contentContainerStyle={{ paddingHorizontal: 8, paddingBottom: 8 }}
-            style={{ flex: 1 }}
-            onLayout={(e) => {
-              boardOffsetX.current = e.nativeEvent.layout.x;
-            }}
-            ref={scrollViewRef}
-          >
-            <View style={{ flexDirection: "row", gap: 10, transform: [{ scale }] }}>
-              {data.columns.map((column, colIndex) => (
-                <View
-                  key={column.id}
-                  onLayout={(e) => {
-                    const { x, y, width, height } = e.nativeEvent.layout;
-                    const existing = columnLayouts.current.findIndex((l) => l.id === column.id);
-                    const entry = { id: column.id, x, y, width, height };
-                    if (existing >= 0) {
-                      columnLayouts.current[existing] = entry;
-                    } else {
-                      columnLayouts.current.push(entry);
-                    }
-                  }}
-                  style={{
-                    width: COLUMN_WIDTH,
-                    backgroundColor: colors.surface,
-                    borderRadius: 14,
-                    borderWidth: 1,
-                    borderColor: colors.border,
-                    overflow: "hidden",
-                    flex: 1,
-                    minHeight: 300,
-                  }}
-                >
-                  {/* Column header */}
-                  <View style={{
-                    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-                    paddingHorizontal: 10, paddingVertical: 8,
-                    borderBottomWidth: 1, borderBottomColor: colors.border,
-                    backgroundColor: `${colors.primary}15`,
-                  }}>
-                    <Text style={{ fontSize: 14, fontWeight: "800", color: colors.foreground, flex: 1 }} numberOfLines={1}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          scrollEnabled={!dragging}
+          contentContainerStyle={{ paddingHorizontal: 8, paddingBottom: 8 }}
+          style={{ flex: 1 } as any}
+          onLayout={(e) => {
+            boardOffsetX.current = e.nativeEvent.layout.x;
+          }}
+          ref={scrollViewRef}
+        >
+          <View style={{ flexDirection: "row", gap: 10, transform: [{ scale }] }}>
+            {data.columns.map((column, colIndex) => (
+              <View
+                key={column.id as any}
+                onLayout={(e) => {
+                  const { x, y, width, height } = e.nativeEvent.layout;
+                  const existing = columnLayouts.current.findIndex((l) => l.id === column.id);
+                  const entry = { id: column.id, x, y, width, height };
+                  if (existing >= 0) {
+                    columnLayouts.current[existing] = entry;
+                  } else {
+                    columnLayouts.current.push(entry);
+                  }
+                }}
+                style={{
+                  width: COLUMN_WIDTH,
+                  backgroundColor: colors.surface,
+                  borderRadius: 14,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  overflow: "hidden",
+                  flex: 1,
+                  minHeight: 300,
+                }}
+              >
+                {/* Column header */}
+                <View style={{
+                  flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+                  paddingHorizontal: 10, paddingVertical: 8,
+                  borderBottomWidth: 1, borderBottomColor: colors.border,
+                  backgroundColor: `${colors.primary}15`,
+                }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 13, fontWeight: "700", color: colors.foreground }}>
                       {column.title}
                     </Text>
-                    <View style={{ flexDirection: "row", gap: 6, alignItems: "center" }}>
-                      <Text style={{ fontSize: 11, color: colors.muted, fontWeight: "600", backgroundColor: `${colors.primary}20`, paddingHorizontal: 6, paddingVertical: 1, borderRadius: 8 }}>
-                        {column.stickers.length}
-                      </Text>
-                      <Pressable
-                        onPress={() => { setRenamingColumn({ id: column.id, title: column.title }); setRenameText(column.title); }}
-                        style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1, padding: 2 }]}
-                      >
-                        <Text style={{ fontSize: 13 }}>✏️</Text>
-                      </Pressable>
-                      <Pressable
-                        onPress={() => handleDeleteColumn(column.id)}
-                        style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1, padding: 2 }]}
-                      >
-                        <Text style={{ fontSize: 13 }}>🗑</Text>
-                      </Pressable>
-                    </View>
+                    <Text style={{ fontSize: 11, color: colors.muted }}>
+                      {column.stickers.length} {isRu ? "стикеров" : "stickers"}
+                    </Text>
                   </View>
+                  <View style={{ flexDirection: "row", gap: 6 }}>
+                    <Pressable
+                      onPress={() => {
+                        setRenamingColumn({ id: column.id, title: column.title });
+                        setRenameText(column.title);
+                      }}
+                      style={({ pressed }) => [{ opacity: pressed ? 0.5 : 0.7 }]}
+                    >
+                      <Text style={{ fontSize: 14 }}>✏️</Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => handleDeleteColumn(column.id)}
+                      style={({ pressed }) => [{ opacity: pressed ? 0.5 : 0.7 }]}
+                    >
+                      <Text style={{ fontSize: 14 }}>🗑️</Text>
+                    </Pressable>
+                  </View>
+                </View>
 
-                  {/* Stickers with drop zones */}
-                  <ScrollView
-                    style={{ flex: 1, paddingHorizontal: 6, paddingTop: 6 }}
-                    showsVerticalScrollIndicator={false}
-                    scrollEnabled={!dragging}
-                  >
-                    {column.stickers.length === 0 ? (
-                      <View>
+                {/* Stickers */}
+                <ScrollView style={{ flex: 1, paddingHorizontal: 8, paddingVertical: 8 }} scrollEnabled={!dragging}>
+                  {column.stickers.map((sticker, stickerIndex) => (
+                    <View key={sticker.id as any}>
+                      {dragging && hoveredDropZone?.columnId === column.id && hoveredDropZone?.position === stickerIndex && (
                         <DropZoneIndicator colors={colors} isRu={isRu} />
-                        <Text style={{ color: colors.muted, fontSize: 12, fontStyle: "italic", textAlign: "center", paddingVertical: 12 }}>
-                          {t.matrix.emptyColumn}
-                        </Text>
-                      </View>
-                    ) : (
-                      <>
-                        {/* Drop zone before first sticker */}
-                        {dragging && hoveredDropZone?.columnId === column.id && hoveredDropZone?.position === 0 && (
-                          <DropZoneIndicator colors={colors} isRu={isRu} />
-                        )}
-
-                        {column.stickers.map((sticker, stickerIndex) => (
-                          <View key={sticker.id}>
-                            <DraggableSticker
-                              sticker={sticker}
-                              columnId={column.id}
-                              colIndex={colIndex}
-                              stickerIndex={stickerIndex}
-                              totalInCol={column.stickers.length}
-                              totalCols={data.columns.length}
-                              isDragging={dragging?.sticker.id === sticker.id}
-                              colors={colors}
-                              onPress={() => setEditingSticker({ columnId: column.id, sticker })}
-                              onDragStart={handleDragStart}
-                              onMoveLeft={() => colIndex > 0 && handleMoveArrow(column.id, stickerIndex, sticker, "left")}
-                              onMoveRight={() => colIndex < data.columns.length - 1 && handleMoveArrow(column.id, stickerIndex, sticker, "right")}
-                              onMoveUp={() => stickerIndex > 0 && handleSwapVertical(column.id, sticker.id, "up")}
-                              onMoveDown={() => stickerIndex < column.stickers.length - 1 && handleSwapVertical(column.id, sticker.id, "down")}
-                            />
-
-                            {/* Drop zone after this sticker */}
-                            {dragging && hoveredDropZone?.columnId === column.id && hoveredDropZone?.position === stickerIndex + 1 && (
-                              <DropZoneIndicator colors={colors} isRu={isRu} />
-                            )}
-                          </View>
-                        ))}
-                      </>
-                    )}
-                    <View style={{ height: 6 }} />
-                  </ScrollView>
-
-                  {/* Add sticker button */}
+                      )}
+                      <DraggableSticker
+                        sticker={sticker}
+                        columnId={column.id}
+                        colIndex={colIndex}
+                        stickerIndex={stickerIndex}
+                        totalInCol={column.stickers.length}
+                        totalCols={data.columns.length}
+                        isDragging={dragging?.sticker.id === sticker.id}
+                        onPress={() => setEditingSticker({ columnId: column.id, sticker })}
+                        onDragStart={handleDragStart}
+                        onDragMove={handleDragMove}
+                        onDragEnd={handleDragEnd}
+                        onMoveLeft={() => handleMoveArrow(column.id, stickerIndex, sticker, "left")}
+                        onMoveRight={() => handleMoveArrow(column.id, stickerIndex, sticker, "right")}
+                        onMoveUp={() => handleSwapVertical(column.id, sticker.id, "up")}
+                        onMoveDown={() => handleSwapVertical(column.id, sticker.id, "down")}
+                        colors={colors}
+                      />
+                    </View>
+                  ))}
+                  {dragging && hoveredDropZone?.columnId === column.id && hoveredDropZone?.position === column.stickers.length && (
+                    <DropZoneIndicator colors={colors} isRu={isRu} />
+                  )}
                   <Pressable
-                    onPress={() => { setAddStickerColumnId(column.id); setShowAddSticker(true); }}
+                    onPress={() => {
+                      setAddStickerColumnId(column.id);
+                      setShowAddSticker(true);
+                    }}
                     style={({ pressed }) => [{
-                      flexDirection: "row", alignItems: "center", justifyContent: "center",
-                      paddingVertical: 10, borderTopWidth: 1, borderTopColor: colors.border,
-                      backgroundColor: `${colors.primary}15`,
+                      marginTop: 8, paddingVertical: 10, borderWidth: 1, borderStyle: "dashed",
+                      borderColor: colors.border, borderRadius: 4, alignItems: "center",
                       opacity: pressed ? 0.6 : 1,
                     }]}
                   >
-                    <Text style={{ fontSize: 14, color: colors.primary, fontWeight: "800" }}>
-                      + {t.matrix.newSticker}
-                    </Text>
+                    <Text style={{ fontSize: 12, color: colors.muted, fontWeight: "600" }}>+ {isRu ? "Добавить" : "Add"}</Text>
                   </Pressable>
-                </View>
-              ))}
-            </View>
-          </ScrollView>
-        </GestureDetector>
-
-        {/* Floating drag ghost */}
-        {dragging && (
-          <View
-            pointerEvents="none"
-            style={{
-              position: "absolute",
-              left: dragX - 50,
-              top: dragY - 30,
-              width: 100,
-              zIndex: 9999,
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 12 },
-              shadowOpacity: 0.4,
-              shadowRadius: 16,
-              elevation: 25,
-              transform: [{ rotate: "-5deg" }, { scale: 1.15 }],
-            }}
-          >
-            <View style={{
-              backgroundColor: dragging.sticker.bgColor,
-              borderRadius: 4, padding: 8,
-            }}>
-              <View style={{
-                position: "absolute", top: -3, left: "50%", marginLeft: -5,
-                width: 10, height: 10, borderRadius: 5,
-                backgroundColor: "#E53935", borderWidth: 1.5, borderColor: "#B71C1C",
-              }} />
-              <Text style={{
-                color: dragging.sticker.textColor, fontSize: 12, lineHeight: 16,
-                fontFamily: Platform.OS === "ios" ? "Noteworthy" : undefined,
-              }} numberOfLines={3}>
-                {dragging.sticker.text}
-              </Text>
-            </View>
+                </ScrollView>
+              </View>
+            ))}
           </View>
-        )}
+        </ScrollView>
 
+        {/* Modals */}
         {/* Add Sticker Modal */}
-        <Modal visible={showAddSticker} transparent animationType="slide" onRequestClose={() => setShowAddSticker(false)}>
-          <Pressable onPress={() => setShowAddSticker(false)} style={styles.modalOverlay}>
-            <Pressable onPress={() => {}} style={[styles.modalContent, { backgroundColor: colors.surface }]}>
-              <Text style={[styles.modalTitle, { color: colors.foreground }]}>{t.matrix.addSticker}</Text>
-
+        <Modal visible={showAddSticker} transparent animationType="fade">
+          <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", alignItems: "center" }}>
+            <View style={{ backgroundColor: colors.background, borderRadius: 12, padding: 16, width: "85%", maxWidth: 400 }}>
+              <Text style={{ fontSize: 16, fontWeight: "700", color: colors.foreground, marginBottom: 12 }}>
+                {isRu ? "Добавить стикер" : "Add Sticker"}
+              </Text>
               <TextInput
+                placeholder={isRu ? "Текст стикера" : "Sticker text"}
                 value={newStickerText}
                 onChangeText={setNewStickerText}
-                placeholder={isRu ? "Текст стикера..." : "Sticker text..."}
-                placeholderTextColor={colors.muted}
-                multiline
-                autoFocus
-                returnKeyType="done"
-                onSubmitEditing={handleAddSticker}
                 style={{
-                  backgroundColor: newStickerBg, color: newStickerTextColor,
-                  borderRadius: 8, padding: 12, fontSize: 15,
-                  minHeight: 80, textAlignVertical: "top", marginBottom: 12,
+                  borderWidth: 1, borderColor: colors.border, borderRadius: 8, padding: 10,
+                  marginBottom: 12, color: colors.foreground, backgroundColor: colors.surface,
                 }}
+                placeholderTextColor={colors.muted}
               />
-
-              <View style={{ flexDirection: "row", gap: 12, marginBottom: 12 }}>
+              <View style={{ flexDirection: "row", gap: 8, marginBottom: 12 }}>
                 <Pressable
-                  onPress={() => { setShowBgPicker(!showBgPicker); setShowTextPicker(false); }}
-                  style={({ pressed }) => [{ flexDirection: "row", alignItems: "center", gap: 6, opacity: pressed ? 0.7 : 1 }]}
+                  onPress={() => setShowBgPicker(!showBgPicker)}
+                  style={{ flex: 1, backgroundColor: newStickerBg, borderRadius: 8, paddingVertical: 12, alignItems: "center" }}
                 >
-                  <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: newStickerBg, borderWidth: 2, borderColor: colors.border }} />
-                  <Text style={{ fontSize: 12, color: colors.muted }}>{t.matrix.stickerColor}</Text>
+                  <Text style={{ fontSize: 12, fontWeight: "600" }}>{isRu ? "Фон" : "BG"}</Text>
                 </Pressable>
                 <Pressable
-                  onPress={() => { setShowTextPicker(!showTextPicker); setShowBgPicker(false); }}
-                  style={({ pressed }) => [{ flexDirection: "row", alignItems: "center", gap: 6, opacity: pressed ? 0.7 : 1 }]}
+                  onPress={() => setShowTextPicker(!showTextPicker)}
+                  style={{ flex: 1, backgroundColor: newStickerTextColor, borderRadius: 8, paddingVertical: 12, alignItems: "center" }}
                 >
-                  <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: newStickerTextColor, borderWidth: 2, borderColor: colors.border }} />
-                  <Text style={{ fontSize: 12, color: colors.muted }}>{t.matrix.textColor}</Text>
+                  <Text style={{ fontSize: 12, fontWeight: "600", color: newStickerBg }}>{isRu ? "Текст" : "Text"}</Text>
                 </Pressable>
               </View>
-
               {showBgPicker && (
                 <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
-                  {STICKER_COLORS.map((c) => (
+                  {STICKER_COLORS.map((color) => (
                     <Pressable
-                      key={c}
-                      onPress={() => { setNewStickerBg(c); setShowBgPicker(false); }}
-                      style={{
-                        width: 36, height: 36, borderRadius: 18, backgroundColor: c,
-                        borderWidth: newStickerBg === c ? 3 : 1,
-                        borderColor: newStickerBg === c ? colors.primary : colors.border,
-                      }}
+                      key={color}
+                      onPress={() => { setNewStickerBg(color); setShowBgPicker(false); }}
+                      style={{ width: "23%", aspectRatio: 1, backgroundColor: color, borderRadius: 8, borderWidth: newStickerBg === color ? 3 : 0, borderColor: colors.primary }}
                     />
                   ))}
                 </View>
               )}
-
               {showTextPicker && (
                 <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
-                  {TEXT_COLORS.map((c) => (
+                  {TEXT_COLORS.map((color) => (
                     <Pressable
-                      key={c}
-                      onPress={() => { setNewStickerTextColor(c); setShowTextPicker(false); }}
-                      style={{
-                        width: 36, height: 36, borderRadius: 18, backgroundColor: c,
-                        borderWidth: newStickerTextColor === c ? 3 : 1,
-                        borderColor: newStickerTextColor === c ? colors.primary : colors.border,
-                      }}
+                      key={color}
+                      onPress={() => { setNewStickerTextColor(color); setShowTextPicker(false); }}
+                      style={{ width: "23%", aspectRatio: 1, backgroundColor: color, borderRadius: 8, borderWidth: newStickerTextColor === color ? 3 : 0, borderColor: colors.primary }}
                     />
                   ))}
                 </View>
               )}
-
-              <View style={{ flexDirection: "row", gap: 10 }}>
+              <View style={{ flexDirection: "row", gap: 8 }}>
                 <Pressable
-                  onPress={() => { setShowAddSticker(false); setShowBgPicker(false); setShowTextPicker(false); }}
-                  style={({ pressed }) => [styles.modalBtn, { backgroundColor: colors.border, opacity: pressed ? 0.7 : 1 }]}
+                  onPress={() => setShowAddSticker(false)}
+                  style={{ flex: 1, backgroundColor: colors.surface, borderRadius: 8, paddingVertical: 10, alignItems: "center" }}
                 >
-                  <Text style={{ color: colors.foreground, fontWeight: "600" }}>{t.common.cancel}</Text>
+                  <Text style={{ color: colors.foreground, fontWeight: "600" }}>{isRu ? "Отмена" : "Cancel"}</Text>
                 </Pressable>
                 <Pressable
                   onPress={handleAddSticker}
-                  style={({ pressed }) => [styles.modalBtn, { backgroundColor: colors.primary, flex: 1, opacity: pressed ? 0.7 : 1 }]}
+                  style={{ flex: 1, backgroundColor: colors.primary, borderRadius: 8, paddingVertical: 10, alignItems: "center" }}
                 >
-                  <Text style={{ color: "#FFF", fontWeight: "700" }}>{t.common.add}</Text>
+                  <Text style={{ color: "#FFF", fontWeight: "600" }}>{isRu ? "Добавить" : "Add"}</Text>
                 </Pressable>
               </View>
-            </Pressable>
-          </Pressable>
+            </View>
+          </View>
         </Modal>
 
         {/* Add Column Modal */}
-        <Modal visible={showAddColumn} transparent animationType="fade" onRequestClose={() => setShowAddColumn(false)}>
-          <Pressable onPress={() => setShowAddColumn(false)} style={styles.modalOverlay}>
-            <Pressable onPress={() => {}} style={[styles.modalContent, { backgroundColor: colors.surface }]}>
-              <Text style={[styles.modalTitle, { color: colors.foreground }]}>{t.matrix.addColumn}</Text>
+        <Modal visible={showAddColumn} transparent animationType="fade">
+          <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", alignItems: "center" }}>
+            <View style={{ backgroundColor: colors.background, borderRadius: 12, padding: 16, width: "85%", maxWidth: 400 }}>
+              <Text style={{ fontSize: 16, fontWeight: "700", color: colors.foreground, marginBottom: 12 }}>
+                {isRu ? "Добавить столбец" : "Add Column"}
+              </Text>
               <TextInput
+                placeholder={isRu ? "Название столбца" : "Column name"}
                 value={newColumnName}
                 onChangeText={setNewColumnName}
-                placeholder={t.matrix.columnName}
-                placeholderTextColor={colors.muted}
-                autoFocus
-                returnKeyType="done"
-                onSubmitEditing={handleAddColumn}
                 style={{
-                  backgroundColor: colors.background, color: colors.foreground,
-                  borderRadius: 10, padding: 12, fontSize: 15,
-                  borderWidth: 1, borderColor: colors.border, marginBottom: 16,
+                  borderWidth: 1, borderColor: colors.border, borderRadius: 8, padding: 10,
+                  marginBottom: 12, color: colors.foreground, backgroundColor: colors.surface,
                 }}
+                placeholderTextColor={colors.muted}
               />
-              <View style={{ flexDirection: "row", gap: 10 }}>
+              <View style={{ flexDirection: "row", gap: 8 }}>
                 <Pressable
                   onPress={() => setShowAddColumn(false)}
-                  style={({ pressed }) => [styles.modalBtn, { backgroundColor: colors.border, opacity: pressed ? 0.7 : 1 }]}
+                  style={{ flex: 1, backgroundColor: colors.surface, borderRadius: 8, paddingVertical: 10, alignItems: "center" }}
                 >
-                  <Text style={{ color: colors.foreground, fontWeight: "600" }}>{t.common.cancel}</Text>
+                  <Text style={{ color: colors.foreground, fontWeight: "600" }}>{isRu ? "Отмена" : "Cancel"}</Text>
                 </Pressable>
                 <Pressable
                   onPress={handleAddColumn}
-                  style={({ pressed }) => [styles.modalBtn, { backgroundColor: colors.primary, flex: 1, opacity: pressed ? 0.7 : 1 }]}
+                  style={{ flex: 1, backgroundColor: colors.primary, borderRadius: 8, paddingVertical: 10, alignItems: "center" }}
                 >
-                  <Text style={{ color: "#FFF", fontWeight: "700" }}>{t.common.add}</Text>
+                  <Text style={{ color: "#FFF", fontWeight: "600" }}>{isRu ? "Добавить" : "Add"}</Text>
                 </Pressable>
               </View>
-            </Pressable>
-          </Pressable>
-        </Modal>
-
-        {/* Edit/Delete Sticker Modal */}
-        <Modal visible={!!editingSticker} transparent animationType="fade" onRequestClose={() => setEditingSticker(null)}>
-          {editingSticker && (
-            <Pressable onPress={() => setEditingSticker(null)} style={styles.modalOverlay}>
-              <Pressable onPress={() => {}} style={[styles.modalContent, { backgroundColor: colors.surface }]}>
-                <View style={{
-                  backgroundColor: editingSticker.sticker.bgColor,
-                  borderRadius: 8, padding: 14, marginBottom: 16, minHeight: 60,
-                }}>
-                  <Text style={{ color: editingSticker.sticker.textColor, fontSize: 14, lineHeight: 20 }}>
-                    {editingSticker.sticker.text}
-                  </Text>
-                </View>
-
-                <View style={{ flexDirection: "row", gap: 10 }}>
-                  <Pressable
-                    onPress={() => {
-                      setMovingSticker(editingSticker);
-                      setEditingSticker(null);
-                    }}
-                    style={({ pressed }) => [styles.modalBtn, { backgroundColor: "#3B82F6", opacity: pressed ? 0.7 : 1 }]}
-                  >
-                    <Text style={{ color: "#FFF", fontWeight: "600" }}>📋 {isRu ? "Переместить" : "Move"}</Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() => {
-                      handleDeleteSticker(editingSticker.columnId, editingSticker.sticker.id);
-                      setEditingSticker(null);
-                    }}
-                    style={({ pressed }) => [styles.modalBtn, { backgroundColor: "#EF4444", opacity: pressed ? 0.7 : 1 }]}
-                  >
-                    <Text style={{ color: "#FFF", fontWeight: "600" }}>🗑 {t.common.delete}</Text>
-                  </Pressable>
-                </View>
-
-                <Pressable
-                  onPress={() => setEditingSticker(null)}
-                  style={({ pressed }) => [styles.modalBtn, { backgroundColor: colors.border, marginTop: 8, opacity: pressed ? 0.7 : 1 }]}
-                >
-                  <Text style={{ color: colors.foreground, fontWeight: "600" }}>{t.common.close}</Text>
-                </Pressable>
-              </Pressable>
-            </Pressable>
-          )}
+            </View>
+          </View>
         </Modal>
 
         {/* Rename Column Modal */}
-        <Modal visible={!!renamingColumn} transparent animationType="fade" onRequestClose={() => setRenamingColumn(null)}>
-          <Pressable onPress={() => setRenamingColumn(null)} style={styles.modalOverlay}>
-            <Pressable onPress={() => {}} style={[styles.modalContent, { backgroundColor: colors.surface }]}>
-              <Text style={[styles.modalTitle, { color: colors.foreground }]}>
+        <Modal visible={renamingColumn !== null} transparent animationType="fade">
+          <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", alignItems: "center" }}>
+            <View style={{ backgroundColor: colors.background, borderRadius: 12, padding: 16, width: "85%", maxWidth: 400 }}>
+              <Text style={{ fontSize: 16, fontWeight: "700", color: colors.foreground, marginBottom: 12 }}>
                 {isRu ? "Переименовать столбец" : "Rename Column"}
               </Text>
               <TextInput
+                placeholder={isRu ? "Новое название" : "New name"}
                 value={renameText}
                 onChangeText={setRenameText}
-                placeholder={isRu ? "Новое название..." : "New name..."}
-                placeholderTextColor={colors.muted}
-                autoFocus
-                returnKeyType="done"
-                onSubmitEditing={handleRenameColumn}
                 style={{
-                  backgroundColor: colors.background, color: colors.foreground,
-                  borderRadius: 10, padding: 12, fontSize: 15,
-                  borderWidth: 1, borderColor: colors.border, marginBottom: 16,
+                  borderWidth: 1, borderColor: colors.border, borderRadius: 8, padding: 10,
+                  marginBottom: 12, color: colors.foreground, backgroundColor: colors.surface,
                 }}
+                placeholderTextColor={colors.muted}
               />
-              <View style={{ flexDirection: "row", gap: 10 }}>
+              <View style={{ flexDirection: "row", gap: 8 }}>
                 <Pressable
                   onPress={() => setRenamingColumn(null)}
-                  style={({ pressed }) => [styles.modalBtn, { backgroundColor: colors.border, opacity: pressed ? 0.7 : 1 }]}
+                  style={{ flex: 1, backgroundColor: colors.surface, borderRadius: 8, paddingVertical: 10, alignItems: "center" }}
                 >
-                  <Text style={{ color: colors.foreground, fontWeight: "600" }}>{t.common.cancel}</Text>
+                  <Text style={{ color: colors.foreground, fontWeight: "600" }}>{isRu ? "Отмена" : "Cancel"}</Text>
                 </Pressable>
                 <Pressable
                   onPress={handleRenameColumn}
-                  style={({ pressed }) => [styles.modalBtn, { backgroundColor: colors.primary, flex: 1, opacity: pressed ? 0.7 : 1 }]}
+                  style={{ flex: 1, backgroundColor: colors.primary, borderRadius: 8, paddingVertical: 10, alignItems: "center" }}
                 >
-                  <Text style={{ color: "#FFF", fontWeight: "700" }}>{t.common.save}</Text>
+                  <Text style={{ color: "#FFF", fontWeight: "600" }}>{isRu ? "Переименовать" : "Rename"}</Text>
                 </Pressable>
               </View>
-            </Pressable>
-          </Pressable>
+            </View>
+          </View>
         </Modal>
 
-        {/* Move Sticker Modal */}
-        <Modal visible={!!movingSticker} transparent animationType="fade" onRequestClose={() => setMovingSticker(null)}>
-          {movingSticker && (
-            <Pressable onPress={() => setMovingSticker(null)} style={styles.modalOverlay}>
-              <Pressable onPress={() => {}} style={[styles.modalContent, { backgroundColor: colors.surface }]}>
-                <View style={{ alignItems: "center", marginBottom: 12 }}>
-                  <View style={{
-                    backgroundColor: movingSticker.sticker.bgColor,
-                    borderRadius: 6, padding: 8, minWidth: 100, maxWidth: 200,
-                    shadowColor: "#000", shadowOffset: { width: 2, height: 3 },
-                    shadowOpacity: 0.2, shadowRadius: 4, elevation: 4,
-                    transform: [{ rotate: "-2deg" }],
-                  }}>
-                    <Text style={{ color: movingSticker.sticker.textColor, fontSize: 12, textAlign: "center" }} numberOfLines={2}>
-                      {movingSticker.sticker.text}
-                    </Text>
-                  </View>
-                </View>
-                <Text style={{ fontSize: 14, fontWeight: "700", color: colors.muted, textAlign: "center", marginBottom: 10 }}>
-                  {isRu ? "Переместить в столбец:" : "Move to column:"}
-                </Text>
-                <View style={{ gap: 6 }}>
-                  {data.columns.map((col) => {
-                    const isCurrent = col.id === movingSticker.columnId;
-                    return (
-                      <Pressable
-                        key={col.id}
-                        onPress={() => {
-                          if (!isCurrent) {
-                            handleMoveSticker(movingSticker.columnId, 0, movingSticker.sticker, col.id);
-                            setMovingSticker(null);
-                          }
-                        }}
-                        disabled={isCurrent}
-                        style={({ pressed }) => [{
-                          backgroundColor: isCurrent ? `${colors.border}40` : pressed ? `${colors.primary}30` : colors.background,
-                          borderRadius: 12, padding: 12,
-                          borderWidth: isCurrent ? 2 : 1.5,
-                          borderColor: isCurrent ? colors.muted : colors.primary,
-                          borderStyle: isCurrent ? "solid" : "dashed",
-                          flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-                          opacity: isCurrent ? 0.4 : 1,
-                        }]}
-                      >
-                        <Text style={{ color: colors.foreground, fontSize: 14, fontWeight: "700" }}>{col.title}</Text>
-                        <Text style={{ color: colors.muted, fontSize: 12 }}>
-                          {isCurrent ? (isRu ? "текущий" : "current") : `${col.stickers.length} ✉`}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-                <Pressable
-                  onPress={() => setMovingSticker(null)}
-                  style={({ pressed }) => [styles.modalBtn, { backgroundColor: colors.border, marginTop: 10, opacity: pressed ? 0.7 : 1 }]}
-                >
-                  <Text style={{ color: colors.foreground, fontWeight: "600" }}>{t.common.cancel}</Text>
-                </Pressable>
+        {/* Edit Sticker Modal */}
+        <Modal visible={editingSticker !== null} transparent animationType="fade">
+          <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", alignItems: "center" }}>
+            <View style={{ backgroundColor: colors.background, borderRadius: 12, padding: 16, width: "85%", maxWidth: 400 }}>
+              <Text style={{ fontSize: 16, fontWeight: "700", color: colors.foreground, marginBottom: 12 }}>
+                {isRu ? "Редактировать стикер" : "Edit Sticker"}
+              </Text>
+              <Pressable
+                onPress={() => {
+                  if (editingSticker) {
+                    handleDeleteSticker(editingSticker.columnId, editingSticker.sticker.id);
+                    setEditingSticker(null);
+                  }
+                }}
+                style={{ backgroundColor: "#EF4444", borderRadius: 8, paddingVertical: 10, alignItems: "center", marginBottom: 8 }}
+              >
+                <Text style={{ color: "#FFF", fontWeight: "600" }}>{isRu ? "Удалить" : "Delete"}</Text>
               </Pressable>
-            </Pressable>
-          )}
+              <Pressable
+                onPress={() => setEditingSticker(null)}
+                style={{ backgroundColor: colors.surface, borderRadius: 8, paddingVertical: 10, alignItems: "center" }}
+              >
+                <Text style={{ color: colors.foreground, fontWeight: "600" }}>{isRu ? "Закрыть" : "Close"}</Text>
+              </Pressable>
+            </View>
+          </View>
         </Modal>
       </View>
     </GestureHandlerRootView>
@@ -1157,35 +996,7 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
 });
 
 const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContent: {
-    width: "88%",
-    maxWidth: 380,
-    borderRadius: 20,
-    padding: 20,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "800",
-    marginBottom: 16,
-    textAlign: "center",
-  },
-  modalBtn: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-    alignItems: "center",
-  },
   zoomBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: "center",
-    alignItems: "center",
+    width: 32, height: 32, borderRadius: 8, justifyContent: "center", alignItems: "center",
   },
 });
