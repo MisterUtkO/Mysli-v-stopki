@@ -826,3 +826,72 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Remove requirement to re-press after long-press on native platforms
 - [x] Maintain tap functionality for editing stickers (only if not dragging)
 - [x] All 115 tests passing, 0 TypeScript errors
+
+
+## Phase 71: Fix Kanban Drag-and-Drop for All Columns
+
+- [x] Fix kanban-board.tsx to allow dragging stickers between ALL columns (not just first two)
+- [x] Removed 3-column limit from COLUMN_WIDTH calculation
+- [x] Enhanced getDropZonesAtX to check ALL columns with tolerance zones
+- [x] Added fallback to closest column if no zones found
+- [x] Test drag-and-drop with custom columns
+- [x] Verify drop zones work for all columns
+- [x] All 115 tests passing
+
+## Phase 72: Fix AMOLED Theme Unlock UI
+
+- [x] Make AMOLED unlock button visible and clear in Settings
+- [x] Implement tap counter (10 taps to unlock)
+- [x] Show progress indicator (e.g., "3/10 taps")
+- [x] Add haptic feedback on each tap
+- [x] Show success message when unlocked
+- [x] All 115 tests passing
+
+## Phase 76: Fix Sounds & Vibration Layout and Add Demo
+
+- [x] Fixed layout overlapping issues with improved spacing
+- [x] Changed from Tailwind to inline styles for better mobile layout control
+- [x] Added demo functionality - plays haptic feedback when changing settings
+- [x] Vibration patterns play different sequences (short, long, multiple)
+- [x] Vibration intensity plays different impact levels (light, medium, heavy)
+- [x] Sound type selection triggers demo notification
+- [x] All 115 tests passing
+
+## Phase 75: Update Patron Achievement
+
+- [x] Updated Patron achievement title to "Благодетель" (Benefactor)
+- [x] Updated description to "Support the developer - copy the donation card details"
+- [x] Improved clarity for users about the achievement purpose
+- [x] All 115 tests passing
+
+## Phase 74: File/Photo Preview for Tasks
+
+- [ ] Create file preview component
+- [ ] Add gallery view for attached photos
+- [ ] Implement file download functionality
+- [ ] Add file type icons
+- [ ] Support multiple file formats (images, PDFs, documents)
+
+## Phase 73: Achievement Emojis Integration
+
+- [ ] Design 8-10 new achievements with unique emojis
+- [ ] Create achievement unlock system that adds emojis to task picker
+- [ ] Reduce initial emoji list (remove duplicates/unused ones)
+- [ ] Update emoji picker to show unlocked achievement emojis
+- [ ] Add visual indicator (🔓) for unlocked emojis
+
+## Phase 74: File/Photo Preview for Tasks
+
+- [ ] Create file preview component
+- [ ] Add gallery view for attached photos
+- [ ] Implement file download functionality
+- [ ] Add file type icons
+- [ ] Support multiple file formats (images, PDFs, documents)
+
+## Phase 77: Version Update & Final Report
+
+- [ ] Update version to 1.0.8.0
+- [ ] Write comprehensive changelog for all 6 improvements
+- [ ] Update About section with new features
+- [ ] Create final checkpoint
+- [ ] Write Russian language report

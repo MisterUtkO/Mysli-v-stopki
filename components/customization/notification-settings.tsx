@@ -1,15 +1,17 @@
-import React from 'react';
-import { View, Text, ScrollView, Pressable, Switch, Alert } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, ScrollView, Pressable, Switch, Alert, Platform } from 'react-native';
 import { useCustomization } from '@/lib/context/customization-context';
 import { useI18n } from '@/lib/context/i18n-context';
 import { ScreenContainer } from '@/components/screen-container';
 import { useColors } from '@/hooks/use-colors';
+import * as Haptics from 'expo-haptics';
 
 export function NotificationSettings() {
   const { notificationSettings, setNotificationSettings } = useCustomization();
   const { language } = useI18n();
   const isRu = language === 'ru';
   const colors = useColors();
+  const [demoPlaying, setDemoPlaying] = useState(false);
 
   const vibrationPatterns = [
     { value: 'short' as const, label: isRu ? 'Короткое' : 'Short', emoji: '📳' },
@@ -49,6 +51,7 @@ export function NotificationSettings() {
       ...notificationSettings,
       vibrationPattern: pattern,
     });
+    playDemoVibration(pattern, notificationSettings.vibrationIntensity);
   };
 
   const handleVibrationIntensityChange = (intensity: 'light' | 'medium' | 'heavy') => {
@@ -56,6 +59,7 @@ export function NotificationSettings() {
       ...notificationSettings,
       vibrationIntensity: intensity,
     });
+    playDemoVibration(notificationSettings.vibrationPattern, intensity);
   };
 
   const handleSoundTypeChange = (soundType: 'bell' | 'chime' | 'beep' | 'notification') => {
@@ -63,19 +67,60 @@ export function NotificationSettings() {
       ...notificationSettings,
       soundType,
     });
+    playDemoSound(soundType);
+  };
+
+  const playDemoSound = async (soundType: string) => {
+    if (Platform.OS !== 'web') {
+      setDemoPlaying(true);
+      try {
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } catch (e) {
+        console.error('Failed to play demo sound:', e);
+      }
+      setTimeout(() => setDemoPlaying(false), 500);
+    }
+  };
+
+  const playDemoVibration = async (pattern: string, intensity: string) => {
+    if (Platform.OS !== 'web') {
+      setDemoPlaying(true);
+      try {
+        if (intensity === 'light') {
+          await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        } else if (intensity === 'medium') {
+          await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        } else {
+          await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+        }
+        
+        if (pattern === 'long') {
+          await new Promise(r => setTimeout(r, 100));
+          await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        } else if (pattern === 'multiple') {
+          await new Promise(r => setTimeout(r, 100));
+          await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          await new Promise(r => setTimeout(r, 100));
+          await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        }
+      } catch (e) {
+        console.error('Failed to play demo vibration:', e);
+      }
+      setTimeout(() => setDemoPlaying(false), 500);
+    }
   };
 
   return (
     <ScreenContainer className="bg-background">
       <ScrollView contentContainerStyle={{ flexGrow: 1 }} className="p-4">
         <Text className="text-2xl font-bold text-foreground mb-6">
-          {isRu ? 'Уведомления' : 'Notifications'}
+          {isRu ? 'Звуки и вибрация' : 'Sounds & Vibration'}
         </Text>
 
         {/* Sound Settings */}
-        <View className="bg-surface rounded-lg p-4 mb-6 border border-border">
-          <View className="flex-row items-center justify-between mb-4">
-            <Text className="text-lg font-semibold text-foreground">
+        <View style={{ backgroundColor: colors.surface, borderRadius: 12, padding: 16, marginBottom: 24, borderWidth: 1, borderColor: colors.border }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <Text style={{ fontSize: 16, fontWeight: '600', color: colors.foreground }}>
               {isRu ? 'Звук' : 'Sound'}
             </Text>
             <Switch
@@ -86,23 +131,29 @@ export function NotificationSettings() {
           </View>
 
           {notificationSettings.soundEnabled && (
-            <View className="gap-2">
-              <Text className="text-sm text-muted mb-2">
+            <View style={{ gap: 12 }}>
+              <Text style={{ fontSize: 13, color: colors.muted }}>
                 {isRu ? 'Тип звука' : 'Sound Type'}
               </Text>
-              <View className="flex-row flex-wrap gap-2">
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'space-between' }}>
                 {soundTypes.map((sound) => (
                   <Pressable
                     key={sound.value}
                     onPress={() => handleSoundTypeChange(sound.value)}
-                    className={`flex-1 min-w-[45%] p-3 rounded-lg items-center justify-center border-2 ${
-                      notificationSettings.soundType === sound.value
-                        ? 'border-primary bg-primary/10'
-                        : 'border-border'
-                    }`}
+                    style={{
+                      flex: 1,
+                      minWidth: '22%',
+                      padding: 12,
+                      borderRadius: 8,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderWidth: 2,
+                      borderColor: notificationSettings.soundType === sound.value ? colors.primary : colors.border,
+                      backgroundColor: notificationSettings.soundType === sound.value ? `${colors.primary}20` : colors.surface,
+                    }}
                   >
-                    <Text className="text-2xl mb-1">{sound.emoji}</Text>
-                    <Text className="text-xs text-foreground text-center">{sound.label}</Text>
+                    <Text style={{ fontSize: 20, marginBottom: 4 }}>{sound.emoji}</Text>
+                    <Text style={{ fontSize: 11, color: colors.foreground, textAlign: 'center', fontWeight: '500' }}>{sound.label}</Text>
                   </Pressable>
                 ))}
               </View>
@@ -111,9 +162,9 @@ export function NotificationSettings() {
         </View>
 
         {/* Vibration Settings */}
-        <View className="bg-surface rounded-lg p-4 mb-6 border border-border">
-          <View className="flex-row items-center justify-between mb-4">
-            <Text className="text-lg font-semibold text-foreground">
+        <View style={{ backgroundColor: colors.surface, borderRadius: 12, padding: 16, marginBottom: 24, borderWidth: 1, borderColor: colors.border }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <Text style={{ fontSize: 16, fontWeight: '600', color: colors.foreground }}>
               {isRu ? 'Вибрация' : 'Vibration'}
             </Text>
             <Switch
@@ -124,25 +175,30 @@ export function NotificationSettings() {
           </View>
 
           {notificationSettings.vibrationEnabled && (
-            <View className="gap-4">
+            <View style={{ gap: 20 }}>
               {/* Vibration Pattern */}
               <View>
-                <Text className="text-sm text-muted mb-2">
+                <Text style={{ fontSize: 13, color: colors.muted, marginBottom: 12 }}>
                   {isRu ? 'Паттерн вибрации' : 'Vibration Pattern'}
                 </Text>
-                <View className="flex-row gap-2">
+                <View style={{ flexDirection: 'row', gap: 8, justifyContent: 'space-between' }}>
                   {vibrationPatterns.map((pattern) => (
                     <Pressable
                       key={pattern.value}
                       onPress={() => handleVibrationPatternChange(pattern.value)}
-                      className={`flex-1 p-3 rounded-lg items-center justify-center border-2 ${
-                        notificationSettings.vibrationPattern === pattern.value
-                          ? 'border-primary bg-primary/10'
-                          : 'border-border'
-                      }`}
+                      style={{
+                        flex: 1,
+                        padding: 12,
+                        borderRadius: 8,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderWidth: 2,
+                        borderColor: notificationSettings.vibrationPattern === pattern.value ? colors.primary : colors.border,
+                        backgroundColor: notificationSettings.vibrationPattern === pattern.value ? `${colors.primary}20` : colors.surface,
+                      }}
                     >
-                      <Text className="text-lg mb-1">{pattern.emoji}</Text>
-                      <Text className="text-xs text-foreground text-center">{pattern.label}</Text>
+                      <Text style={{ fontSize: 18, marginBottom: 4 }}>{pattern.emoji}</Text>
+                      <Text style={{ fontSize: 11, color: colors.foreground, textAlign: 'center', fontWeight: '500' }}>{pattern.label}</Text>
                     </Pressable>
                   ))}
                 </View>
@@ -150,22 +206,27 @@ export function NotificationSettings() {
 
               {/* Vibration Intensity */}
               <View>
-                <Text className="text-sm text-muted mb-2">
+                <Text style={{ fontSize: 13, color: colors.muted, marginBottom: 12 }}>
                   {isRu ? 'Интенсивность' : 'Intensity'}
                 </Text>
-                <View className="flex-row gap-2">
+                <View style={{ flexDirection: 'row', gap: 8, justifyContent: 'space-between' }}>
                   {vibrationIntensities.map((intensity) => (
                     <Pressable
                       key={intensity.value}
                       onPress={() => handleVibrationIntensityChange(intensity.value)}
-                      className={`flex-1 p-3 rounded-lg items-center justify-center border-2 ${
-                        notificationSettings.vibrationIntensity === intensity.value
-                          ? 'border-primary bg-primary/10'
-                          : 'border-border'
-                      }`}
+                      style={{
+                        flex: 1,
+                        padding: 12,
+                        borderRadius: 8,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderWidth: 2,
+                        borderColor: notificationSettings.vibrationIntensity === intensity.value ? colors.primary : colors.border,
+                        backgroundColor: notificationSettings.vibrationIntensity === intensity.value ? `${colors.primary}20` : colors.surface,
+                      }}
                     >
-                      <Text className="text-lg mb-1">{intensity.emoji}</Text>
-                      <Text className="text-xs text-foreground text-center">{intensity.label}</Text>
+                      <Text style={{ fontSize: 18, marginBottom: 4 }}>{intensity.emoji}</Text>
+                      <Text style={{ fontSize: 11, color: colors.foreground, textAlign: 'center', fontWeight: '500' }}>{intensity.label}</Text>
                     </Pressable>
                   ))}
                 </View>
@@ -175,11 +236,11 @@ export function NotificationSettings() {
         </View>
 
         {/* Info */}
-        <View className="bg-primary/10 rounded-lg p-4 border border-primary/30">
-          <Text className="text-sm text-foreground">
+        <View style={{ backgroundColor: `${colors.primary}15`, borderRadius: 12, padding: 16, borderWidth: 1, borderColor: `${colors.primary}30` }}>
+          <Text style={{ fontSize: 13, color: colors.foreground }}>
             {isRu
-              ? 'Эти настройки применяются ко всем уведомлениям приложения. Вы также можете настроить уведомления для каждой задачи отдельно.'
-              : 'These settings apply to all app notifications. You can also customize notifications for individual tasks.'}
+              ? 'Эти настройки применяются ко всем уведомлениям приложения. Выберите параметр, чтобы услышать демонстрацию.'
+              : 'These settings apply to all app notifications. Select an option to hear a demo.'}
           </Text>
         </View>
       </ScrollView>

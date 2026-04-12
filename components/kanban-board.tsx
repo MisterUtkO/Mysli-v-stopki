@@ -558,24 +558,17 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
     const relX = pageX - boardOffsetX.current;
     const zones: DropZone[] = [];
 
-    let closestLayout: ColumnLayout | null = null;
-    let minDistX = Infinity;
-
+    // Find ALL columns that could be drop targets (not just closest)
     for (const layout of columnLayouts.current) {
-      const colCenterX = layout.x + layout.width / 2;
-      const distX = Math.abs(relX - colCenterX);
-      if (distX < minDistX) {
-        minDistX = distX;
-        closestLayout = layout;
-      }
-    }
-
-    if (closestLayout) {
-      const col = data.columns.find((c) => c.id === closestLayout!.id);
-      if (col) {
+      const col = data.columns.find((c) => c.id === layout.id);
+      if (!col) continue;
+      
+      // Check if pageX is within this column's bounds (with some tolerance)
+      const tolerance = layout.width * 0.3; // 30% tolerance for easier targeting
+      if (relX >= layout.x - tolerance && relX <= layout.x + layout.width + tolerance) {
         for (let i = 0; i <= col.stickers.length; i++) {
           zones.push({
-            columnId: closestLayout.id,
+            columnId: layout.id,
             position: i,
             type: i === col.stickers.length ? "end" : "between",
           });
@@ -583,8 +576,36 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
       }
     }
 
+    // If no zones found, find closest column as fallback
+    if (zones.length === 0) {
+      let closestLayout: ColumnLayout | null = null;
+      let minDistX = Infinity;
+
+      for (const layout of columnLayouts.current) {
+        const colCenterX = layout.x + layout.width / 2;
+        const distX = Math.abs(relX - colCenterX);
+        if (distX < minDistX) {
+          minDistX = distX;
+          closestLayout = layout;
+        }
+      }
+
+      if (closestLayout) {
+        const col = data.columns.find((c) => c.id === closestLayout!.id);
+        if (col) {
+          for (let i = 0; i <= col.stickers.length; i++) {
+            zones.push({
+              columnId: closestLayout.id,
+              position: i,
+              type: i === col.stickers.length ? "end" : "between",
+            });
+          }
+        }
+      }
+    }
+
     return zones;
-  }, [data.columns]);
+  }, [data.columns])
 
   const getClosestDropZone = useCallback((pageX: number, pageY: number): DropZone | null => {
     const zones = getDropZonesAtX(pageX);
@@ -663,7 +684,7 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
   const zoomIn = () => setScale((s) => Math.min(s + 0.15, 2));
   const zoomOut = () => setScale((s) => Math.max(s - 0.15, 0.5));
 
-  const COLUMN_WIDTH = Math.max(180, (SCREEN_WIDTH - 60) / Math.min(data.columns.length, 3));
+  const COLUMN_WIDTH = Math.max(180, (SCREEN_WIDTH - 60) / Math.max(data.columns.length, 1));
 
   if (!loaded) return null;
 

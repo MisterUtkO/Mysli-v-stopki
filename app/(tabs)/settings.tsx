@@ -94,10 +94,23 @@ export default function SettingsScreen() {
 
   const handleThemeChange = async (theme: "light" | "dark" | "amoled" | "pastel" | "notebook") => {
     if (theme === "amoled" && !hasExplorerAchievement) {
-      Alert.alert(
-        isRu ? "Заблокировано" : "Locked",
-        isRu ? "Разблокируйте эту тему, выполнив достижение 'Упорный исследователь'" : "Unlock this theme by completing the 'Persistent Explorer' achievement"
-      );
+      const newCount = amoledTapCount + 1;
+      setAmoledTapCount(newCount);
+      
+      if (newCount >= 10) {
+        setColorScheme("amoled");
+        await updateSettings({ theme: "amoled" });
+        Alert.alert(
+          isRu ? "🖤 AMOLED разблокирована!" : "🖤 AMOLED Unlocked!",
+          isRu ? "Тема успешно разблокирована!" : "Theme successfully unlocked!"
+        );
+        setAmoledTapCount(0);
+      } else {
+        Alert.alert(
+          isRu ? "Разблокировка AMOLED" : "Unlock AMOLED",
+          isRu ? `Нажмите ещё ${10 - newCount} раз(а)` : `Tap ${10 - newCount} more time(s)`
+        );
+      }
       return;
     }
     setColorScheme(theme);
