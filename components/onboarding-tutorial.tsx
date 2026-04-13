@@ -243,16 +243,15 @@ function OnboardingTutorialModal({
         Without it, react-native-gesture-handler gestures are silently ignored
         because the gesture responder tree is not connected to the modal's root.
       */}
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: "rgba(0, 0, 0, 0.75)",
-            justifyContent: "center",
-            alignItems: "center",
-            paddingHorizontal: getAdaptiveValues().containerPaddingHorizontal,
-          }}
-        >
+      <GestureHandlerRootView
+        style={{
+          flex: 1,
+          backgroundColor: "rgba(0, 0, 0, 0.75)",
+          justifyContent: "center",
+          alignItems: "center",
+          paddingHorizontal: getAdaptiveValues().containerPaddingHorizontal,
+        }}
+      >
         <GestureDetector gesture={panGesture}>
           <Animated.View
             style={[
@@ -398,7 +397,6 @@ function OnboardingTutorialModal({
             </View>
           </Animated.View>
         </GestureDetector>
-        </View>
       </GestureHandlerRootView>
     </Modal>
   );
