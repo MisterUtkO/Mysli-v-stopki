@@ -37,7 +37,7 @@ const FEATURES: Feature[] = [
   },
   {
     emoji: "📌",
-    titleRu: "Канбан доска",
+    titleRu: "Канбан-доска",
     titleEn: "Kanban Board",
     descRu: "Визуализируйте рабочий процесс с помощью стикеров",
     descEn: "Visualize your workflow with sticky notes",
@@ -87,6 +87,23 @@ const FEATURES: Feature[] = [
 ];
 
 const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "1.0.9.2",
+    dateRu: "13 апреля 2026",
+    dateEn: "April 13, 2026",
+    changesRu: [
+      "📝 Исправлена орфография: офлайн, завершённые",
+      "🌐 Унифицированы переводы статусов (Не начато / Выполнено)",
+      "📌 Унифицировано название Канбан-доска во всех местах",
+      "✅ Исправлены ESLint-ошибки (незаэкранированные кавычки в JSX)",
+    ],
+    changesEn: [
+      "📝 Fixed spelling: offline, завершённые",
+      "🌐 Unified status translations (Not started / Completed)",
+      "📌 Unified Kanban board naming across all screens",
+      "✅ Fixed ESLint errors (unescaped quotes in JSX)",
+    ],
+  },
   {
     version: "1.0.9.1",
     dateRu: "13 апреля 2026",
@@ -230,11 +247,11 @@ const CHANGELOG: ChangelogEntry[] = [
     ],
   },
   {
-    version: "1.0.4.0",
+    version: "1.0.3.0",
     dateRu: "15 марта 2026",
     dateEn: "March 15, 2026",
     changesRu: [
-      "📌 Полная поддержка Канбан доски",
+      "📌 Полная поддержка Канбан-доски",
       "🎨 Новая цветовая схема",
       "📊 Добавлена статистика",
       "🔔 Улучшены уведомления",

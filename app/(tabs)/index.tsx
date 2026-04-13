@@ -142,9 +142,9 @@ export default function HomeScreen() {
 
   const getStatusLabel = (status: TaskStatus): string => {
     switch (status) {
-      case "not_started": return isRu ? "Начать" : "Start";
+      case "not_started": return isRu ? "Не начато" : "Not started";
       case "in_progress": return isRu ? "В процессе" : "In progress";
-      case "completed": return isRu ? "Сделано" : "Done";
+      case "completed": return isRu ? "Выполнено" : "Completed";
     }
   };
 

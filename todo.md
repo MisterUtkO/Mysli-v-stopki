@@ -932,3 +932,15 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Test auto-scroll on boards with many columns
 - [x] Update version to 1.0.9.1
 - [x] Add changelog entry for auto-scroll improvements
+
+## Phase 81: Audit Fixes
+- [x] Fix package.json version to 1.0.9.2
+- [x] Fix ESLint errors: unescaped quotes in privacy-policy.tsx (lines 23, 87)
+- [x] Fix ESLint errors: unescaped quotes in terms-of-service.tsx (lines 47, 112)
+- [x] Fix spelling: "оффлайн" → "офлайн" in translations.ts:543
+- [x] Fix ё: "завершен*" → "завершён*" in translations.ts:418,444,484,538
+- [x] Unify "Канбан-доска" naming across all files
+- [x] Unify status not_started: "Не начато" everywhere (fix index.tsx)
+- [x] Unify status completed: "Выполнено" everywhere (fix index.tsx)
+- [x] Unify Q4 label: "Исключить"/"Eliminate" in translations.ts and types.ts
+- [x] Update version to 1.0.9.2 with changelog entry

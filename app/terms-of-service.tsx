@@ -44,7 +44,7 @@ export default function TermsOfServiceScreen() {
         4. Отказ от ответственности
       </Text>
       <Text style={{ fontSize: 14, color: colors.muted, lineHeight: 20, marginBottom: 12 }}>
-        Приложение предоставляется "как есть" без каких-либо гарантий. Мы не несем ответственность за потерю данных или любые другие убытки, возникшие в результате использования Приложения.
+        Приложение предоставляется &ldquo;как есть&rdquo; без каких-либо гарантий. Мы не несем ответственность за потерю данных или любые другие убытки, возникшие в результате использования Приложения.
       </Text>
 
       <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground, marginTop: 12, marginBottom: 8 }}>
@@ -109,7 +109,7 @@ export default function TermsOfServiceScreen() {
         4. Disclaimer
       </Text>
       <Text style={{ fontSize: 14, color: colors.muted, lineHeight: 20, marginBottom: 12 }}>
-        The Application is provided "as is" without any warranties. We are not responsible for data loss or any other damages arising from the use of the Application.
+        The Application is provided &ldquo;as is&rdquo; without any warranties. We are not responsible for data loss or any other damages arising from the use of the Application.
       </Text>
 
       <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground, marginTop: 12, marginBottom: 8 }}>
