@@ -831,12 +831,12 @@ export default function SettingsScreen() {
               justifyContent: 'space-between',
               alignItems: 'center',
               paddingHorizontal: 16,
-              paddingTop: Math.max(insets.top, 16),
+              paddingTop: Platform.OS === 'web' ? 20 : Math.max(insets.top, 16),
               paddingBottom: 12,
               borderBottomWidth: 0.5,
               borderBottomColor: colors.border,
             }}>
-              <Text style={{ fontSize: 18, fontWeight: 'bold', color: colors.foreground }}>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: colors.foreground, flex: 1, marginRight: 8 }} numberOfLines={1}>
                 {isRu ? '🎨 Цвета квадрантов' : '🎨 Quadrant Colors'}
               </Text>
               <Pressable
@@ -867,12 +867,12 @@ export default function SettingsScreen() {
               justifyContent: 'space-between',
               alignItems: 'center',
               paddingHorizontal: 16,
-              paddingTop: Math.max(insets.top, 16),
+              paddingTop: Platform.OS === 'web' ? 20 : Math.max(insets.top, 16),
               paddingBottom: 12,
               borderBottomWidth: 0.5,
               borderBottomColor: colors.border,
             }}>
-              <Text style={{ fontSize: 18, fontWeight: 'bold', color: colors.foreground }}>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: colors.foreground, flex: 1, marginRight: 8 }} numberOfLines={1}>
                 {isRu ? '🔊 Звуки и вибрация' : '🔊 Sound & Vibration'}
               </Text>
               <Pressable
@@ -903,12 +903,12 @@ export default function SettingsScreen() {
               justifyContent: 'space-between',
               alignItems: 'center',
               paddingHorizontal: 16,
-              paddingTop: Math.max(insets.top, 16),
+              paddingTop: Platform.OS === 'web' ? 20 : Math.max(insets.top, 16),
               paddingBottom: 12,
               borderBottomWidth: 0.5,
               borderBottomColor: colors.border,
             }}>
-              <Text style={{ fontSize: 18, fontWeight: 'bold', color: colors.foreground }}>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: colors.foreground, flex: 1, marginRight: 8 }} numberOfLines={1}>
                 {isRu ? '⏰ Подсветка сроков' : '⏰ Deadline Highlighting'}
               </Text>
               <Pressable

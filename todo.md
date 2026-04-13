@@ -966,3 +966,9 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Implement sound preview on tap in notification-settings.tsx
 - [x] Implement vibration pattern demo on tap
 - [x] Update version to 1.0.76
+
+## Phase 85: Modal Header Fix & Onboarding Actualization
+- [ ] Fix modal headers: add Platform.OS check for proper paddingTop on web vs native
+- [ ] Ensure modal title doesn't overflow/truncate on any screen size
+- [ ] Actualize onboarding slides with current app features and correct status names
+- [ ] Update version to 1.0.77

@@ -1,7 +1,7 @@
 import React, { createContext, useContext } from "react";
 // Version is hardcoded here but comes from app.config.ts
 // Update this value when releasing a new version
-const APP_VERSION = "1.0.76";
+const APP_VERSION = "1.0.77";
 
 interface AppVersionContextType {
   version: string;
