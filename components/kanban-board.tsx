@@ -359,11 +359,13 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
   const [dragX, setDragX] = useState(0);
   const [dragY, setDragY] = useState(0);
   const [hoveredDropZone, setHoveredDropZone] = useState<DropZone | null>(null);
+  const [hoveredColumnId, setHoveredColumnId] = useState<string | null>(null);
   const columnLayouts = useRef<ColumnLayout[]>([]);
   const scrollViewRef = useRef<ScrollView>(null);
   const boardOffsetX = useRef(0);   // left edge of ScrollView on screen
   const scrollOffsetX = useRef(0);  // how far the user has scrolled horizontally
   const autoScrollInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+  const lastHoveredColumnId = useRef<string | null>(null); // track column changes for haptic feedback
 
   // ─── Data loading ───────────────────────────────────────────────────────────
 
@@ -662,13 +664,24 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
 
     const zone = getClosestDropZone(pageX, pageY);
     setHoveredDropZone(zone);
-  }, [startAutoScroll, stopAutoScroll, getClosestDropZone]);
+    
+    // Update hovered column and trigger haptic feedback on column change
+    if (zone && zone.columnId !== lastHoveredColumnId.current) {
+      setHoveredColumnId(zone.columnId);
+      lastHoveredColumnId.current = zone.columnId;
+      if (Platform.OS !== "web") {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+    }
+  }, [startAutoScroll, stopAutoScroll, getClosestDropZone])
 
   const handleDragEnd = useCallback((pageX: number, pageY: number) => {
     stopAutoScroll();
     if (!dragging || !hoveredDropZone) {
       setDragging(null);
       setHoveredDropZone(null);
+      setHoveredColumnId(null);
+      lastHoveredColumnId.current = null;
       return;
     }
 
@@ -678,6 +691,8 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
     if (fromColId === targetColId && fromIndex === targetIndex) {
       setDragging(null);
       setHoveredDropZone(null);
+      setHoveredColumnId(null);
+      lastHoveredColumnId.current = null;
       return;
     }
 
@@ -688,7 +703,9 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
 
     setDragging(null);
     setHoveredDropZone(null);
-  }, [dragging, hoveredDropZone, handleMoveSticker, stopAutoScroll]);
+    setHoveredColumnId(null);
+    lastHoveredColumnId.current = null;
+  }, [dragging, hoveredDropZone, handleMoveSticker, stopAutoScroll])
 
   // ─── Zoom ───────────────────────────────────────────────────────────────────
 
@@ -772,11 +789,17 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
                   width: COLUMN_WIDTH,
                   backgroundColor: colors.surface,
                   borderRadius: 14,
-                  borderWidth: 1,
-                  borderColor: colors.border,
+                  borderWidth: 2,
+                  borderColor: hoveredColumnId === column.id ? colors.primary : colors.border,
                   overflow: "hidden",
                   flex: 1,
                   minHeight: 300,
+                  opacity: hoveredColumnId === column.id ? 1 : 1,
+                  shadowColor: hoveredColumnId === column.id ? colors.primary : "transparent",
+                  shadowOffset: { width: 0, height: 0 },
+                  shadowOpacity: hoveredColumnId === column.id ? 0.3 : 0,
+                  shadowRadius: hoveredColumnId === column.id ? 8 : 0,
+                  elevation: hoveredColumnId === column.id ? 5 : 1,
                 }}
               >
                 {/* Column header */}
@@ -784,7 +807,8 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
                   flexDirection: "row", alignItems: "center", justifyContent: "space-between",
                   paddingHorizontal: 10, paddingVertical: 8,
                   borderBottomWidth: 1, borderBottomColor: colors.border,
-                  backgroundColor: `${colors.primary}15`,
+                  backgroundColor: hoveredColumnId === column.id ? `${colors.primary}30` : `${colors.primary}15`,
+                  transitionDuration: "150ms",
                 }}>
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontSize: 13, fontWeight: "700", color: colors.foreground }}>

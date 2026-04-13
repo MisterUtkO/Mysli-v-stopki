@@ -88,6 +88,23 @@ const FEATURES: Feature[] = [
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.0.9.0",
+    dateRu: "13 апреля 2026",
+    dateEn: "April 13, 2026",
+    changesRu: [
+      "✨ Визуальный индикатор целевого столбца при перетаскивании в Канбане",
+      "🎯 Целевой столбец подсвечивается (граница + тень + фон заголовка)",
+      "📳 Тактильный отклик (лёгкая вибрация) при пересечении границы столбца",
+      "🔧 Улучшена точность определения целевого столбца",
+    ],
+    changesEn: [
+      "✨ Visual indicator for target column during Kanban drag",
+      "🎯 Target column highlighted (border + shadow + header background)",
+      "📳 Haptic feedback (light vibration) when crossing column boundary",
+      "🔧 Improved accuracy of target column detection",
+    ],
+  },
+  {
     version: "1.0.8.0",
     dateRu: "13 апреля 2026",
     dateEn: "April 13, 2026",

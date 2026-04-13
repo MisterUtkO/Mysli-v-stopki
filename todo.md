@@ -916,3 +916,11 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Fixed: contentX = pageX - boardOffsetX + scrollOffsetX (correct for all columns)
 - [x] Fixed: re-measure ScrollView at drag start for accuracy on native
 - [x] All 115 tests passing, 0 TypeScript errors
+
+## Phase 79: Visual Column Indicator & Haptic Feedback
+- [x] Add visual highlight to target column during drag (border color + shadow)
+- [x] Add haptic feedback (Light impact) when crossing column boundaries
+- [x] Track hovered column ID separately from drop zone
+- [x] Update column header background on hover
+- [x] Update version to 1.0.9.0
+- [x] Add changelog entry for visual feedback improvements
