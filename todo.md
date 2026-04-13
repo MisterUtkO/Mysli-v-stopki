@@ -950,3 +950,11 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Update app-version-context.tsx APP_VERSION to 1.0.74
 - [x] Update package.json version to 1.0.74
 - [x] Rewrite changelog in app-about-section.tsx: logical sequence 1.0.1 → 1.0.74
+
+## Phase 83: UX Improvements — Attachments & Onboarding Swipes
+- [x] Tap on photo → open fullscreen image viewer (modal with zoom/pan)
+- [x] Tap on file → open file with expo-web-browser / Share
+- [x] Remove need to go through 3-dot menu to view attachments
+- [x] Fix onboarding swipes on real device (GestureHandlerRootView inside Modal)
+- [x] Ensure onboarding swipe works on iOS and Android native
+- [x] Update version to 1.0.75

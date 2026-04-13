@@ -8,7 +8,7 @@ import Animated, {
   interpolate,
   Extrapolation,
 } from "react-native-reanimated";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import { Gesture, GestureDetector, GestureHandlerRootView } from "react-native-gesture-handler";
 import { useColors } from "@/hooks/use-colors";
 import { useI18n } from "@/lib/context/i18n-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -193,16 +193,18 @@ function OnboardingTutorialModal({
   };
 
   const panGesture = Gesture.Pan()
-    .activeOffsetX([-12, 12])
-    .failOffsetY([-20, 20])
+    // Lower thresholds for better native responsiveness
+    .activeOffsetX([-8, 8])
+    .failOffsetY([-10, 10])
     .onUpdate((e) => {
-      translateX.value = e.translationX;
+      // Subtle rubber-band resistance to show the card is draggable
+      translateX.value = e.translationX * 0.5;
     })
     .onEnd((e) => {
       runOnJS(handleSwipeEnd)(e.translationX);
     })
     .onFinalize(() => {
-      translateX.value = withTiming(0, { duration: 150 });
+      translateX.value = withTiming(0, { duration: 200 });
     });
 
   const cardAnimStyle = useAnimatedStyle(() => ({
@@ -236,15 +238,21 @@ function OnboardingTutorialModal({
       animationType="fade"
       onRequestClose={handleSkip}
     >
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: "rgba(0, 0, 0, 0.75)",
-          justifyContent: "center",
-          alignItems: "center",
-          paddingHorizontal: getAdaptiveValues().containerPaddingHorizontal,
-        }}
-      >
+      {/*
+        GestureHandlerRootView MUST wrap content inside Modal on native iOS/Android.
+        Without it, react-native-gesture-handler gestures are silently ignored
+        because the gesture responder tree is not connected to the modal's root.
+      */}
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0, 0, 0, 0.75)",
+            justifyContent: "center",
+            alignItems: "center",
+            paddingHorizontal: getAdaptiveValues().containerPaddingHorizontal,
+          }}
+        >
         <GestureDetector gesture={panGesture}>
           <Animated.View
             style={[
@@ -390,7 +398,8 @@ function OnboardingTutorialModal({
             </View>
           </Animated.View>
         </GestureDetector>
-      </View>
+        </View>
+      </GestureHandlerRootView>
     </Modal>
   );
 }

@@ -88,6 +88,23 @@ const FEATURES: Feature[] = [
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.0.75",
+    dateRu: "13 апреля 2026",
+    dateEn: "April 13, 2026",
+    changesRu: [
+      "🖼 Просмотр фото по нажатию — полноэкранный режим с зумом (щипок и двойной тап)",
+      "📄 Просмотр файлов по нажатию — красивый экран с кнопкой 'Открыть / Поделиться'",
+      "📎 Вложения в карточках задач теперь кликабельны",
+      "👆 Исправлены свайпы обучения на реальном устройстве (iOS/Android)",
+    ],
+    changesEn: [
+      "🖼 Tap photo to view fullscreen — pinch-to-zoom and double-tap zoom",
+      "📄 Tap file to view — clean screen with Open / Share button",
+      "📎 Attachments in task cards are now tappable",
+      "👆 Fixed onboarding swipes on real device (iOS/Android)",
+    ],
+  },
+  {
     version: "1.0.74",
     dateRu: "13 апреля 2026",
     dateEn: "April 13, 2026",

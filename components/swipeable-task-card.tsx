@@ -25,7 +25,8 @@ import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { useRouter } from "expo-router";
 import { useState, useRef } from "react";
 import * as Haptics from "expo-haptics";
-import type { Task, TaskStatus } from "@/lib/domain/types";
+import type { Task, TaskStatus, TaskAttachment } from "@/lib/domain/types";
+import { FilePreviewModal } from "@/components/file-preview-modal";
 import { AnimatedEmoji } from "@/components/animated-emoji";
 import { TaskCardGlow } from "@/components/task-card-glow";
 import { getTaskGlowType } from "@/lib/glow-colors";
@@ -265,6 +266,9 @@ export function SwipeableTaskCard({
   const flashStyle = useAnimatedStyle(() => ({
     opacity: flashOpacity.value,
   }));
+
+  const [cardShowFilePreview, setCardShowFilePreview] = useState(false);
+  const [cardSelectedAttachment, setCardSelectedAttachment] = useState<TaskAttachment | null>(null);
 
   const { quadrantColors, deadlineHighlightSettings } = useCustomization();
   
@@ -523,13 +527,33 @@ export function SwipeableTaskCard({
                   {hasAttachments && (
                     <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
                       {task.attachments!.map((att, idx) => (
-                        <View key={idx} style={{ width: 48, height: 48, borderRadius: 8, backgroundColor: "rgba(128,128,128,0.15)", overflow: "hidden", alignItems: "center", justifyContent: "center" }}>
+                        <Pressable
+                          key={idx}
+                          onPress={() => { setCardSelectedAttachment(att); setCardShowFilePreview(true); }}
+                          style={({ pressed }) => ({
+                            width: 52,
+                            height: 52,
+                            borderRadius: 10,
+                            backgroundColor: "rgba(128,128,128,0.15)",
+                            overflow: "hidden",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            opacity: pressed ? 0.75 : 1,
+                            borderWidth: 1.5,
+                            borderColor: pressed ? "rgba(10,126,164,0.6)" : "transparent",
+                          })}
+                        >
                           {att.type === "image" ? (
-                            <Image source={{ uri: att.uri }} style={{ width: 48, height: 48 }} resizeMode="cover" />
+                            <Image source={{ uri: att.uri }} style={{ width: 52, height: 52 }} resizeMode="cover" />
                           ) : (
-                            <Text style={{ fontSize: 20 }}>📎</Text>
+                            <View style={{ alignItems: "center" }}>
+                              <Text style={{ fontSize: 22 }}>📎</Text>
+                              <Text style={{ fontSize: 8, color: "#999", marginTop: 2 }} numberOfLines={1}>
+                                {att.name.split(".").pop()?.toUpperCase()}
+                              </Text>
+                            </View>
                           )}
-                        </View>
+                        </Pressable>
                       ))}
                     </View>
                   )}
@@ -615,6 +639,11 @@ export function SwipeableTaskCard({
           </Pressable>
         </Animated.View>
       </View>
+      <FilePreviewModal
+        visible={cardShowFilePreview}
+        attachment={cardSelectedAttachment}
+        onClose={() => setCardShowFilePreview(false)}
+      />
     </GestureDetector>
   );
 }
