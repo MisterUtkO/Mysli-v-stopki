@@ -924,3 +924,11 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Update column header background on hover
 - [x] Update version to 1.0.9.0
 - [x] Add changelog entry for visual feedback improvements
+
+## Phase 80: Auto-Scroll Improvement for Large Kanban Boards
+- [x] Fix auto-scroll to use scrollOffsetX instead of boardOffsetX
+- [x] Increase SCROLL_SPEED from 8 to 12 pixels per frame for faster scrolling
+- [x] Improve edge detection (50px threshold for better responsiveness)
+- [x] Test auto-scroll on boards with many columns
+- [x] Update version to 1.0.9.1
+- [x] Add changelog entry for auto-scroll improvements

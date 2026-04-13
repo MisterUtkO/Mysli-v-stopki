@@ -88,6 +88,23 @@ const FEATURES: Feature[] = [
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.0.9.1",
+    dateRu: "13 апреля 2026",
+    dateEn: "April 13, 2026",
+    changesRu: [
+      "⚡ Улучшено автоматическое прокручивание доски при перетаскивании к краям",
+      "🎯 Увеличена скорость прокручивания для лучшей отзывчивости",
+      "📊 Оптимизирована работа с досками с большим количеством столбцов",
+      "🔧 Исправлено определение направления прокручивания",
+    ],
+    changesEn: [
+      "⚡ Improved auto-scroll when dragging stickers near board edges",
+      "🎯 Increased scroll speed for better responsiveness",
+      "📊 Optimized for boards with many columns",
+      "🔧 Fixed scroll direction detection",
+    ],
+  },
+  {
     version: "1.0.9.0",
     dateRu: "13 апреля 2026",
     dateEn: "April 13, 2026",

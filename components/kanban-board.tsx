@@ -36,7 +36,7 @@ const STORAGE_KEY = KANBAN_STORAGE_KEY;
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const SCREEN_HEIGHT = Dimensions.get("window").height;
 const SCROLL_EDGE_THRESHOLD = 60;
-const SCROLL_SPEED = 8;
+const SCROLL_SPEED = 12; // pixels per frame (16ms intervals = ~750px/s at max speed)
 
 const STICKER_COLORS = [
   "#FFEB3B", "#FF9800", "#F44336", "#E91E63", "#9C27B0",
@@ -536,8 +536,11 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
   const startAutoScroll = useCallback((direction: "left" | "right") => {
     if (autoScrollInterval.current) clearInterval(autoScrollInterval.current);
     autoScrollInterval.current = setInterval(() => {
+      const newX = direction === "left" 
+        ? Math.max(0, scrollOffsetX.current - SCROLL_SPEED) 
+        : scrollOffsetX.current + SCROLL_SPEED;
       scrollViewRef.current?.scrollTo({
-        x: direction === "left" ? Math.max(0, boardOffsetX.current - SCROLL_SPEED) : boardOffsetX.current + SCROLL_SPEED,
+        x: newX,
         animated: false,
       });
     }, 16);
@@ -654,9 +657,13 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
     setDragX(pageX);
     setDragY(pageY);
 
-    if (pageX < SCROLL_EDGE_THRESHOLD) {
+    // Auto-scroll when dragging near edges
+    const edgeThreshold = 50; // pixels from edge to trigger scroll
+    const scrollMargin = 20; // pixels to scroll per frame
+    
+    if (pageX < edgeThreshold) {
       startAutoScroll("left");
-    } else if (pageX > SCREEN_WIDTH - SCROLL_EDGE_THRESHOLD) {
+    } else if (pageX > SCREEN_WIDTH - edgeThreshold) {
       startAutoScroll("right");
     } else {
       stopAutoScroll();
