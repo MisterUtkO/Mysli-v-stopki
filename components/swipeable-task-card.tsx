@@ -371,6 +371,7 @@ export function SwipeableTaskCard({
   // ─── REGULAR VIEW ──────────────────────────────────────────────────────────
   const glowType = getTaskGlowType(task);
   return (
+    <>
     <GestureDetector gesture={panGesture}>
       <Animated.View style={{ marginBottom: 8, borderRadius: 14, position: "relative" }}>
         <TaskCardGlow glowType={glowType} borderRadius={14} intensity="high" />
@@ -639,11 +640,12 @@ export function SwipeableTaskCard({
           </Pressable>
         </Animated.View>
       </Animated.View>
-      <FilePreviewModal
-        visible={cardShowFilePreview}
-        attachment={cardSelectedAttachment}
-        onClose={() => setCardShowFilePreview(false)}
-      />
     </GestureDetector>
+    <FilePreviewModal
+      visible={cardShowFilePreview}
+      attachment={cardSelectedAttachment}
+      onClose={() => setCardShowFilePreview(false)}
+    />
+    </>
   );
 }
