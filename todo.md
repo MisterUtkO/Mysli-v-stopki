@@ -907,3 +907,12 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Updated version to 1.0.8.0 in app.config.ts and app-version-context.tsx
 - [x] Added comprehensive changelog entry in app-about-section.tsx
 - [x] All 115 tests passing, 0 TypeScript errors
+
+## Phase 78: Fix Kanban Drag-Drop All Columns
+
+- [x] Read full kanban-board.tsx drag logic
+- [x] Root cause: boardOffsetX tracked ScrollView screen position but not scroll offset
+- [x] Fixed: added scrollOffsetX.current via onScroll handler
+- [x] Fixed: contentX = pageX - boardOffsetX + scrollOffsetX (correct for all columns)
+- [x] Fixed: re-measure ScrollView at drag start for accuracy on native
+- [x] All 115 tests passing, 0 TypeScript errors

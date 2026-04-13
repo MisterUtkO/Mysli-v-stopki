@@ -361,7 +361,8 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
   const [hoveredDropZone, setHoveredDropZone] = useState<DropZone | null>(null);
   const columnLayouts = useRef<ColumnLayout[]>([]);
   const scrollViewRef = useRef<ScrollView>(null);
-  const boardOffsetX = useRef(0);
+  const boardOffsetX = useRef(0);   // left edge of ScrollView on screen
+  const scrollOffsetX = useRef(0);  // how far the user has scrolled horizontally
   const autoScrollInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // ─── Data loading ───────────────────────────────────────────────────────────
@@ -548,6 +549,14 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
   }, []);
 
   const handleDragStart = useCallback((state: DragState, pageX: number, pageY: number) => {
+    // Re-measure the ScrollView's position on screen at drag start for accuracy on native
+    if (scrollViewRef.current) {
+      (scrollViewRef.current as any).measure?.(
+        (_fx: number, _fy: number, _w: number, _h: number, px: number, _py: number) => {
+          boardOffsetX.current = px;
+        }
+      );
+    }
     setDragging(state);
     setDragX(pageX);
     setDragY(pageY);
@@ -555,17 +564,19 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
   }, [stopAutoScroll]);
 
   const getDropZonesAtX = useCallback((pageX: number): DropZone[] => {
-    const relX = pageX - boardOffsetX.current;
+    // Convert screen pageX to position within the scrollable content:
+    // pageX (absolute screen coord) - boardOffsetX (left edge of ScrollView on screen) + scrollOffsetX (how far scrolled)
+    const contentX = pageX - boardOffsetX.current + scrollOffsetX.current;
     const zones: DropZone[] = [];
 
-    // Find ALL columns that could be drop targets (not just closest)
+    // Find ALL columns that could be drop targets
     for (const layout of columnLayouts.current) {
       const col = data.columns.find((c) => c.id === layout.id);
       if (!col) continue;
-      
-      // Check if pageX is within this column's bounds (with some tolerance)
-      const tolerance = layout.width * 0.3; // 30% tolerance for easier targeting
-      if (relX >= layout.x - tolerance && relX <= layout.x + layout.width + tolerance) {
+
+      // layout.x is relative to the scrollable content (not the screen)
+      const tolerance = layout.width * 0.25; // 25% tolerance for easier targeting
+      if (contentX >= layout.x - tolerance && contentX <= layout.x + layout.width + tolerance) {
         for (let i = 0; i <= col.stickers.length; i++) {
           zones.push({
             columnId: layout.id,
@@ -583,7 +594,7 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
 
       for (const layout of columnLayouts.current) {
         const colCenterX = layout.x + layout.width / 2;
-        const distX = Math.abs(relX - colCenterX);
+        const distX = Math.abs(contentX - colCenterX);
         if (distX < minDistX) {
           minDistX = distX;
           closestLayout = layout;
@@ -737,6 +748,10 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
           onLayout={(e) => {
             boardOffsetX.current = e.nativeEvent.layout.x;
           }}
+          onScroll={(e) => {
+            scrollOffsetX.current = e.nativeEvent.contentOffset.x;
+          }}
+          scrollEventThrottle={16}
           ref={scrollViewRef}
         >
           <View style={{ flexDirection: "row", gap: 10, transform: [{ scale }] }}>
