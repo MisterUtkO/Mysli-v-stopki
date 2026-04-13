@@ -958,3 +958,11 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Fix onboarding swipes on real device (GestureHandlerRootView inside Modal)
 - [x] Ensure onboarding swipe works on iOS and Android native
 - [x] Update version to 1.0.75
+
+## Phase 84: Customization SafeArea & Real Sounds
+- [x] Fix SafeArea/notch in all 3 customization modals (quadrant, notification, deadline)
+- [x] Remove duplicate ScreenContainer from child customization components
+- [x] Generate 4 real sound files (bell, chime, beep, notification)
+- [x] Implement sound preview on tap in notification-settings.tsx
+- [x] Implement vibration pattern demo on tap
+- [x] Update version to 1.0.76

@@ -88,6 +88,21 @@ const FEATURES: Feature[] = [
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.0.76",
+    dateRu: "13 апреля 2026",
+    dateEn: "April 13, 2026",
+    changesRu: [
+      "🔔 Звуки и вибрация: добавлены 4 реальных звука (звонок, перезвон, бип, уведомление) — нажмите для прослушивания",
+      "📳 Вибрация: паттерны (короткая/длинная/многократная) и интенсивность — нажмите для демонстрации",
+      "📱 Исправлен интерфейс кастомизации — правильные отступы под вырез камеры на всех устройствах",
+    ],
+    changesEn: [
+      "🔔 Sound & Vibration: 4 real sounds added (bell, chime, beep, notification) — tap to preview",
+      "📳 Vibration patterns (short/long/multiple) and intensity — tap to feel on device",
+      "📱 Fixed customization UI — proper safe area insets for all screen types and camera cutouts",
+    ],
+  },
+  {
     version: "1.0.75",
     dateRu: "13 апреля 2026",
     dateEn: "April 13, 2026",

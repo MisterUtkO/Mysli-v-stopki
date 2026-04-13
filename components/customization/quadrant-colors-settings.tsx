@@ -3,7 +3,6 @@ import { View, Text, ScrollView, Pressable, Alert } from 'react-native';
 import { useCustomization } from '@/lib/context/customization-context';
 import { useI18n } from '@/lib/context/i18n-context';
 import type { Language } from '@/lib/i18n/translations';
-import { ScreenContainer } from '@/components/screen-container';
 import { useColors } from '@/hooks/use-colors';
 
 export function QuadrantColorsSettings() {
@@ -69,12 +68,8 @@ export function QuadrantColorsSettings() {
   };
 
   return (
-    <ScreenContainer className="bg-background">
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }} className="p-4">
-        <Text className="text-2xl font-bold text-foreground mb-6">
-          {isRu ? 'Цвета квадрантов' : 'Quadrant Colors'}
-        </Text>
-
+    <View style={{ flex: 1 }}>
+      <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 32 }} style={{ padding: 16 }}>
         {/* Quadrant selector */}
         <View className="flex-row gap-2 mb-6">
           {(['q1', 'q2', 'q3', 'q4'] as const).map((q) => (
@@ -143,6 +138,6 @@ export function QuadrantColorsSettings() {
           </Text>
         </Pressable>
       </ScrollView>
-    </ScreenContainer>
+    </View>
   );
 }

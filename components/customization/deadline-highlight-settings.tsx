@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, Pressable, Switch } from 'react-native';
 import { useCustomization } from '@/lib/context/customization-context';
 import { useI18n } from '@/lib/context/i18n-context';
-import { ScreenContainer } from '@/components/screen-container';
 import { useColors } from '@/hooks/use-colors';
 
 export function DeadlineHighlightSettings() {
@@ -71,11 +70,8 @@ export function DeadlineHighlightSettings() {
   };
 
   return (
-    <ScreenContainer className="bg-background">
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }} className="p-4">
-        <Text className="text-2xl font-bold text-foreground mb-6">
-          {isRu ? 'Подсветка сроков' : 'Deadline Highlighting'}
-        </Text>
+    <View style={{ flex: 1 }}>
+      <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 32 }} style={{ padding: 16 }}>
 
         {/* Expired Tasks Color */}
         <View className="bg-surface rounded-lg p-4 mb-6 border border-border">
@@ -248,6 +244,6 @@ export function DeadlineHighlightSettings() {
           </View>
         </View>
       </ScrollView>
-    </ScreenContainer>
+    </View>
   );
 }

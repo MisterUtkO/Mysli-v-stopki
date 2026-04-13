@@ -11,6 +11,7 @@ import {
   Modal,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Clipboard from "expo-clipboard";
 import { Image } from "expo-image";
 import { ScreenContainer } from "@/components/screen-container";
@@ -38,6 +39,7 @@ type MotivFrequency = "never" | "10min" | "30min" | "hourly" | "daily" | "weekly
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { settings, updateSettings, exportTasks, clearAllData, tasks } = useTaskContext();
   const { language, setLanguage, t } = useI18n();
   const { colorScheme, setColorScheme } = useThemeContext();
@@ -823,12 +825,30 @@ export default function SettingsScreen() {
           onRequestClose={() => setShowCustomizationModal(null)}
         >
           <View style={{ flex: 1, backgroundColor: colors.background }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 }}>
+            {/* Safe header respecting notch/camera cutout */}
+            <View style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              paddingHorizontal: 16,
+              paddingTop: Math.max(insets.top, 16),
+              paddingBottom: 12,
+              borderBottomWidth: 0.5,
+              borderBottomColor: colors.border,
+            }}>
               <Text style={{ fontSize: 18, fontWeight: 'bold', color: colors.foreground }}>
-                {isRu ? 'Цвета квадрантов' : 'Quadrant Colors'}
+                {isRu ? '🎨 Цвета квадрантов' : '🎨 Quadrant Colors'}
               </Text>
-              <Pressable onPress={() => setShowCustomizationModal(null)}>
-                <Text style={{ fontSize: 24, color: colors.foreground }}>✕</Text>
+              <Pressable
+                onPress={() => setShowCustomizationModal(null)}
+                style={({ pressed }) => [{
+                  width: 32, height: 32, borderRadius: 16,
+                  backgroundColor: colors.surface,
+                  alignItems: 'center', justifyContent: 'center',
+                  opacity: pressed ? 0.6 : 1,
+                }]}
+              >
+                <Text style={{ fontSize: 16, color: colors.foreground, fontWeight: '600' }}>✕</Text>
               </Pressable>
             </View>
             <QuadrantColorsSettings />
@@ -842,12 +862,29 @@ export default function SettingsScreen() {
           onRequestClose={() => setShowCustomizationModal(null)}
         >
           <View style={{ flex: 1, backgroundColor: colors.background }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 }}>
+            <View style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              paddingHorizontal: 16,
+              paddingTop: Math.max(insets.top, 16),
+              paddingBottom: 12,
+              borderBottomWidth: 0.5,
+              borderBottomColor: colors.border,
+            }}>
               <Text style={{ fontSize: 18, fontWeight: 'bold', color: colors.foreground }}>
-                {isRu ? 'Звуки и вибрация' : 'Sound & Vibration'}
+                {isRu ? '🔊 Звуки и вибрация' : '🔊 Sound & Vibration'}
               </Text>
-              <Pressable onPress={() => setShowCustomizationModal(null)}>
-                <Text style={{ fontSize: 24, color: colors.foreground }}>✕</Text>
+              <Pressable
+                onPress={() => setShowCustomizationModal(null)}
+                style={({ pressed }) => [{
+                  width: 32, height: 32, borderRadius: 16,
+                  backgroundColor: colors.surface,
+                  alignItems: 'center', justifyContent: 'center',
+                  opacity: pressed ? 0.6 : 1,
+                }]}
+              >
+                <Text style={{ fontSize: 16, color: colors.foreground, fontWeight: '600' }}>✕</Text>
               </Pressable>
             </View>
             <NotificationSettings />
@@ -861,12 +898,29 @@ export default function SettingsScreen() {
           onRequestClose={() => setShowCustomizationModal(null)}
         >
           <View style={{ flex: 1, backgroundColor: colors.background }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 }}>
+            <View style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              paddingHorizontal: 16,
+              paddingTop: Math.max(insets.top, 16),
+              paddingBottom: 12,
+              borderBottomWidth: 0.5,
+              borderBottomColor: colors.border,
+            }}>
               <Text style={{ fontSize: 18, fontWeight: 'bold', color: colors.foreground }}>
-                {isRu ? 'Подсветка сроков' : 'Deadline Highlighting'}
+                {isRu ? '⏰ Подсветка сроков' : '⏰ Deadline Highlighting'}
               </Text>
-              <Pressable onPress={() => setShowCustomizationModal(null)}>
-                <Text style={{ fontSize: 24, color: colors.foreground }}>✕</Text>
+              <Pressable
+                onPress={() => setShowCustomizationModal(null)}
+                style={({ pressed }) => [{
+                  width: 32, height: 32, borderRadius: 16,
+                  backgroundColor: colors.surface,
+                  alignItems: 'center', justifyContent: 'center',
+                  opacity: pressed ? 0.6 : 1,
+                }]}
+              >
+                <Text style={{ fontSize: 16, color: colors.foreground, fontWeight: '600' }}>✕</Text>
               </Pressable>
             </View>
             <DeadlineHighlightSettings />
