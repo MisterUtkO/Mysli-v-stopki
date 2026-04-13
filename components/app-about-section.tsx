@@ -88,7 +88,7 @@ const FEATURES: Feature[] = [
 
 const CHANGELOG: ChangelogEntry[] = [
   {
-    version: "1.0.9.2",
+    version: "1.0.74",
     dateRu: "13 апреля 2026",
     dateEn: "April 13, 2026",
     changesRu: [
@@ -105,7 +105,7 @@ const CHANGELOG: ChangelogEntry[] = [
     ],
   },
   {
-    version: "1.0.9.1",
+    version: "1.0.73",
     dateRu: "13 апреля 2026",
     dateEn: "April 13, 2026",
     changesRu: [
@@ -122,7 +122,7 @@ const CHANGELOG: ChangelogEntry[] = [
     ],
   },
   {
-    version: "1.0.9.0",
+    version: "1.0.72",
     dateRu: "13 апреля 2026",
     dateEn: "April 13, 2026",
     changesRu: [
@@ -139,7 +139,7 @@ const CHANGELOG: ChangelogEntry[] = [
     ],
   },
   {
-    version: "1.0.8.0",
+    version: "1.0.70",
     dateRu: "13 апреля 2026",
     dateEn: "April 13, 2026",
     changesRu: [
@@ -162,7 +162,7 @@ const CHANGELOG: ChangelogEntry[] = [
     ],
   },
   {
-    version: "1.0.7.0",
+    version: "1.0.65",
     dateRu: "11 апреля 2026",
     dateEn: "April 11, 2026",
     changesRu: [
@@ -179,7 +179,7 @@ const CHANGELOG: ChangelogEntry[] = [
     ],
   },
   {
-    version: "1.0.6.7",
+    version: "1.0.60",
     dateRu: "11 апреля 2026",
     dateEn: "April 11, 2026",
     changesRu: [
@@ -196,7 +196,7 @@ const CHANGELOG: ChangelogEntry[] = [
     ],
   },
   {
-    version: "1.0.5.1",
+    version: "1.0.50",
     dateRu: "10 апреля 2026",
     dateEn: "April 10, 2026",
     changesRu: [
@@ -213,7 +213,7 @@ const CHANGELOG: ChangelogEntry[] = [
     ],
   },
   {
-    version: "1.0.5.0",
+    version: "1.0.40",
     dateRu: "9 апреля 2026",
     dateEn: "April 9, 2026",
     changesRu: [
@@ -230,7 +230,7 @@ const CHANGELOG: ChangelogEntry[] = [
     ],
   },
   {
-    version: "1.0.4.0",
+    version: "1.0.30",
     dateRu: "1 апреля 2026",
     dateEn: "April 1, 2026",
     changesRu: [
@@ -247,7 +247,7 @@ const CHANGELOG: ChangelogEntry[] = [
     ],
   },
   {
-    version: "1.0.3.0",
+    version: "1.0.20",
     dateRu: "15 марта 2026",
     dateEn: "March 15, 2026",
     changesRu: [
@@ -261,6 +261,40 @@ const CHANGELOG: ChangelogEntry[] = [
       "🎨 New color scheme",
       "📊 Added statistics",
       "🔔 Improved notifications",
+    ],
+  },
+  {
+    version: "1.0.10",
+    dateRu: "1 марта 2026",
+    dateEn: "March 1, 2026",
+    changesRu: [
+      "🏆 Система достижений — первая версия",
+      "🔔 Базовые уведомления и напоминания",
+      "🌙 Тёмная тема",
+      "🌍 Поддержка русского и английского языков",
+    ],
+    changesEn: [
+      "🏆 Achievement system — first version",
+      "🔔 Basic notifications and reminders",
+      "🌙 Dark theme",
+      "🌍 Russian and English language support",
+    ],
+  },
+  {
+    version: "1.0.1",
+    dateRu: "15 февраля 2026",
+    dateEn: "February 15, 2026",
+    changesRu: [
+      "🚀 Первый публичный релиз SDVGNote",
+      "📋 Управление задачами с матрицей Эйзенхауэра",
+      "📌 Базовая Канбан-доска со стикерами",
+      "📊 Экран статистики",
+    ],
+    changesEn: [
+      "🚀 First public release of SDVGNote",
+      "📋 Task management with Eisenhower Matrix",
+      "📌 Basic Kanban board with stickers",
+      "📊 Statistics screen",
     ],
   },
 ];

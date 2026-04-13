@@ -944,3 +944,9 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Unify status completed: "Выполнено" everywhere (fix index.tsx)
 - [x] Unify Q4 label: "Исключить"/"Eliminate" in translations.ts and types.ts
 - [x] Update version to 1.0.9.2 with changelog entry
+
+## Phase 82: Version Renumbering to 1.0.74
+- [x] Update app.config.ts version to 1.0.74
+- [x] Update app-version-context.tsx APP_VERSION to 1.0.74
+- [x] Update package.json version to 1.0.74
+- [x] Rewrite changelog in app-about-section.tsx: logical sequence 1.0.1 → 1.0.74

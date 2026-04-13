@@ -1,6 +1,6 @@
 {
   "name": "app-template",
-  "version": "1.0.9.2",
+  "version": "1.0.74",
   "private": true,
   "main": "expo-router/entry",
   "scripts": {
