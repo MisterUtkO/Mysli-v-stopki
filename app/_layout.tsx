@@ -30,6 +30,7 @@ import { useI18n } from "@/lib/context/i18n-context";
 import { initializeNotifications } from "@/lib/services/notification-scheduler";
 import { Alert } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import * as NavigationBar from "expo-navigation-bar";
 
 // Global navigation ref for reliable navigation from anywhere in the app
 export const navigationRef = React.createRef<any>();
@@ -100,6 +101,22 @@ export default function RootLayout() {
   // Initialize notifications (permissions + foreground handler + channels)
   useEffect(() => {
     initializeNotifications();
+  }, []);
+
+  // Hide Android navigation bar (system buttons) for full-screen immersive mode
+  useEffect(() => {
+    if (Platform.OS !== "android") return;
+    const enableImmersive = async () => {
+      try {
+        // Hide the navigation bar (back/home/recents buttons)
+        await NavigationBar.setVisibilityAsync("hidden");
+        // Swipe from bottom edge to temporarily reveal, then auto-hide again
+        await NavigationBar.setBehaviorAsync("overlay-swipe");
+      } catch (e) {
+        // Silently ignore — not critical
+      }
+    };
+    enableImmersive();
   }, []);
 
   // Reschedule notifications when app comes to foreground
