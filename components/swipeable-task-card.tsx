@@ -15,8 +15,8 @@ import { useCustomization } from "@/lib/context/customization-context";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withSpring,
   withTiming,
+  Easing,
   runOnJS,
   interpolate,
   Extrapolation,
@@ -131,8 +131,8 @@ export function SwipeableTaskCard({
 
   const triggerFlash = (currentStatus: TaskStatus) => {
     setFlashColor(getNextStatusColor(currentStatus));
-    flashOpacity.value = 0.35;
-    flashOpacity.value = withTiming(0, { duration: 400 });
+    flashOpacity.value = 0.15;
+    flashOpacity.value = withTiming(0, { duration: 350 });
   };
 
   const getStatusLabel = (status: TaskStatus): string => {
@@ -195,7 +195,7 @@ export function SwipeableTaskCard({
           text: isRu ? "Нет" : "No",
           onPress: () => {
             // Snap back without deleting
-            translateX.value = withSpring(0, { damping: 20, stiffness: 200 });
+            translateX.value = withTiming(0, { duration: 280, easing: Easing.out(Easing.cubic) });
           },
           style: "cancel",
         },
@@ -234,17 +234,17 @@ export function SwipeableTaskCard({
         // Swipe right → change status
         translateX.value = withTiming(120, { duration: 120 }, () => {
           runOnJS(handleSwipeRight)();
-          translateX.value = withSpring(0, { damping: 15, stiffness: 200 });
+          translateX.value = withTiming(0, { duration: 280, easing: Easing.out(Easing.cubic) });
         });
       } else if (event.translationX < -SWIPE_THRESHOLD) {
         // Swipe left → delete
         translateX.value = withTiming(-120, { duration: 120 }, () => {
           runOnJS(handleSwipeLeft)();
-          translateX.value = withSpring(0, { damping: 20, stiffness: 200 });
+          translateX.value = withTiming(0, { duration: 280, easing: Easing.out(Easing.cubic) });
         });
       } else {
-        // Snap back with reduced oscillation
-        translateX.value = withSpring(0, { damping: 20, stiffness: 200 });
+        // Snap back without bounce
+        translateX.value = withTiming(0, { duration: 250, easing: Easing.out(Easing.cubic) });
       }
     })
     .onFinalize(() => {
@@ -299,7 +299,7 @@ export function SwipeableTaskCard({
       <GestureDetector gesture={panGesture}>
         <View style={{ marginBottom: 6, borderRadius: 8, position: "relative" }}>
           {/* Background actions */}
-          <View style={{ position: "absolute", top: 0, bottom: 0, left: 0, right: 0, flexDirection: "row", borderRadius: 8, overflow: "hidden" }}>
+          <View style={{ position: "absolute", top: 0, bottom: 0, left: 0, right: 0, flexDirection: "row", borderRadius: 8, overflow: "hidden", zIndex: 0 }}>
             <Animated.View style={[{ flex: 1, backgroundColor: "#22C55E", justifyContent: "center", paddingLeft: 12 }, rightBgOpacity]}>
               <Text style={{ color: "#FFFFFF", fontWeight: "700", fontSize: 11 }}>
                 {getNextStatusLabel(task.status)}
@@ -377,7 +377,7 @@ export function SwipeableTaskCard({
         <TaskCardGlow glowType={glowType} borderRadius={14} intensity="high" />
 
         {/* Background actions */}
-        <View style={{ position: "absolute", top: 0, bottom: 0, left: 0, right: 0, flexDirection: "row", borderRadius: 14, overflow: "hidden" }}>
+        <View style={{ position: "absolute", top: 0, bottom: 0, left: 0, right: 0, flexDirection: "row", borderRadius: 14, overflow: "hidden", zIndex: 0 }}>
           <Animated.View style={[{ flex: 1, backgroundColor: "#22C55E", justifyContent: "center", paddingLeft: 16, borderRadius: 14 }, rightBgOpacity]}>
             <Text style={{ color: "#FFFFFF", fontWeight: "700", fontSize: 13 }}>
               {getNextStatusLabel(task.status)}
@@ -391,7 +391,7 @@ export function SwipeableTaskCard({
         </View>
 
         {/* Swipeable card */}
-        <Animated.View style={[cardAnimStyle, { borderRadius: 14, overflow: "hidden" }]}>
+        <Animated.View style={[cardAnimStyle, { borderRadius: 14, overflow: "hidden", zIndex: 1 }]}>
           <Pressable
             onPress={() => onToggleExpand(task.id)}
             style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1, borderRadius: 14 }]}
