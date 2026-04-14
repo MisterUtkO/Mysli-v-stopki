@@ -103,20 +103,21 @@ export default function RootLayout() {
     initializeNotifications();
   }, []);
 
-  // Hide Android navigation bar (system buttons) for full-screen immersive mode
+  // Make Android navigation bar transparent (like Telegram)
+  // The bar stays visible but blends with the app background
   useEffect(() => {
     if (Platform.OS !== "android") return;
-    const enableImmersive = async () => {
+    const makeTransparent = async () => {
       try {
-        // Hide the navigation bar (back/home/recents buttons)
-        await NavigationBar.setVisibilityAsync("hidden");
-        // Swipe from bottom edge to temporarily reveal, then auto-hide again
-        await NavigationBar.setBehaviorAsync("overlay-swipe");
+        // Fully transparent background — content shows through
+        await NavigationBar.setBackgroundColorAsync("#00000000");
+        // Behavior: swipe-up gesture still works naturally
+        await NavigationBar.setBehaviorAsync("inset-swipe");
       } catch (e) {
         // Silently ignore — not critical
       }
     };
-    enableImmersive();
+    makeTransparent();
   }, []);
 
   // Reschedule notifications when app comes to foreground
