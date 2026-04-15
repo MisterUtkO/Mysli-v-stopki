@@ -12,6 +12,7 @@ import { useEffect } from "react";
 import { useThemeContext } from "@/lib/theme-provider";
 import { getGlowColor, type GlowType } from "@/lib/glow-colors";
 import { getThemeNeonColor } from "@/lib/theme-neon-colors";
+import { useCustomization } from "@/lib/context/customization-context";
 
 interface TaskCardGlowProps {
   glowType: GlowType | null;
@@ -26,8 +27,9 @@ export function TaskCardGlow({
 }: TaskCardGlowProps) {
   const glowAnimation = useSharedValue(0);
   const { colorScheme } = useThemeContext();
+  const customization = useCustomization();
   const isAmoled = colorScheme === "amoled";
-  const isVisible = glowType !== null;
+  const isVisible = glowType !== null && customization.animationIntensity !== 'off';
   // Use theme-specific neon color instead of glow-colors
   const glowColor = isVisible ? getThemeNeonColor(colorScheme) : "transparent";
 
@@ -53,7 +55,7 @@ export function TaskCardGlow({
     } else {
       glowAnimation.value = 0;
     }
-  }, [isVisible, glowAnimation]);
+  }, [isVisible, glowAnimation, customization.animationIntensity]);
 
   const animatedGlowStyle = useAnimatedStyle(() => {
     const opacity = interpolate(

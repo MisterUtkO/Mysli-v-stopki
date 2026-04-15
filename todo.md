@@ -972,3 +972,10 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [ ] Ensure modal title doesn't overflow/truncate on any screen size
 - [ ] Actualize onboarding slides with current app features and correct status names
 - [ ] Update version to 1.0.77
+
+## Phase 89: Nav Bar, Matrix Brightness, Animation Intensity, Onboarding Update
+- [ ] Auto nav bar button color (light/dark) based on active theme
+- [ ] Matrix background brightness slider in Settings (quadrant backgrounds only, not task cards)
+- [ ] Animation intensity slider in Settings (Off / Low / Medium) for sticker animations
+- [ ] Update onboarding to cover ALL app features
+- [ ] Add new features to About screen changelog (v1.0.79+)

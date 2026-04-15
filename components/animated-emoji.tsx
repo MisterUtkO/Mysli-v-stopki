@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Animated, Easing, Platform, View } from "react-native";
+import { useCustomization } from "@/lib/context/customization-context";
 
 /**
  * AnimatedEmoji — renders an emoji with SUBTLE looping animation.
@@ -35,10 +36,18 @@ interface AnimatedEmojiProps {
 export function AnimatedEmoji({ emoji, size = 18 }: AnimatedEmojiProps) {
   const anim1 = useRef(new Animated.Value(0)).current;
   const animType = getAnimationType(emoji);
+  const customization = useCustomization();
+  const isAnimationDisabled = customization.animationIntensity === 'off';
 
   useEffect(() => {
     // Skip animations on web for performance
     if (Platform.OS === "web") return;
+
+    // If animations are disabled, don't run any animation
+    if (isAnimationDisabled) {
+      anim1.setValue(0);
+      return;
+    }
 
     let animation: Animated.CompositeAnimation;
 
@@ -146,7 +155,7 @@ export function AnimatedEmoji({ emoji, size = 18 }: AnimatedEmojiProps) {
 
     animation.start();
     return () => animation.stop();
-  }, [animType]);
+  }, [animType, isAnimationDisabled, anim1]);
 
   // On web, just render static emoji
   if (Platform.OS === "web") {

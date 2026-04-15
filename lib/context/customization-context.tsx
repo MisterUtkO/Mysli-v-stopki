@@ -31,6 +31,12 @@ export interface CustomizationContextType {
   setNotificationSettings: (settings: NotificationSettings) => void;
   deadlineHighlightSettings: DeadlineHighlightSettings;
   setDeadlineHighlightSettings: (settings: DeadlineHighlightSettings) => void;
+  /** Matrix quadrant background brightness: 0.0 (very dim) to 1.0 (full color). Default: 0.7 */
+  matrixBrightness: number;
+  setMatrixBrightness: (value: number) => void;
+  /** Sticker animation intensity: 'off' | 'low' | 'medium'. Default: 'low' */
+  animationIntensity: 'off' | 'low' | 'medium';
+  setAnimationIntensity: (value: 'off' | 'low' | 'medium') => void;
   resetToDefaults: () => void;
 }
 
@@ -66,6 +72,8 @@ export function CustomizationProvider({ children }: { children: React.ReactNode 
   );
   const [deadlineHighlightSettings, setDeadlineHighlightSettings] =
     useState<DeadlineHighlightSettings>(DEFAULT_DEADLINE_HIGHLIGHT_SETTINGS);
+  const [matrixBrightness, setMatrixBrightnessState] = useState<number>(0.7);
+  const [animationIntensity, setAnimationIntensityState] = useState<'off' | 'low' | 'medium'>('low');
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Load settings from AsyncStorage on mount
@@ -75,10 +83,12 @@ export function CustomizationProvider({ children }: { children: React.ReactNode 
 
   const loadSettings = async () => {
     try {
-      const [colorsStr, notificationsStr, deadlineStr] = await Promise.all([
+      const [colorsStr, notificationsStr, deadlineStr, brightnessStr, animStr] = await Promise.all([
         AsyncStorage.getItem('customization_quadrant_colors'),
         AsyncStorage.getItem('customization_notification_settings'),
         AsyncStorage.getItem('customization_deadline_highlight_settings'),
+        AsyncStorage.getItem('customization_matrix_brightness'),
+        AsyncStorage.getItem('customization_animation_intensity'),
       ]);
 
       if (colorsStr) {
@@ -89,6 +99,12 @@ export function CustomizationProvider({ children }: { children: React.ReactNode 
       }
       if (deadlineStr) {
         setDeadlineHighlightSettings(JSON.parse(deadlineStr));
+      }
+      if (brightnessStr) {
+        setMatrixBrightnessState(parseFloat(brightnessStr));
+      }
+      if (animStr) {
+        setAnimationIntensityState(animStr as 'off' | 'low' | 'medium');
       }
     } catch (error) {
       console.error('Failed to load customization settings:', error);
@@ -124,16 +140,38 @@ export function CustomizationProvider({ children }: { children: React.ReactNode 
     }
   };
 
+  const handleSetMatrixBrightness = async (value: number) => {
+    setMatrixBrightnessState(value);
+    try {
+      await AsyncStorage.setItem('customization_matrix_brightness', String(value));
+    } catch (error) {
+      console.error('Failed to save matrix brightness:', error);
+    }
+  };
+
+  const handleSetAnimationIntensity = async (value: 'off' | 'low' | 'medium') => {
+    setAnimationIntensityState(value);
+    try {
+      await AsyncStorage.setItem('customization_animation_intensity', value);
+    } catch (error) {
+      console.error('Failed to save animation intensity:', error);
+    }
+  };
+
   const resetToDefaults = async () => {
     try {
       await Promise.all([
         AsyncStorage.removeItem('customization_quadrant_colors'),
         AsyncStorage.removeItem('customization_notification_settings'),
         AsyncStorage.removeItem('customization_deadline_highlight_settings'),
+        AsyncStorage.removeItem('customization_matrix_brightness'),
+        AsyncStorage.removeItem('customization_animation_intensity'),
       ]);
       setQuadrantColors(DEFAULT_QUADRANT_COLORS);
       setNotificationSettings(DEFAULT_NOTIFICATION_SETTINGS);
       setDeadlineHighlightSettings(DEFAULT_DEADLINE_HIGHLIGHT_SETTINGS);
+      setMatrixBrightnessState(0.7);
+      setAnimationIntensityState('low');
     } catch (error) {
       console.error('Failed to reset customization settings:', error);
     }
@@ -152,6 +190,10 @@ export function CustomizationProvider({ children }: { children: React.ReactNode 
         setNotificationSettings: handleSetNotificationSettings,
         deadlineHighlightSettings,
         setDeadlineHighlightSettings: handleSetDeadlineHighlightSettings,
+        matrixBrightness,
+        setMatrixBrightness: handleSetMatrixBrightness,
+        animationIntensity,
+        setAnimationIntensity: handleSetAnimationIntensity,
         resetToDefaults,
       }}
     >

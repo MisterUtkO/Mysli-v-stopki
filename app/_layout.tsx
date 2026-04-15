@@ -31,6 +31,7 @@ import { initializeNotifications } from "@/lib/services/notification-scheduler";
 import { Alert } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import * as NavigationBar from "expo-navigation-bar";
+import { useThemeContext } from "@/lib/theme-provider";
 
 // Global navigation ref for reliable navigation from anywhere in the app
 export const navigationRef = React.createRef<any>();
@@ -55,6 +56,23 @@ declare global {
       EXPO_PUBLIC_API_URL?: string;
     }
   }
+}
+
+/**
+ * Syncs Android navigation bar button style (light/dark) with the active theme.
+ * Dark themes (dark, amoled, darkMatte) → light buttons (white icons).
+ * Light themes (light, pastel, notebook) → dark buttons (black icons).
+ */
+function NavBarThemeSync() {
+  const { colorScheme } = useThemeContext();
+
+  useEffect(() => {
+    if (Platform.OS !== "android") return;
+    const isDarkTheme = colorScheme === "dark" || colorScheme === "amoled" || colorScheme === "darkMatte";
+    NavigationBar.setButtonStyleAsync(isDarkTheme ? "light" : "dark").catch(() => {});
+  }, [colorScheme]);
+
+  return null;
 }
 
 /**
@@ -201,6 +219,7 @@ export default function RootLayout() {
   if (shouldOverrideSafeArea) {
     return (
       <ThemeProvider>
+        <NavBarThemeSync />
         <SafeAreaProvider initialMetrics={providerInitialMetrics}>
           <SafeAreaFrameContext.Provider value={frame}>
             <SafeAreaInsetsContext.Provider value={insets}>
@@ -214,6 +233,7 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider>
+      <NavBarThemeSync />
       <SafeAreaProvider initialMetrics={providerInitialMetrics}>{content}</SafeAreaProvider>
     </ThemeProvider>
   );

@@ -155,6 +155,8 @@ export default function MatrixScreen() {
     // Use customized color from CustomizationContext if available
     const quadrantColorKey = quadrant.toLowerCase() as keyof typeof customization.quadrantColors;
     const quadrantColor = customization?.quadrantColors?.[quadrantColorKey] || config.color;
+    // Apply brightness: 1.0 = full color, 0.0 = almost transparent (very dim)
+    const brightness = customization?.matrixBrightness ?? 0.7;
 
     return (
       <View
@@ -163,6 +165,7 @@ export default function MatrixScreen() {
           width: quadrantWidth,
           height: quadrantHeight,
           backgroundColor: quadrantColor,
+          opacity: 0.2 + brightness * 0.8, // range: 0.2 (dim) to 1.0 (full)
           borderWidth: 2,
           borderColor: quadrantColor,
           overflow: "hidden",

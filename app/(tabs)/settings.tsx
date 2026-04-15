@@ -32,6 +32,8 @@ import { AppAboutSection } from "@/components/app-about-section";
 import { QuadrantColorsSettings } from "@/components/customization/quadrant-colors-settings";
 import { NotificationSettings } from "@/components/customization/notification-settings";
 import { DeadlineHighlightSettings } from "@/components/customization/deadline-highlight-settings";
+import { useCustomization } from "@/lib/context/customization-context";
+import Slider from "@react-native-community/slider";
 
 
 type NotifFrequency = "never" | "hourly" | "daily" | "weekly" | "always";
@@ -50,6 +52,7 @@ export default function SettingsScreen() {
   const [exporting, setExporting] = useState(false);
   const [showAboutSection, setShowAboutSection] = useState(false);
   const [showCustomizationModal, setShowCustomizationModal] = useState<'quadrant' | 'notification' | 'deadline' | null>(null);
+  const customization = useCustomization();
 
   const [aboutTapCount, setAboutTapCount] = useState(0);
   const [amoledTapCount, setAmoledTapCount] = useState(0);
@@ -647,6 +650,67 @@ export default function SettingsScreen() {
                   {isRu ? "⏰ Подсветка сроков" : "⏰ Deadline Highlighting"}
                 </Text>
               </Pressable>
+
+              {/* Matrix Brightness Slider */}
+              <View style={{ backgroundColor: colors.surface, borderRadius: 12, padding: 16, gap: 12 }}>
+                <Text style={{ color: colors.foreground, fontWeight: "700", fontSize: 14 }}>
+                  {isRu ? "🔆 Яркость фона матрицы" : "🔆 Matrix Background Brightness"}
+                </Text>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+                  <Text style={{ color: colors.muted, fontSize: 12 }}>Dim</Text>
+                  <Slider
+                    style={{ flex: 1, height: 40 }}
+                    minimumValue={0}
+                    maximumValue={1}
+                    step={0.1}
+                    value={customization.matrixBrightness}
+                    onValueChange={(value) => customization.setMatrixBrightness(value)}
+                    minimumTrackTintColor={colors.primary}
+                    maximumTrackTintColor={colors.border}
+                  />
+                  <Text style={{ color: colors.muted, fontSize: 12 }}>Bright</Text>
+                </View>
+                <Text style={{ color: colors.muted, fontSize: 12 }}>
+                  {isRu ? "Регулирует насыщенность фонов квадрантов матрицы" : "Adjusts quadrant background saturation"}
+                </Text>
+              </View>
+
+              {/* Animation Intensity Selector */}
+              <View style={{ backgroundColor: colors.surface, borderRadius: 12, padding: 16, gap: 12 }}>
+                <Text style={{ color: colors.foreground, fontWeight: "700", fontSize: 14 }}>
+                  {isRu ? "✨ Интенсивность анимаций" : "✨ Animation Intensity"}
+                </Text>
+                <View style={{ flexDirection: "row", gap: 8 }}>
+                  {(['off', 'low', 'medium'] as const).map((intensity) => (
+                    <Pressable
+                      key={intensity}
+                      onPress={() => customization.setAnimationIntensity(intensity)}
+                      style={({ pressed }) => [{
+                        flex: 1,
+                        paddingVertical: 10,
+                        paddingHorizontal: 8,
+                        borderRadius: 8,
+                        backgroundColor: customization.animationIntensity === intensity ? colors.primary : colors.background,
+                        borderWidth: 1,
+                        borderColor: customization.animationIntensity === intensity ? colors.primary : colors.border,
+                        opacity: pressed ? 0.7 : 1,
+                      }]}
+                    >
+                      <Text style={{
+                        color: customization.animationIntensity === intensity ? "#FFF" : colors.foreground,
+                        fontWeight: "600",
+                        fontSize: 12,
+                        textAlign: "center",
+                      }}>
+                        {intensity === 'off' ? (isRu ? "Выкл" : "Off") : intensity === 'low' ? (isRu ? "Слабо" : "Low") : (isRu ? "Средне" : "Med")}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+                <Text style={{ color: colors.muted, fontSize: 12 }}>
+                  {isRu ? "Контролирует анимации стикеров и эффекты" : "Controls sticker animations and effects"}
+                </Text>
+              </View>
             </View>
 
             {/* ========== SECTION 7: INFORMATION & SUPPORT ========== */}

@@ -190,6 +190,10 @@ export interface Translations {
     achievementsDescription: string;
     tipsTitle: string;
     tipsDescription: string;
+    settingsTitle: string;
+    settingsDescription: string;
+    fullscreenTitle: string;
+    fullscreenDescription: string;
     skip: string;
     next: string;
     previous: string;
@@ -373,6 +377,10 @@ const EN: Translations = {
     achievementsDescription: "Unlock achievements as you work: complete tasks, explore themes, add attachments, and more. Check your progress in the Statistics tab.",
     tipsTitle: "Pro Tips",
     tipsDescription: "Attach photos or files to tasks — tap them to preview. Enable sounds and vibration in Settings → Customization. Try all five themes to unlock the Theme Explorer achievement!",
+    settingsTitle: "Customization & Settings",
+    settingsDescription: "Adjust matrix background brightness for better readability on bright screens. Control animation intensity (Off/Low/Medium) for sticker effects. Navigation buttons auto-adjust colors based on your theme. All settings are saved automatically.",
+    fullscreenTitle: "Full-Screen Experience",
+    fullscreenDescription: "The app runs in full-screen mode with a transparent navigation bar. Swipe up from the bottom to temporarily show system controls. Navigation buttons automatically adapt to your current theme.",
     skip: "Skip",
     next: "Next →",
     previous: "← Back",
@@ -556,6 +564,10 @@ const RU: Translations = {
     achievementsDescription: "Открывайте достижения по мере работы: завершайте задачи, исследуйте темы, добавляйте вложения и многое другое. Следите за прогрессом на вкладке Статистика.",
     tipsTitle: "Полезные советы",
     tipsDescription: "Прикрепляйте фото и файлы к задачам — нажмите для просмотра. Включите звуки и вибрацию в Настройках → Кастомизация. Попробуйте все пять тем, чтобы разблокировать достижение «Исследователь тем»!",
+    settingsTitle: "Кастомизация и настройки",
+    settingsDescription: "Регулируйте яркость фона матрицы для лучшей читаемости на ярких экранах. Контролируйте интенсивность анимаций (Выкл/Слабо/Средне) для эффектов стикеров. Кнопки навигации автоматически адаптируют цвета под вашу тему. Все настройки сохраняются автоматически.",
+    fullscreenTitle: "Полноэкранный режим",
+    fullscreenDescription: "Приложение работает в полноэкранном режиме с прозрачной панелью навигации. Свайпните вверх снизу, чтобы временно показать системные кнопки. Кнопки навигации автоматически адаптируют цвета под вашу текущую тему.",
     skip: "Пропустить",
     next: "Далее →",
     previous: "← Назад",

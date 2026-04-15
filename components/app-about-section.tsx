@@ -88,6 +88,25 @@ const FEATURES: Feature[] = [
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.0.80",
+    dateRu: "15 апреля 2026",
+    dateEn: "April 15, 2026",
+    changesRu: [
+      "🔆 Яркость фона матрицы — ползунок в Настройках → Кастомизация для лучшей читаемости на ярких экранах",
+      "✨ Интенсивность анимаций — выбор Выкл/Слабо/Средне для эффектов стикеров и подсветки",
+      "🎨 Автоматическая смена цвета кнопок навигации Android в зависимости от темы",
+      "🌐 Полноэкранный режим с прозрачной панелью навигации (как в Telegram)",
+      "📚 Обновлено обучение — добавлены слайды о кастомизации и полноэкранном режиме",
+    ],
+    changesEn: [
+      "🔆 Matrix background brightness — slider in Settings → Customization for better readability on bright screens",
+      "✨ Animation intensity — choose Off/Low/Medium for sticker effects and highlights",
+      "🎨 Auto-adjust Android navigation button colors based on active theme",
+      "🌐 Full-screen mode with transparent navigation bar (like Telegram)",
+      "📚 Updated onboarding — added slides about customization and full-screen experience",
+    ],
+  },
+  {
     version: "1.0.76",
     dateRu: "13 апреля 2026",
     dateEn: "April 13, 2026",
