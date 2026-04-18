@@ -11,7 +11,7 @@ export function AppVersionFooter() {
   return (
     <View className="items-center py-6 border-t border-border mt-6">
       <Text className="text-sm text-muted">
-        SDVGNote • v{version}
+        Мысли в стопки • v{version}
       </Text>
     </View>
   );

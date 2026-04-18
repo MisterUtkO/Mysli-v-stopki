@@ -336,13 +336,13 @@ const CHANGELOG: ChangelogEntry[] = [
     dateRu: "15 февраля 2026",
     dateEn: "February 15, 2026",
     changesRu: [
-      "🚀 Первый публичный релиз SDVGNote",
+      "🚀 Первый публичный релиз Мысли в стопки",
       "📋 Управление задачами с матрицей Эйзенхауэра",
       "📌 Базовая Канбан-доска со стикерами",
       "📊 Экран статистики",
     ],
     changesEn: [
-      "🚀 First public release of SDVGNote",
+      "🚀 First public release of Мысли в стопки",
       "📋 Task management with Eisenhower Matrix",
       "📌 Basic Kanban board with stickers",
       "📊 Statistics screen",
@@ -356,7 +356,7 @@ export function AppAboutSection() {
   const colors = useColors();
   const isRu = language === "ru";
 
-  const appName = "SDVGNote";
+  const appName = "Мысли в стопки";
   const appSubtitle = isRu ? "Заметки для самоорганизации" : "Notes for Self-Organization";
 
   return (
@@ -441,8 +441,8 @@ export function AppAboutSection() {
       <View className="items-center py-6 px-4">
         <Text className="text-xs text-muted text-center">
           {isRu
-            ? "SDVGNote — приложение для управления задачами и самоорганизации"
-            : "SDVGNote — task management and self-organization app"}
+            ? "Мысли в стопки — приложение для управления задачами и самоорганизации"
+            : "Мысли в стопки — task management and self-organization app"}
         </Text>
         <Text className="text-xs text-muted text-center mt-2">
           {isRu ? "Сделано с ❤️ для вас" : "Made with ❤️ for you"}

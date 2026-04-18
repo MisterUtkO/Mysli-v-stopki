@@ -20,7 +20,7 @@ export default function PrivacyPolicyScreen() {
         1. Введение
       </Text>
       <Text style={{ fontSize: 14, color: colors.muted, lineHeight: 20, marginBottom: 12 }}>
-        Приложение SDVGNote (&ldquo;Приложение&rdquo;) уважает вашу конфиденциальность. Данная политика описывает, как мы собираем, используем и защищаем ваши данные.
+        Приложение Мысли в стопки (&ldquo;Приложение&rdquo;) уважает вашу конфиденциальность. Данная политика описывает, как мы собираем, используем и защищаем ваши данные.
       </Text>
 
       <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground, marginTop: 12, marginBottom: 8 }}>
@@ -84,7 +84,7 @@ export default function PrivacyPolicyScreen() {
         1. Introduction
       </Text>
       <Text style={{ fontSize: 14, color: colors.muted, lineHeight: 20, marginBottom: 12 }}>
-        SDVGNote (&ldquo;Application&rdquo;) respects your privacy. This policy describes how we collect, use, and protect your data.
+        Мысли в стопки (&ldquo;Application&rdquo;) respects your privacy. This policy describes how we collect, use, and protect your data.
       </Text>
 
       <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground, marginTop: 12, marginBottom: 8 }}>

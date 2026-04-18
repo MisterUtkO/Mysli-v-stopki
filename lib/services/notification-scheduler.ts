@@ -280,7 +280,7 @@ export async function scheduleMotivationalNotification(
 
       await Notifications.scheduleNotificationAsync({
         content: {
-          title: "💪 SDVGNote",
+          title: "💪 Мысли в стопки",
           body: text,
           sound: true,
           data: { type: "motivational" },
@@ -300,7 +300,7 @@ export async function scheduleMotivationalNotification(
 
       await Notifications.scheduleNotificationAsync({
         content: {
-          title: "💪 SDVGNote",
+          title: "💪 Мысли в стопки",
           body: text,
           sound: true,
           data: { type: "motivational" },

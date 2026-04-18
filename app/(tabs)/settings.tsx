@@ -774,7 +774,7 @@ export default function SettingsScreen() {
                     <Text style={{ fontSize: 24 }}>✈️</Text>
                     <View>
                       <Text className="text-foreground font-semibold" style={{ fontSize: 16 }}>@misterutko</Text>
-                      <Text className="text-muted" style={{ fontSize: 12 }}>SDVGNote Creator</Text>
+                      <Text className="text-muted" style={{ fontSize: 12 }}>Мысли в стопки</Text>
                     </View>
                   </View>
                   <Text style={{ fontSize: 18 }}>→</Text>

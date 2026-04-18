@@ -1,4 +1,4 @@
-# SDVGNote — Заметки для самоорганизации
+# Мысли в стопки — Заметки для самоорганизации
 
 ## Status: ✅ COMPLETE
 
@@ -150,8 +150,8 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Live quadrant preview in task-detail edit screen
 - [x] Recalculate quadrant and priority score on task save
 
-## Phase 8: Major UI/UX Overhaul — SDVGNote Rebrand
-- [x] Rename app to SDVGNote (app.config.ts, branding)
+## Phase 8: Major UI/UX Overhaul — Мысли в стопки Rebrand
+- [x] Rename app to Мысли в стопки (app.config.ts, branding)
 - [x] Replace app icon with user-provided ChatGPT image
 - [x] Collapsible task cards — compact by default (emoji + title only), expand on tap
 - [x] Three-dot menu (⋮) on expanded task card for editing
@@ -542,10 +542,10 @@ All features have been implemented, tested, and verified. The app is ready for u
 ## Phase 38: Fix "All" Tab, Onboarding Swipe, App Rename
 - [x] Fix "All" tab to cycle through all statuses on swipe (already working correctly)
 - [ ] Add swipe gesture navigation to onboarding tutorial (left/right swipe for prev/next)
-- [x] Rename "Eisenhower Priority" to "SDVGNote" everywhere in the app
+- [x] Rename "Eisenhower Priority" to "Мысли в стопки" everywhere in the app
 - [x] Update app.config.ts with new app name and description
-- [x] Update translations to use SDVGNote
-- [x] Update about.tsx copyright to use SDVGNote
+- [x] Update translations to use Мысли в стопки
+- [x] Update about.tsx copyright to use Мысли в стопки
 
 
 ## Phase 39: Fix Swipe Status Cycling Bug
@@ -648,14 +648,14 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Emphasis on transparency and gratitude, not sales
 - [x] All 110 tests passing
 
-## Phase 54: Complete Branding Rebrand to SDVGNote
+## Phase 54: Complete Branding Rebrand to Мысли в стопки
 
-- [x] Replace all "Eisenhower Priority" with "SDVGNote" in code and UI
-- [x] Update translations (RU/EN) to use SDVGNote consistently
-- [x] Update README.md with SDVGNote branding
-- [x] Update design.md with SDVGNote branding
-- [x] Update STABILITY_REPORT.md with SDVGNote branding
-- [x] Update todo.md header with SDVGNote branding
+- [x] Replace all "Eisenhower Priority" with "Мысли в стопки" in code and UI
+- [x] Update translations (RU/EN) to use Мысли в стопки consistently
+- [x] Update README.md with Мысли в стопки branding
+- [x] Update design.md with Мысли в стопки branding
+- [x] Update STABILITY_REPORT.md with Мысли в стопки branding
+- [x] Update todo.md header with Мысли в стопки branding
 - [x] All 110 tests still passing
 
 ## Phase 55: Full-Text Search, Color-Coded Kanban, Interactive Undo

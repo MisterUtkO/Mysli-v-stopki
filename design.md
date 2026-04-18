@@ -1,4 +1,4 @@
-# SDVGNote — Заметки для самоорганизации | Design Plan
+# Мысли в стопки — Заметки для самоорганизации | Design Plan
 
 ## Overview
 A mobile-first task management application for self-organization using the Eisenhower Matrix model (Important/Urgent quadrants) with advanced 10-point metric scoring. Optimized for portrait orientation (9:16) and one-handed usage on iOS and Android.

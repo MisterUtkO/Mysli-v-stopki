@@ -65,8 +65,8 @@ export default function SupportDeveloperScreen() {
                 }}
               >
                 {isRu
-                  ? "SDVGNote распространяется бесплатно.\nЕсли приложение оказалось полезным, вы можете по желанию поддержать развитие проекта и будущие обновления."
-                  : "SDVGNote is free to use.\nIf the app has been helpful, you can optionally support the project development and future updates."}
+                  ? "Мысли в стопки распространяется бесплатно.\nЕсли приложение оказалось полезным, вы можете по желанию поддержать развитие проекта и будущие обновления."
+                  : "Мысли в стопки is free to use.\nIf the app has been helpful, you can optionally support the project development and future updates."}
               </Text>
             </View>
 

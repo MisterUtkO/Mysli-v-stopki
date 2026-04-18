@@ -20,7 +20,7 @@ export default function TermsOfServiceScreen() {
         1. Принятие условий
       </Text>
       <Text style={{ fontSize: 14, color: colors.muted, lineHeight: 20, marginBottom: 12 }}>
-        Используя приложение SDVGNote, вы принимаете эти условия использования. Если вы не согласны с какой-либо частью этих условий, пожалуйста, не используйте Приложение.
+        Используя приложение Мысли в стопки, вы принимаете эти условия использования. Если вы не согласны с какой-либо частью этих условий, пожалуйста, не используйте Приложение.
       </Text>
 
       <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground, marginTop: 12, marginBottom: 8 }}>
@@ -85,7 +85,7 @@ export default function TermsOfServiceScreen() {
         1. Acceptance of Terms
       </Text>
       <Text style={{ fontSize: 14, color: colors.muted, lineHeight: 20, marginBottom: 12 }}>
-        By using the SDVGNote application, you accept these terms of service. If you do not agree with any part of these terms, please do not use the Application.
+        By using the Мысли в стопки application, you accept these terms of service. If you do not agree with any part of these terms, please do not use the Application.
       </Text>
 
       <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground, marginTop: 12, marginBottom: 8 }}>

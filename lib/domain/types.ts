@@ -1,5 +1,5 @@
 /**
- * SDVGNote — Task Priority App Types
+ * Мысли в стопки — Task Priority App Types
  * Uses 7-point scale for importance and urgency
  */
 

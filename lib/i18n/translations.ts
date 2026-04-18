@@ -365,8 +365,8 @@ const EN: Translations = {
   },
 
   onboarding: {
-    welcome: "Welcome to SDVGNote",
-    welcomeDescription: "Manage your tasks efficiently with SDVGNote. Organize tasks by urgency and importance. Customize themes, sounds, and more.",
+    welcome: "Welcome to Мысли в стопки",
+    welcomeDescription: "Manage your tasks efficiently with Мысли в стопки. Organize tasks by urgency and importance. Customize themes, sounds, and more.",
     tasksTitle: "Tasks Screen",
     tasksDescription: "View all your tasks filtered by status: All, Not Started, In Progress, and Done. Swipe a task left or right to change its status or delete it. Tap a photo attachment to open the full-screen viewer.",
     matrixTitle: "Eisenhower Matrix",
@@ -552,8 +552,8 @@ const RU: Translations = {
   },
 
   onboarding: {
-    welcome: "Добро пожаловать в SDVGNote",
-    welcomeDescription: "Управляйте задачами эффективно с помощью SDVGNote. Организуйте задачи по срочности и важности. Настройте темы, звуки и многое другое.",
+    welcome: "Добро пожаловать в Мысли в стопки",
+    welcomeDescription: "Управляйте задачами эффективно с помощью Мысли в стопки. Организуйте задачи по срочности и важности. Настройте темы, звуки и многое другое.",
     tasksTitle: "Экран задач",
     tasksDescription: "Просматривайте задачи по статусам: Все, Не начато, В процессе и Выполнено. Свайпните задачу влево или вправо, чтобы изменить статус или удалить её. Нажмите на фото-вложение, чтобы открыть полноэкранный просмотр.",
     matrixTitle: "Матрица Эйзенхауэра",
