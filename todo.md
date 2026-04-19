@@ -1002,3 +1002,4 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Remove priority and status from detail modal
 - [x] Edit mode should reuse existing sticker edit functionality with pre-filled text
 - [x] Ensure sticker is created with proper colors and text
+- [x] Fix: Add onEdit prop to enable sticker editing in modal

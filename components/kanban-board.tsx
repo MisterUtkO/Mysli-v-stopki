@@ -1090,6 +1090,9 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
             stickerBgColor={detailSticker.sticker.bgColor || "#FFEB3B"}
             stickerTextColor={detailSticker.sticker.textColor || "#000000"}
             onClose={() => setDetailSticker(null)}
+            onEdit={() => {
+              // onEdit is handled by the modal's internal state
+            }}
             onDelete={(stickerId) => {
               if (detailSticker) {
                 handleDeleteSticker(detailSticker.columnId, stickerId);
