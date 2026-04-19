@@ -10,7 +10,7 @@ interface KanbanStickerDetailModalProps {
   visible: boolean;
   sticker: Task | null;
   onClose: () => void;
-  onEdit?: (task: Task) => void;
+  onEdit?: (sticker: any) => void;
   onDelete?: (taskId: string) => void;
   onSave?: (stickerId: string, text: string, bgColor: string, textColor: string) => void;
   stickerBgColor?: string;
@@ -106,7 +106,7 @@ export function KanbanStickerDetailModal({
             paddingTop: 16,
             paddingBottom: 16,
             marginHorizontal: 16,
-            maxHeight: "80%",
+            maxHeight: "70%",
             width: "90%",
             maxWidth: 400,
           }}
@@ -251,111 +251,17 @@ export function KanbanStickerDetailModal({
               </>
             ) : (
               <>
-                {/* View Mode */}
+                {/* View Mode - Only show text */}
                 <Text
                   style={{
                     fontSize: 16,
                     fontWeight: "700",
                     color: colors.foreground,
-                    marginBottom: 12,
+                    lineHeight: 24,
                   }}
                 >
                   {sticker.title}
                 </Text>
-
-                {/* Description */}
-                {sticker.description && (
-                  <View style={{ marginBottom: 12 }}>
-                    <Text
-                      style={{
-                        fontSize: 11,
-                        color: colors.muted,
-                        marginBottom: 6,
-                      }}
-                    >
-                      {isRu ? "Описание" : "Description"}
-                    </Text>
-                    <Text
-                      style={{
-                        fontSize: 13,
-                        lineHeight: 18,
-                        color: colors.foreground,
-                      }}
-                    >
-                      {sticker.description}
-                    </Text>
-                  </View>
-                )}
-
-                {/* Due Date */}
-                {sticker.dueDate && (
-                  <View style={{ marginBottom: 10 }}>
-                    <Text
-                      style={{
-                        fontSize: 11,
-                        color: colors.muted,
-                        marginBottom: 4,
-                      }}
-                    >
-                      {isRu ? "Срок" : "Due Date"}
-                    </Text>
-                    <Text
-                      style={{
-                        fontSize: 13,
-                        color: colors.foreground,
-                      }}
-                    >
-                      {new Date(sticker.dueDate).toLocaleDateString(isRu ? "ru-RU" : "en-US")}
-                    </Text>
-                  </View>
-                )}
-
-                {/* Priority */}
-                <View style={{ marginBottom: 12 }}>
-                  <Text
-                    style={{
-                      fontSize: 11,
-                      color: colors.muted,
-                      marginBottom: 4,
-                    }}
-                  >
-                    {isRu ? "Приоритет" : "Priority"}
-                  </Text>
-                  <Text
-                    style={{
-                      fontSize: 13,
-                      color: colors.foreground,
-                    }}
-                  >
-                    {isRu ? "Важность" : "Importance"}: {sticker.importance} | {isRu ? "Срочность" : "Urgency"}: {sticker.urgency}
-                  </Text>
-                </View>
-
-                {/* Status */}
-                <View style={{ marginBottom: 16 }}>
-                  <Text
-                    style={{
-                      fontSize: 11,
-                      color: colors.muted,
-                      marginBottom: 4,
-                    }}
-                  >
-                    {isRu ? "Статус" : "Status"}
-                  </Text>
-                  <Text
-                    style={{
-                      fontSize: 13,
-                      color: colors.foreground,
-                      textTransform: "capitalize",
-                    }}
-                  >
-                    {sticker.status === "not_started"
-                      ? isRu ? "Не начато" : "Not started"
-                      : sticker.status === "in_progress"
-                      ? isRu ? "В процессе" : "In progress"
-                      : isRu ? "Выполнено" : "Completed"}
-                  </Text>
-                </View>
               </>
             )}
           </ScrollView>
@@ -416,7 +322,7 @@ export function KanbanStickerDetailModal({
                       color: "#FFFFFF",
                     }}
                   >
-                    {isRu ? "Добавить" : "Add"}
+                    {isRu ? "Сохранить" : "Save"}
                   </Text>
                 </Pressable>
               </>
@@ -447,33 +353,6 @@ export function KanbanStickerDetailModal({
                   </Text>
                 </Pressable>
 
-                {onEdit && (
-                  <Pressable
-                    onPress={handleEdit}
-                    style={({ pressed }) => [
-                      {
-                        flex: 1,
-                        paddingVertical: 10,
-                        borderRadius: 8,
-                        backgroundColor: colors.primary,
-                        opacity: pressed ? 0.8 : 1,
-                        justifyContent: "center",
-                        alignItems: "center",
-                      },
-                    ]}
-                  >
-                    <Text
-                      style={{
-                        fontSize: 13,
-                        fontWeight: "600",
-                        color: "#FFFFFF",
-                      }}
-                    >
-                      {isRu ? "Редактировать" : "Edit"}
-                    </Text>
-                  </Pressable>
-                )}
-
                 {onDelete && (
                   <Pressable
                     onPress={handleDelete}
@@ -497,6 +376,33 @@ export function KanbanStickerDetailModal({
                       }}
                     >
                       {isRu ? "Удалить" : "Delete"}
+                    </Text>
+                  </Pressable>
+                )}
+
+                {onEdit && (
+                  <Pressable
+                    onPress={handleEdit}
+                    style={({ pressed }) => [
+                      {
+                        flex: 1,
+                        paddingVertical: 10,
+                        borderRadius: 8,
+                        backgroundColor: colors.primary,
+                        opacity: pressed ? 0.8 : 1,
+                        justifyContent: "center",
+                        alignItems: "center",
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 13,
+                        fontWeight: "600",
+                        color: "#FFFFFF",
+                      }}
+                    >
+                      {isRu ? "Редактировать" : "Edit"}
                     </Text>
                   </Pressable>
                 )}

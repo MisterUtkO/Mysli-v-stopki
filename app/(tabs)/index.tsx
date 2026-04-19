@@ -21,6 +21,8 @@ import { TaskDetailModal } from "@/components/task-detail-modal";
 import { syncTaskToCalendar, formatTaskForCalendar } from "@/lib/calendar-sync";
 import type { Task, TaskStatus } from "@/lib/domain/types";
 import { useState, useRef, useMemo, useCallback } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { KANBAN_STORAGE_KEY } from "@/lib/kanban-sync";
 
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -406,12 +408,36 @@ export default function HomeScreen() {
           }}
           onDelete={(taskId) => handleDelete(taskId, "")}
           onExportToCalendar={(task) => handleExportToCalendar(task)}
-          onExportToKanban={(task) => {
-            if (selectedTaskForDetail) {
+          onExportToKanban={async (task) => {
+            try {
+              const stored = await AsyncStorage.getItem(KANBAN_STORAGE_KEY);
+              const data = stored ? JSON.parse(stored) : { columns: [{ id: "col_1", title: "Start", stickers: [] }, { id: "col_2", title: "In Progress", stickers: [] }, { id: "col_3", title: "Done", stickers: [] }] };
+              
+              const newSticker = {
+                id: `sticker_${Date.now()}`,
+                text: task.title,
+                bgColor: "#FFEB3B",
+                textColor: "#000000",
+              };
+              
+              data.columns[0].stickers.push(newSticker);
+              await AsyncStorage.setItem(KANBAN_STORAGE_KEY, JSON.stringify(data));
+              
+              Alert.alert(
+                isRu ? "Успешно" : "Success",
+                isRu ? "Задача добавлена в канбан" : "Task added to Kanban"
+              );
+              
+              setSelectedTaskForDetail(null);
               router.push({
-                pathname: "/kanban",
-                params: { taskId: task.id },
+                pathname: "/(tabs)/kanban",
               });
+            } catch (error) {
+              console.error("Export to Kanban error:", error);
+              Alert.alert(
+                isRu ? "Ошибка" : "Error",
+                isRu ? "Ошибка при добавлении в канбан" : "Error adding to Kanban"
+              );
             }
           }}
         />

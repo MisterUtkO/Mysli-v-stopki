@@ -995,3 +995,10 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Integrate onSave handler to update sticker on kanban board
 - [x] Update version to 1.0.84
 - [ ] Save checkpoint for Phase 91
+
+## Phase 92: Kanban Integration & Modal Simplification ✅
+- [x] Add task to Kanban as sticker when "в канбан" button is clicked (not just navigate)
+- [x] Simplify KanbanStickerDetailModal to show only: text, 3 buttons (Close, Delete, Edit)
+- [x] Remove priority and status from detail modal
+- [x] Edit mode should reuse existing sticker edit functionality with pre-filled text
+- [x] Ensure sticker is created with proper colors and text
