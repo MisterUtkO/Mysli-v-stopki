@@ -986,3 +986,12 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Display full sticker text in modal with edit/delete options
 - [x] Update version to 1.0.83
 - [ ] Save checkpoint for Phase 90
+
+## Phase 91: Fix TaskDetailModal & KanbanStickerDetailModal ✅
+- [x] Restore calendar and kanban export buttons to TaskDetailModal
+- [x] Remove duplicate delete button from KanbanStickerDetailModal
+- [x] Implement full sticker editing with text, background color, text color
+- [x] Add preview of sticker in edit mode
+- [x] Integrate onSave handler to update sticker on kanban board
+- [x] Update version to 1.0.84
+- [ ] Save checkpoint for Phase 91

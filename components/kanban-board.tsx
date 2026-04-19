@@ -1087,16 +1087,28 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
               subtasks: [],
               priorityScore: 0,
             } as any}
+            stickerBgColor={detailSticker.sticker.bgColor || "#FFEB3B"}
+            stickerTextColor={detailSticker.sticker.textColor || "#000000"}
             onClose={() => setDetailSticker(null)}
-            onEdit={() => {
-              if (detailSticker) {
-                setEditingSticker(detailSticker);
-                setDetailSticker(null);
-              }
-            }}
             onDelete={(stickerId) => {
               if (detailSticker) {
                 handleDeleteSticker(detailSticker.columnId, stickerId);
+                setDetailSticker(null);
+              }
+            }}
+            onSave={(stickerId, text, bgColor, textColor) => {
+              if (detailSticker) {
+                const updatedSticker = { ...detailSticker.sticker, text, bgColor, textColor };
+                setData((prev) => ({
+                  columns: prev.columns.map((col) =>
+                    col.id === detailSticker.columnId
+                      ? {
+                          ...col,
+                          stickers: col.stickers.map((s) => (s.id === stickerId ? updatedSticker : s)),
+                        }
+                      : col
+                  ),
+                }));
                 setDetailSticker(null);
               }
             }}

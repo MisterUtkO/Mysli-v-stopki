@@ -405,6 +405,15 @@ export default function HomeScreen() {
             });
           }}
           onDelete={(taskId) => handleDelete(taskId, "")}
+          onExportToCalendar={(task) => handleExportToCalendar(task)}
+          onExportToKanban={(task) => {
+            if (selectedTaskForDetail) {
+              router.push({
+                pathname: "/kanban",
+                params: { taskId: task.id },
+              });
+            }
+          }}
         />
       </ScreenContainer>
     </ScreenTransition>

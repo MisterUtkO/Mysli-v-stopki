@@ -11,6 +11,8 @@ interface TaskDetailModalProps {
   onClose: () => void;
   onEdit?: (task: Task) => void;
   onDelete?: (taskId: string) => void;
+  onExportToCalendar?: (task: Task) => void;
+  onExportToKanban?: (task: Task) => void;
 }
 
 export function TaskDetailModal({
@@ -19,6 +21,8 @@ export function TaskDetailModal({
   onClose,
   onEdit,
   onDelete,
+  onExportToCalendar,
+  onExportToKanban,
 }: TaskDetailModalProps) {
   const colors = useColors();
   const { language } = useI18n();
@@ -39,6 +43,22 @@ export function TaskDetailModal({
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
     onDelete?.(task.id);
+    onClose();
+  };
+
+  const handleExportToCalendar = () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    onExportToCalendar?.(task);
+    onClose();
+  };
+
+  const handleExportToKanban = () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    onExportToKanban?.(task);
     onClose();
   };
 
@@ -193,11 +213,11 @@ export function TaskDetailModal({
             </View>
           </ScrollView>
 
-          {/* Action buttons */}
+          {/* Action buttons - Row 1 */}
           <View
             style={{
               flexDirection: "row",
-              gap: 12,
+              gap: 8,
               marginTop: 16,
             }}
           >
@@ -206,7 +226,7 @@ export function TaskDetailModal({
               style={({ pressed }) => [
                 {
                   flex: 1,
-                  paddingVertical: 12,
+                  paddingVertical: 10,
                   borderRadius: 8,
                   backgroundColor: colors.surface,
                   opacity: pressed ? 0.7 : 1,
@@ -217,7 +237,7 @@ export function TaskDetailModal({
             >
               <Text
                 style={{
-                  fontSize: 14,
+                  fontSize: 12,
                   fontWeight: "600",
                   color: colors.foreground,
                 }}
@@ -232,7 +252,7 @@ export function TaskDetailModal({
                 style={({ pressed }) => [
                   {
                     flex: 1,
-                    paddingVertical: 12,
+                    paddingVertical: 10,
                     borderRadius: 8,
                     backgroundColor: colors.primary,
                     opacity: pressed ? 0.8 : 1,
@@ -243,7 +263,7 @@ export function TaskDetailModal({
               >
                 <Text
                   style={{
-                    fontSize: 14,
+                    fontSize: 12,
                     fontWeight: "600",
                     color: "#FFFFFF",
                   }}
@@ -259,7 +279,7 @@ export function TaskDetailModal({
                 style={({ pressed }) => [
                   {
                     flex: 1,
-                    paddingVertical: 12,
+                    paddingVertical: 10,
                     borderRadius: 8,
                     backgroundColor: "#EF4444",
                     opacity: pressed ? 0.8 : 1,
@@ -270,12 +290,75 @@ export function TaskDetailModal({
               >
                 <Text
                   style={{
-                    fontSize: 14,
+                    fontSize: 12,
                     fontWeight: "600",
                     color: "#FFFFFF",
                   }}
                 >
                   {isRu ? "Удалить" : "Delete"}
+                </Text>
+              </Pressable>
+            )}
+          </View>
+
+          {/* Action buttons - Row 2 (Export buttons) */}
+          <View
+            style={{
+              flexDirection: "row",
+              gap: 8,
+              marginTop: 8,
+            }}
+          >
+            {onExportToCalendar && (
+              <Pressable
+                onPress={handleExportToCalendar}
+                style={({ pressed }) => [
+                  {
+                    flex: 1,
+                    paddingVertical: 10,
+                    borderRadius: 8,
+                    backgroundColor: "#3B82F6",
+                    opacity: pressed ? 0.8 : 1,
+                    justifyContent: "center",
+                    alignItems: "center",
+                  },
+                ]}
+              >
+                <Text
+                  style={{
+                    fontSize: 12,
+                    fontWeight: "600",
+                    color: "#FFFFFF",
+                  }}
+                >
+                  {isRu ? "📅 Календарь" : "📅 Calendar"}
+                </Text>
+              </Pressable>
+            )}
+
+            {onExportToKanban && (
+              <Pressable
+                onPress={handleExportToKanban}
+                style={({ pressed }) => [
+                  {
+                    flex: 1,
+                    paddingVertical: 10,
+                    borderRadius: 8,
+                    backgroundColor: "#8B5CF6",
+                    opacity: pressed ? 0.8 : 1,
+                    justifyContent: "center",
+                    alignItems: "center",
+                  },
+                ]}
+              >
+                <Text
+                  style={{
+                    fontSize: 12,
+                    fontWeight: "600",
+                    color: "#FFFFFF",
+                  }}
+                >
+                  {isRu ? "📌 Канбан" : "📌 Kanban"}
                 </Text>
               </Pressable>
             )}
