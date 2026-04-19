@@ -17,6 +17,7 @@ import { useTaskContext } from "@/lib/context/task-context";
 import { useI18n } from "@/lib/context/i18n-context";
 import { SwipeableTaskCard } from "@/components/swipeable-task-card";
 import { SwipeHint } from "@/components/swipe-hint";
+import { TaskDetailModal } from "@/components/task-detail-modal";
 import { syncTaskToCalendar, formatTaskForCalendar } from "@/lib/calendar-sync";
 import type { Task, TaskStatus } from "@/lib/domain/types";
 import { useState, useRef, useMemo, useCallback } from "react";
@@ -40,6 +41,7 @@ export default function HomeScreen() {
   const [searchVisible, setSearchVisible] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
+  const [selectedTaskForDetail, setSelectedTaskForDetail] = useState<Task | null>(null);
   const searchInputRef = useRef<TextInput>(null);
 
   // Filter out deleted tasks from display
@@ -93,8 +95,10 @@ export default function HomeScreen() {
   };
 
   const toggleExpand = (taskId: string) => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setExpandedTaskId(expandedTaskId === taskId ? null : taskId);
+    const task = tasks.find((t) => t.id === taskId);
+    if (task) {
+      setSelectedTaskForDetail(task);
+    }
   };
 
   const toggleSearch = () => {
@@ -390,6 +394,18 @@ export default function HomeScreen() {
           </ScrollView>
         )}
       </View>
+        <TaskDetailModal
+          visible={selectedTaskForDetail !== null}
+          task={selectedTaskForDetail}
+          onClose={() => setSelectedTaskForDetail(null)}
+          onEdit={(task) => {
+            router.push({
+              pathname: "/task-detail/[id]",
+              params: { id: task.id },
+            });
+          }}
+          onDelete={(taskId) => handleDelete(taskId, "")}
+        />
       </ScreenContainer>
     </ScreenTransition>
   );

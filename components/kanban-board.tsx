@@ -31,6 +31,7 @@ import { useTaskContext } from "@/lib/context/task-context";
 import { KANBAN_STORAGE_KEY } from "@/lib/kanban-sync";
 import { useCallback, useState, useRef, forwardRef, useImperativeHandle } from "react";
 import React from "react";
+import { KanbanStickerDetailModal } from "./kanban-sticker-detail-modal";
 
 const STORAGE_KEY = KANBAN_STORAGE_KEY;
 const SCREEN_WIDTH = Dimensions.get("window").width;
@@ -346,6 +347,9 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
 
   // Edit sticker modal
   const [editingSticker, setEditingSticker] = useState<{ columnId: string; sticker: KanbanSticker } | null>(null);
+  
+  // Detail modal for viewing full text
+  const [detailSticker, setDetailSticker] = useState<{ columnId: string; sticker: KanbanSticker } | null>(null);
 
   // Move sticker modal
   const [movingSticker, setMovingSticker] = useState<{ columnId: string; sticker: KanbanSticker } | null>(null);
@@ -859,7 +863,7 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
                         totalInCol={column.stickers.length}
                         totalCols={data.columns.length}
                         isDragging={dragging?.sticker.id === sticker.id}
-                        onPress={() => setEditingSticker({ columnId: column.id, sticker })}
+                        onPress={() => setDetailSticker({ columnId: column.id, sticker })}
                         onDragStart={handleDragStart}
                         onDragMove={handleDragMove}
                         onDragEnd={handleDragEnd}
@@ -1062,6 +1066,42 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
             </View>
           </View>
         </Modal>
+
+        {/* Sticker Detail Modal */}
+        {detailSticker && (
+          <KanbanStickerDetailModal
+            visible={detailSticker !== null}
+            sticker={{
+              id: detailSticker.sticker.id,
+              title: detailSticker.sticker.text,
+              description: "",
+              status: "not_started",
+              importance: 0,
+              urgency: 0,
+              dueDate: undefined,
+              isDeleted: false,
+              createdAt: Date.now(),
+              updatedAt: Date.now(),
+              attachments: [],
+              tags: [],
+              subtasks: [],
+              priorityScore: 0,
+            } as any}
+            onClose={() => setDetailSticker(null)}
+            onEdit={() => {
+              if (detailSticker) {
+                setEditingSticker(detailSticker);
+                setDetailSticker(null);
+              }
+            }}
+            onDelete={(stickerId) => {
+              if (detailSticker) {
+                handleDeleteSticker(detailSticker.columnId, stickerId);
+                setDetailSticker(null);
+              }
+            }}
+          />
+        )}
       </View>
     </GestureHandlerRootView>
   );
