@@ -1003,3 +1003,12 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Edit mode should reuse existing sticker edit functionality with pre-filled text
 - [x] Ensure sticker is created with proper colors and text
 - [x] Fix: Add onEdit prop to enable sticker editing in modal
+
+## Phase 93: Matrix Screen Readability Improvements ✅
+- [x] Create MatrixTaskCard component showing only title and priority with icon
+- [x] Add semi-transparent dark background for text contrast
+- [x] Add priority icons (⚡ for high, ⭐ for medium, ○ for low) to the left of text
+- [x] Implement modal for full task details when clicking on matrix card
+- [x] Update matrix.tsx to use new MatrixTaskCard instead of SwipeableTaskCard
+- [x] Remove visible card borders/edges from matrix view
+- [x] Test readability with various text lengths

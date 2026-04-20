@@ -6,8 +6,11 @@ import { useTaskContext } from "@/lib/context/task-context";
 import { useColors } from "@/hooks/use-colors";
 import { useI18n } from "@/lib/context/i18n-context";
 import { useCustomization } from "@/lib/context/customization-context";
+import type { Task } from "@/lib/domain/types";
 import { SwipeableTaskCard } from "@/components/swipeable-task-card";
+import { MatrixTaskCard } from "@/components/matrix-task-card";
 import { TaskPopupBubble } from "@/components/task-popup-bubble";
+import { TaskDetailModal } from "@/components/task-detail-modal";
 import { cn } from "@/lib/utils";
 
 const QUADRANT_CONFIG = {
@@ -67,6 +70,8 @@ export default function MatrixScreen() {
   const [popupVisible, setPopupVisible] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [popupPosition, setPopupPosition] = useState({ top: 100, left: 20 });
+  const [detailModalVisible, setDetailModalVisible] = useState(false);
+  const [selectedTaskForDetail, setSelectedTaskForDetail] = useState<Task | null>(null);
 
   const screenWidth = Dimensions.get("window").width;
   const screenHeight = Dimensions.get("window").height;
@@ -187,17 +192,14 @@ export default function MatrixScreen() {
           data={quadrantTaskList}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <View className="px-2 py-1">
-              <SwipeableTaskCard
-                task={item}
-                isExpanded={expandedTasks.has(item.id)}
-                isRu={isRu}
-                onToggleExpand={handleToggleExpand}
-                onStatusChange={handleStatusChange}
-                onDelete={handleDelete}
-                isMatrixView={true}
-              />
-            </View>
+            <MatrixTaskCard
+              task={item}
+              isRu={isRu}
+              onPress={(task) => {
+                setSelectedTaskForDetail(task);
+                setDetailModalVisible(true);
+              }}
+            />
           )}
           scrollEnabled={true}
           onScroll={(event) => {
@@ -238,6 +240,33 @@ export default function MatrixScreen() {
             {renderQuadrant("Q4")}
           </View>
         </View>
+
+        {/* Task Detail Modal */}
+        {selectedTaskForDetail && (
+          <TaskDetailModal
+            visible={detailModalVisible}
+            task={selectedTaskForDetail}
+            onClose={() => {
+              setDetailModalVisible(false);
+              setSelectedTaskForDetail(null);
+            }}
+            onEdit={(task) => {
+              setDetailModalVisible(false);
+              setSelectedTaskForDetail(null);
+            }}
+            onDelete={(taskId) => {
+              deleteTask(taskId);
+              setDetailModalVisible(false);
+              setSelectedTaskForDetail(null);
+            }}
+            onExportToCalendar={(task) => {
+              // Handle calendar export
+            }}
+            onExportToKanban={(task) => {
+              // Handle kanban export
+            }}
+          />
+        )}
 
         {/* Task Detail Popup Bubble */}
         {popupVisible && selectedTask && (
