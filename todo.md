@@ -1012,3 +1012,16 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Update matrix.tsx to use new MatrixTaskCard instead of SwipeableTaskCard
 - [x] Remove visible card borders/edges from matrix view
 - [x] Test readability with various text lengths
+
+## Phase 94: Comprehensive Unit Tests for Quadrant Logic ✅
+- [x] Implement calculateDeadlineUrgency function with all deadline boundary cases
+- [x] Create unit tests for overdue tasks (urgencyDeadline = 7)
+- [x] Create unit tests for tasks without due date (urgencyDeadline = 1)
+- [x] Test boundary cases: 2 hours, 12 hours, 24 hours, 3 days, 7 days, 14 days, 30 days
+- [x] Test quadrant override: importance == 5 AND urgencyFinal == 5 -> SCHEDULE
+- [x] Test quadrant override: overdue AND importance >= 5 -> DO_NOW
+- [x] Test final urgency calculation: urgencyFinal = max(urgencyManual, urgencyDeadline)
+- [x] Test all quadrant assignment rules (DO_NOW, SCHEDULE, DELEGATE, ELIMINATE)
+- [x] Test sorting within each quadrant (integration tests included)
+- [x] Verify priority reason generation for UI display
+- [x] All 60 unit tests passing
