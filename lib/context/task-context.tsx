@@ -16,6 +16,15 @@ import {
 } from "@/lib/database/db";
 import { createTaskWithScoring } from "@/lib/domain/scoring";
 import {
+  resolveQuadrant,
+  mapQuadrantTypeToUI,
+  buildPriorityReason,
+  calculateDeadlineUrgency,
+  calculateFinalUrgency,
+} from "@/lib/domain/quadrant-logic";
+import { migrateAllTasksToNewLogic } from "@/lib/services/task-migration";
+import { migrateExistingTasks } from "@/lib/services/migration-trigger";
+import {
   scheduleTaskNotifications,
   scheduleMotivationalNotification,
   cancelAllScheduledNotifications,
@@ -145,7 +154,15 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
           return (now - task.deletedAt) < sevenDaysMs;
         });
         
-        setTasks(activeTasks);
+        // Run migration to apply new quadrant logic to existing tasks
+        console.log("[TaskContext] Running migration for existing tasks");
+        const migratedTasks = await migrateExistingTasks(activeTasks, async (id, updates) => {
+          await dbUpdateTask(id, updates);
+        });
+        
+        // Reload tasks after migration
+        const finalTasks = migratedTasks.length > 0 ? await getAllTasks() : activeTasks;
+        setTasks(finalTasks);
 
         const language = (await getSetting("language")) as "en" | "ru" | null;
         const theme = (await getSetting("theme")) as "light" | "dark" | "amoled" | "pastel" | "system" | null;
@@ -193,24 +210,45 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const createTask = async (input: CreateTaskInput): Promise<Task> => {
-    const taskWithScoring = createTaskWithScoring(
-      {
-        title: input.title,
-        description: input.description,
-        importance: input.importance,
-        urgency: input.urgency,
-        dueDate: input.dueDate,
-        dueTime: input.dueTime,
-        status: input.status,
-        emoji: input.emoji,
-        notificationFrequency: input.notificationFrequency,
-        attachments: input.attachments,
-      },
-      {
-        importanceThreshold: settings.importanceThreshold,
-        urgencyThreshold: settings.urgencyThreshold,
-      }
+    // Use new hybrid quadrant logic
+    const now = new Date();
+    const urgencyManual = input.urgency;
+    const urgencyDeadline = calculateDeadlineUrgency(
+      input.dueDate ? `${input.dueDate}T${input.dueTime || "00:00"}` : null,
+      now
     );
+    const urgencyFinal = calculateFinalUrgency(urgencyManual, urgencyDeadline);
+    
+    const quadrantType = resolveQuadrant(
+      input.importance,
+      urgencyManual,
+      input.dueDate ? `${input.dueDate}T${input.dueTime || "00:00"}` : null,
+      now
+    );
+    const quadrant = mapQuadrantTypeToUI(quadrantType);
+    const priorityReason = buildPriorityReason(
+      input.importance,
+      urgencyManual,
+      input.dueDate ? `${input.dueDate}T${input.dueTime || "00:00"}` : null,
+      quadrantType,
+      now
+    );
+
+    const taskWithScoring = {
+      title: input.title,
+      description: input.description,
+      importance: input.importance,
+      urgency: urgencyFinal,
+      dueDate: input.dueDate,
+      dueTime: input.dueTime,
+      status: input.status,
+      emoji: input.emoji,
+      notificationFrequency: input.notificationFrequency || "global",
+      attachments: input.attachments || [],
+      quadrant,
+      priorityScore: Math.round(((input.importance - 1) / 6 + (urgencyFinal - 1) / 6) / 2 * 100),
+      sortOrder: 0,
+    };
 
     const newTask = await dbCreateTask(taskWithScoring);
     const updatedTasks = await getAllTasks();

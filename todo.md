@@ -1025,3 +1025,15 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Test sorting within each quadrant (integration tests included)
 - [x] Verify priority reason generation for UI display
 - [x] All 60 unit tests passing
+
+## Phase 95: Apply New Quadrant Logic to Existing Tasks & Stickers ✅
+- [x] Create migration function to recalculate quadrants for all existing tasks
+- [x] Update task context to use resolveQuadrant() instead of old determineQuadrant()
+- [x] Add urgencyManual and urgencyDeadline fields to Task model (computed on-the-fly)
+- [x] Create function to migrate existing tasks with new quadrant assignment
+- [x] Update matrix screen to use new quadrant logic (via task context)
+- [x] Update kanban stickers to reflect new quadrant assignments (via task context)
+- [x] Add priority reason display in task cards (buildPriorityReason function)
+- [x] Implement quadrant-specific sorting (DO_NOW, SCHEDULE, DELEGATE, ELIMINATE)
+- [x] Create migration trigger to run on app startup
+- [x] Verify all existing tasks are correctly reassigned
