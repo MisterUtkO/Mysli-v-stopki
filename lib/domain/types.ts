@@ -123,5 +123,5 @@ export const QUADRANT_COLORS: Record<Quadrant, QuadrantColor> = {
   Q1: { background: "#FF6B6B", border: "#C92A2A", text: "#FFFFFF", label: "Do Now" },
   Q2: { background: "#FFA94D", border: "#E67700", text: "#FFFFFF", label: "Schedule" },
   Q3: { background: "#74C0FC", border: "#1971C2", text: "#FFFFFF", label: "Delegate" },
-  Q4: { background: "#51CF66", border: "#2B8A3E", text: "#FFFFFF", label: "Eliminate" },
+  Q4: { background: "#51CF66", border: "#2B8A3E", text: "#FFFFFF", label: "Postpone" },
 };

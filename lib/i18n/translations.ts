@@ -370,7 +370,7 @@ const EN: Translations = {
     tasksTitle: "Tasks Screen",
     tasksDescription: "View all your tasks filtered by status: All, Not Started, In Progress, and Done. Swipe a task left or right to change its status or delete it. Tap a photo attachment to open the full-screen viewer.",
     matrixTitle: "Eisenhower Matrix",
-    matrixDescription: "Visualize your tasks in a 2×2 matrix: Do First (urgent & important), Schedule (important), Delegate (urgent), and Eliminate (neither). Focus on what matters most.",
+    matrixDescription: "Visualize your tasks in a 2×2 matrix: Do First (urgent & important), Schedule (important), Delegate (urgent), and Postpone (neither). Focus on what matters most.",
     kanbanTitle: "Kanban Board",
     kanbanDescription: "Organize tasks in columns: Not Started, In Progress, and Done. Hold a sticker for a moment, then drag it to any column. The board highlights the target column as you drag.",
     achievementsTitle: "Achievements",
