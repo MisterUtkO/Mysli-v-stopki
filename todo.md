@@ -1043,3 +1043,10 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Implement quadrant-specific sorting (DO_NOW, SCHEDULE, DELEGATE, ELIMINATE)
 - [x] Create migration trigger to run on app startup
 - [x] Verify all existing tasks are correctly reassigned
+
+## Phase 97: Fix Matrix Screen Task Detail Modal Buttons ✅
+- [x] Add missing imports (Alert, AsyncStorage, KANBAN_STORAGE_KEY, calendar-sync)
+- [x] Implement onExportToCalendar handler in matrix TaskDetailModal
+- [x] Implement onExportToKanban handler in matrix TaskDetailModal
+- [x] Add success/error alerts for both export operations
+- [x] Verify TypeScript compilation (0 errors)

@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from "react";
-import { View, Text, ScrollView, Dimensions, FlatList, Pressable, Modal } from "react-native";
+import { View, Text, ScrollView, Dimensions, FlatList, Pressable, Modal, Alert } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { ScreenTransition } from "@/components/screen-transition";
 import { useTaskContext } from "@/lib/context/task-context";
@@ -12,6 +12,9 @@ import { MatrixTaskCard } from "@/components/matrix-task-card";
 import { TaskPopupBubble } from "@/components/task-popup-bubble";
 import { TaskDetailModal } from "@/components/task-detail-modal";
 import { cn } from "@/lib/utils";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { KANBAN_STORAGE_KEY } from "@/lib/kanban-sync";
+import { syncTaskToCalendar, formatTaskForCalendar } from "@/lib/calendar-sync";
 
 const QUADRANT_CONFIG = {
   Q1: {
@@ -259,11 +262,66 @@ export default function MatrixScreen() {
               setDetailModalVisible(false);
               setSelectedTaskForDetail(null);
             }}
-            onExportToCalendar={(task) => {
-              // Handle calendar export
+            onExportToCalendar={async (task) => {
+              try {
+                const calendarEvent = formatTaskForCalendar(task);
+                if (!calendarEvent) {
+                  Alert.alert(
+                    isRu ? "Ошибка" : "Error",
+                    isRu ? "Задача должна иметь дату" : "Task must have a due date"
+                  );
+                  return;
+                }
+                
+                const eventId = await syncTaskToCalendar(calendarEvent);
+                if (eventId) {
+                  Alert.alert(
+                    isRu ? "Успешно" : "Success",
+                    isRu ? "Задача добавлена в календарь" : "Task added to calendar"
+                  );
+                } else {
+                  Alert.alert(
+                    isRu ? "Ошибка" : "Error",
+                    isRu ? "Не удалось добавить в календарь" : "Failed to add to calendar"
+                  );
+                }
+              } catch (error) {
+                console.error("Export to calendar error:", error);
+                Alert.alert(
+                  isRu ? "Ошибка" : "Error",
+                  isRu ? "Ошибка при добавлении в календарь" : "Error adding to calendar"
+                );
+              }
             }}
-            onExportToKanban={(task) => {
-              // Handle kanban export
+            onExportToKanban={async (task) => {
+              try {
+                const stored = await AsyncStorage.getItem(KANBAN_STORAGE_KEY);
+                const data = stored ? JSON.parse(stored) : { columns: [{ id: "col_1", title: "Start", stickers: [] }, { id: "col_2", title: "In Progress", stickers: [] }, { id: "col_3", title: "Done", stickers: [] }] };
+                
+                const newSticker = {
+                  id: `sticker_${Date.now()}`,
+                  text: task.title,
+                  bgColor: "#FFEB3B",
+                  textColor: "#000000",
+                };
+                
+                data.columns[0].stickers.push(newSticker);
+                await AsyncStorage.setItem(KANBAN_STORAGE_KEY, JSON.stringify(data));
+                
+                Alert.alert(
+                  isRu ? "Успешно" : "Success",
+                  isRu ? "Задача добавлена в канбан" : "Task added to Kanban"
+                );
+                
+                setDetailModalVisible(false);
+                setSelectedTaskForDetail(null);
+              } catch (error) {
+                console.error("Export to Kanban error:", error);
+                Alert.alert(
+                  isRu ? "Ошибка" : "Error",
+                  isRu ? "Ошибка при добавлении в канбан" : "Error adding to Kanban"
+                );
+              }
             }}
           />
         )}
