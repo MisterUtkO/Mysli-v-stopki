@@ -51,7 +51,6 @@ export function TaskDetailModal({
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     onExportToCalendar?.(task);
-    onClose();
   };
 
   const handleExportToKanban = () => {
@@ -59,7 +58,6 @@ export function TaskDetailModal({
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     onExportToKanban?.(task);
-    onClose();
   };
 
   return (
@@ -68,6 +66,7 @@ export function TaskDetailModal({
       transparent
       animationType="fade"
       onRequestClose={onClose}
+      presentationStyle="overFullScreen"
     >
       <SafeAreaView
         style={{
@@ -77,11 +76,14 @@ export function TaskDetailModal({
         }}
         edges={["top", "left", "right"]}
       >
+        {/* Overlay background - tappable to close */}
         <Pressable
           style={{ flex: 1 }}
           onPress={onClose}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         />
 
+        {/* Modal content */}
         <View
           style={{
             backgroundColor: colors.background,
@@ -91,6 +93,7 @@ export function TaskDetailModal({
             paddingTop: 16,
             paddingBottom: 24,
             maxHeight: "80%",
+            zIndex: 1000,
           }}
         >
           {/* Handle bar */}
@@ -105,7 +108,12 @@ export function TaskDetailModal({
             }}
           />
 
-          <ScrollView showsVerticalScrollIndicator={false}>
+          {/* Scrollable content */}
+          <ScrollView 
+            showsVerticalScrollIndicator={false}
+            scrollEnabled={true}
+            nestedScrollEnabled={true}
+          >
             {/* Title */}
             <Text
               style={{
@@ -219,6 +227,7 @@ export function TaskDetailModal({
               flexDirection: "row",
               gap: 8,
               marginTop: 16,
+              zIndex: 1001,
             }}
           >
             <Pressable
@@ -307,6 +316,7 @@ export function TaskDetailModal({
               flexDirection: "row",
               gap: 8,
               marginTop: 8,
+              zIndex: 1001,
             }}
           >
             {onExportToCalendar && (

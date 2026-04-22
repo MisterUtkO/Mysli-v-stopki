@@ -57,7 +57,7 @@ const getQuadrantConfig = (isRu: boolean) => ({
 });
 
 export default function MatrixScreen() {
-  const { tasks, updateTask, deleteTask } = useTaskContext();
+  const { tasks, updateTask, deleteTask, refreshTasks } = useTaskContext();
   const colors = useColors();
   const { t, language } = useI18n();
   const customization = useCustomization();
@@ -257,8 +257,9 @@ export default function MatrixScreen() {
               setDetailModalVisible(false);
               setSelectedTaskForDetail(null);
             }}
-            onDelete={(taskId) => {
-              deleteTask(taskId);
+            onDelete={async (taskId) => {
+              await deleteTask(taskId);
+              await refreshTasks();
               setDetailModalVisible(false);
               setSelectedTaskForDetail(null);
             }}
@@ -279,6 +280,8 @@ export default function MatrixScreen() {
                     isRu ? "Успешно" : "Success",
                     isRu ? "Задача добавлена в календарь" : "Task added to calendar"
                   );
+                  setDetailModalVisible(false);
+                  setSelectedTaskForDetail(null);
                 } else {
                   Alert.alert(
                     isRu ? "Ошибка" : "Error",
