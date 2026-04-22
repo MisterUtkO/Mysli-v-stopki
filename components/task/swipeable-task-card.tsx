@@ -10,7 +10,7 @@ import {
   Alert,
   ToastAndroid,
 } from "react-native";
-import { addTaskToKanban } from "@/lib/kanban-sync";
+import { addTaskToKanban } from "@/lib/integrations/kanban/kanban-sync";
 import { useCustomization } from "@/lib/context/customization-context";
 import Animated, {
   useSharedValue,
@@ -26,10 +26,10 @@ import { useRouter } from "expo-router";
 import { useState, useRef } from "react";
 import * as Haptics from "expo-haptics";
 import type { Task, TaskStatus, TaskAttachment } from "@/lib/domain/types";
-import { FilePreviewModal } from "@/components/file-preview-modal";
-import { AnimatedEmoji } from "@/components/animated-emoji";
-import { TaskCardGlow } from "@/components/task-card-glow";
-import { getTaskGlowType } from "@/lib/glow-colors";
+import { FilePreviewModal } from "@/components/modals/file-preview-modal";
+import { AnimatedEmoji } from "@/components/animations/animated-emoji";
+import { TaskCardGlow } from "@/components/task/task-card-glow";
+import { getTaskGlowType } from "@/lib/theme/glow-colors";
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {

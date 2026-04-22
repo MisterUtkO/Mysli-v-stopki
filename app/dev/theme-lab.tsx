@@ -1,12 +1,12 @@
 import { useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-import { ScreenContainer } from "@/components/screen-container";
-import { ThemedView } from "@/components/themed-view";
+import { ScreenContainer } from "@/components/common/screen-container";
+import { ThemedView } from "@/components/common/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { SchemeColors, type ColorScheme } from "@/constants/theme";
 import { useColors } from "@/hooks/use-colors";
-import { useThemeContext } from "@/lib/theme-provider";
+import { useThemeContext } from "@/lib/theme/theme-provider";
 
 type PaletteName = keyof typeof SchemeColors.light;
 

@@ -13,11 +13,11 @@ import Slider from "@react-native-community/slider";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
-import { ScreenContainer } from "@/components/screen-container";
+import { ScreenContainer } from "@/components/common/screen-container";
 import { useTaskContext } from "@/lib/context/task-context";
 import { useI18n } from "@/lib/context/i18n-context";
-import { EmojiPicker } from "@/components/emoji-picker";
-import { FilePreviewModal } from "@/components/file-preview-modal";
+import { EmojiPicker } from "@/components/modals/emoji-picker";
+import { FilePreviewModal } from "@/components/modals/file-preview-modal";
 import { determineQuadrant, calculatePriorityScore } from "@/lib/domain/scoring";
 import type { Task, NotificationFrequency, TaskAttachment } from "@/lib/domain/types";
 

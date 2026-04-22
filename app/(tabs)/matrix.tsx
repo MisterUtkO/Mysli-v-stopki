@@ -1,20 +1,20 @@
 import { useState, useCallback, useMemo } from "react";
 import { View, Text, ScrollView, Dimensions, FlatList, Pressable, Modal, Alert } from "react-native";
-import { ScreenContainer } from "@/components/screen-container";
-import { ScreenTransition } from "@/components/screen-transition";
+import { ScreenContainer } from "@/components/common/screen-container";
+import { ScreenTransition } from "@/components/animations/screen-transition";
 import { useTaskContext } from "@/lib/context/task-context";
 import { useColors } from "@/hooks/use-colors";
 import { useI18n } from "@/lib/context/i18n-context";
 import { useCustomization } from "@/lib/context/customization-context";
 import type { Task } from "@/lib/domain/types";
-import { SwipeableTaskCard } from "@/components/swipeable-task-card";
-import { MatrixTaskCard } from "@/components/matrix-task-card";
-import { TaskPopupBubble } from "@/components/task-popup-bubble";
-import { TaskDetailModal } from "@/components/task-detail-modal";
+import { SwipeableTaskCard } from "@/components/task/swipeable-task-card";
+import { MatrixTaskCard } from "@/components/matrix/matrix-task-card";
+import { TaskPopupBubble } from "@/components/task/task-popup-bubble";
+import { TaskDetailModal } from "@/components/task/task-detail-modal";
 import { cn } from "@/lib/utils";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { KANBAN_STORAGE_KEY } from "@/lib/kanban-sync";
-import { syncTaskToCalendar, formatTaskForCalendar } from "@/lib/calendar-sync";
+import { KANBAN_STORAGE_KEY } from "@/lib/integrations/kanban/kanban-sync";
+import { syncTaskToCalendar, formatTaskForCalendar } from "@/lib/integrations/calendar/calendar-sync";
 
 const QUADRANT_CONFIG = {
   Q1: {

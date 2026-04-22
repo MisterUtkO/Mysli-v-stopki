@@ -1,7 +1,7 @@
 import { View, Text, Pressable, ScrollView, Linking } from "react-native";
 import { useRouter } from "expo-router";
-import { ScreenContainer } from "@/components/screen-container";
-import { ScreenTransition } from "@/components/screen-transition";
+import { ScreenContainer } from "@/components/common/screen-container";
+import { ScreenTransition } from "@/components/animations/screen-transition";
 import { useI18n } from "@/lib/context/i18n-context";
 import { useColors } from "@/hooks/use-colors";
 

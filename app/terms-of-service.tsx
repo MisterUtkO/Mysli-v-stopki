@@ -1,6 +1,6 @@
 import { ScrollView, Text, View, Pressable } from "react-native";
 import { useRouter } from "expo-router";
-import { ScreenContainer } from "@/components/screen-container";
+import { ScreenContainer } from "@/components/common/screen-container";
 import { useI18n } from "@/lib/context/i18n-context";
 import { useColors } from "@/hooks/use-colors";
 

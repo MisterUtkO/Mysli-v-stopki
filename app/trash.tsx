@@ -1,7 +1,7 @@
 import { View, Text, FlatList, Pressable, Alert, Platform } from "react-native";
 import { useRouter } from "expo-router";
-import { ScreenContainer } from "@/components/screen-container";
-import { ScreenTransition } from "@/components/screen-transition";
+import { ScreenContainer } from "@/components/common/screen-container";
+import { ScreenTransition } from "@/components/animations/screen-transition";
 import { useTaskContext } from "@/lib/context/task-context";
 import { useI18n } from "@/lib/context/i18n-context";
 import type { Task } from "@/lib/domain/types";

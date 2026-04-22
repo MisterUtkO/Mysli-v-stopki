@@ -9,9 +9,9 @@ import Animated, {
   Easing,
 } from "react-native-reanimated";
 import { useEffect } from "react";
-import { useThemeContext } from "@/lib/theme-provider";
-import { getGlowColor, type GlowType } from "@/lib/glow-colors";
-import { getThemeNeonColor } from "@/lib/theme-neon-colors";
+import { useThemeContext } from "@/lib/theme/theme-provider";
+import { getGlowColor, type GlowType } from "@/lib/theme/glow-colors";
+import { getThemeNeonColor } from "@/lib/theme/theme-neon-colors";
 import { useCustomization } from "@/lib/context/customization-context";
 
 interface TaskCardGlowProps {

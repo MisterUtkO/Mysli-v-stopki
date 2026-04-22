@@ -1,9 +1,9 @@
 import React, { useRef } from "react";
 import { View } from "react-native";
-import { ScreenContainer } from "@/components/screen-container";
-import { ScreenTransition } from "@/components/screen-transition";
+import { ScreenContainer } from "@/components/common/screen-container";
+import { ScreenTransition } from "@/components/animations/screen-transition";
 import { useColors } from "@/hooks/use-colors";
-import { KanbanBoard, type KanbanBoardRef } from "@/components/kanban-board";
+import { KanbanBoard, type KanbanBoardRef } from "@/components/kanban/kanban-board";
 import { useFocusEffect } from "expo-router";
 
 export default function KanbanScreen() {

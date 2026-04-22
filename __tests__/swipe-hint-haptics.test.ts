@@ -29,7 +29,7 @@ describe("Screen Transition Component", () => {
   it("should have ScreenTransition component file", async () => {
     const fs = await import("fs");
     const content = fs.readFileSync(
-      "/home/ubuntu/eisenhower-priority-app/components/screen-transition.tsx",
+      "/home/ubuntu/eisenhower-priority-app/components/animations/screen-transition.tsx",
       "utf-8"
     );
     expect(content).toContain("export function ScreenTransition");
@@ -74,7 +74,7 @@ describe("Haptic Feedback Integration", () => {
     // Read the file content to verify haptics is imported
     const fs = await import("fs");
     const content = fs.readFileSync(
-      "/home/ubuntu/eisenhower-priority-app/components/swipeable-task-card.tsx",
+      "/home/ubuntu/eisenhower-priority-app/components/task/swipeable-task-card.tsx",
       "utf-8"
     );
     expect(content).toContain('import * as Haptics from "expo-haptics"');
@@ -85,7 +85,7 @@ describe("Haptic Feedback Integration", () => {
   it("should guard haptics with Platform.OS check", async () => {
     const fs = await import("fs");
     const content = fs.readFileSync(
-      "/home/ubuntu/eisenhower-priority-app/components/swipeable-task-card.tsx",
+      "/home/ubuntu/eisenhower-priority-app/components/task/swipeable-task-card.tsx",
       "utf-8"
     );
     // Haptics should only fire on native, not web
@@ -97,7 +97,7 @@ describe("Screen Transition Animation Tuning", () => {
   it("should use easing curves for smooth animations", async () => {
     const fs = await import("fs");
     const content = fs.readFileSync(
-      "/home/ubuntu/eisenhower-priority-app/components/screen-transition.tsx",
+      "/home/ubuntu/eisenhower-priority-app/components/animations/screen-transition.tsx",
       "utf-8"
     );
     expect(content).toContain("Easing.out(Easing.cubic)");
@@ -107,7 +107,7 @@ describe("Screen Transition Animation Tuning", () => {
   it("should have default duration of 250ms", async () => {
     const fs = await import("fs");
     const content = fs.readFileSync(
-      "/home/ubuntu/eisenhower-priority-app/components/screen-transition.tsx",
+      "/home/ubuntu/eisenhower-priority-app/components/animations/screen-transition.tsx",
       "utf-8"
     );
     expect(content).toContain("duration = 250");
@@ -116,7 +116,7 @@ describe("Screen Transition Animation Tuning", () => {
   it("should have shorter exit animation than enter", async () => {
     const fs = await import("fs");
     const content = fs.readFileSync(
-      "/home/ubuntu/eisenhower-priority-app/components/screen-transition.tsx",
+      "/home/ubuntu/eisenhower-priority-app/components/animations/screen-transition.tsx",
       "utf-8"
     );
     // Exit uses duration * 0.8 for snappier feel

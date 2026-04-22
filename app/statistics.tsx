@@ -1,5 +1,5 @@
 import { View, Text, ScrollView, Pressable, Dimensions } from "react-native";
-import { ScreenContainer } from "@/components/screen-container";
+import { ScreenContainer } from "@/components/common/screen-container";
 import { useTaskContext } from "@/lib/context/task-context";
 import { useI18n } from "@/lib/context/i18n-context";
 import { useColors } from "@/hooks/use-colors";

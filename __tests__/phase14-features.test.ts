@@ -42,7 +42,7 @@ describe("Theme configuration", () => {
 
 // Test 2: Theme provider supports new schemes
 describe("Theme provider", () => {
-  const providerSource = fs.readFileSync(path.join(projectRoot, "lib/theme-provider.tsx"), "utf-8");
+  const providerSource = fs.readFileSync(path.join(projectRoot, "lib/theme/theme-provider.tsx"), "utf-8");
 
   it("should recognize amoled and pastel in saved theme loading", () => {
     expect(providerSource).toContain('"amoled"');
@@ -64,7 +64,7 @@ describe("Theme provider", () => {
 
 // Test 3: Achievements no longer have isSecret
 describe("Achievement definitions", () => {
-  const achievementsSource = fs.readFileSync(path.join(projectRoot, "lib/achievements/definitions.ts"), "utf-8");
+  const achievementsSource = fs.readFileSync(path.join(projectRoot, "lib/services/achievement/definitions.ts"), "utf-8");
 
   it("should not contain isSecret property", () => {
     expect(achievementsSource).not.toContain("isSecret");
@@ -118,7 +118,7 @@ describe("Settings theme selector", () => {
 
 // Test 7: Kanban board has rename column feature
 describe("Kanban board column renaming", () => {
-  const kanbanSource = fs.readFileSync(path.join(projectRoot, "components/kanban-board.tsx"), "utf-8");
+  const kanbanSource = fs.readFileSync(path.join(projectRoot, "components/kanban/kanban-board.tsx"), "utf-8");
 
   it("should have rename column state", () => {
     expect(kanbanSource).toContain("renamingColumn");
@@ -141,7 +141,7 @@ describe("Kanban board column renaming", () => {
 
 // Test 8: AnimatedEmoji has multiple animation types
 describe("AnimatedEmoji component", () => {
-  const emojiSource = fs.readFileSync(path.join(projectRoot, "components/animated-emoji.tsx"), "utf-8");
+  const emojiSource = fs.readFileSync(path.join(projectRoot, "components/animations/animated-emoji.tsx"), "utf-8");
 
   it("should have multiple animation types", () => {
     expect(emojiSource).toContain('"flicker"');
@@ -167,7 +167,7 @@ describe("AnimatedEmoji component", () => {
 
 // Test 9: Notification scheduler
 describe("Notification scheduler", () => {
-  const notifSource = fs.readFileSync(path.join(projectRoot, "lib/services/notification-scheduler.ts"), "utf-8");
+  const notifSource = fs.readFileSync(path.join(projectRoot, "lib/services/notification/notification-scheduler.ts"), "utf-8");
 
   it("should have task notification scheduling", () => {
     expect(notifSource).toContain("scheduleTaskNotifications");

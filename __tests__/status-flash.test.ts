@@ -6,7 +6,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "fs";
 
-const cardPath = "/home/ubuntu/eisenhower-priority-app/components/swipeable-task-card.tsx";
+const cardPath = "/home/ubuntu/eisenhower-priority-app/components/task/swipeable-task-card.tsx";
 const content = readFileSync(cardPath, "utf-8");
 
 describe("Status Change Flash Animation", () => {

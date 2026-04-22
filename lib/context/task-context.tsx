@@ -22,27 +22,27 @@ import {
   calculateDeadlineUrgency,
   calculateFinalUrgency,
 } from "@/lib/domain/quadrant-logic";
-import { migrateAllTasksToNewLogic } from "@/lib/services/task-migration";
-import { migrateExistingTasks } from "@/lib/services/migration-trigger";
+import { migrateAllTasksToNewLogic } from "@/lib/services/task/task-migration";
+import { migrateExistingTasks } from "@/lib/services/task/migration-trigger";
 import {
   scheduleTaskNotifications,
   scheduleMotivationalNotification,
   cancelAllScheduledNotifications,
-} from "@/lib/services/notification-scheduler";
+} from "@/lib/services/notification/notification-scheduler";
 import {
   syncTaskToCalendar,
   formatTaskForCalendar,
   deleteCalendarEventByTaskId,
-} from "@/lib/calendar-sync";
-import { syncTaskToKanban, removeTaskFromKanban } from "@/lib/kanban-sync";
+} from "@/lib/integrations/calendar/calendar-sync";
+import { syncTaskToKanban, removeTaskFromKanban } from "@/lib/integrations/kanban/kanban-sync";
 import {
   scheduleTaskReminder,
   rescheduleTaskReminder,
   cancelTaskReminder,
   getReminderSettings,
   requestNotificationPermissions,
-} from "@/lib/reminders";
-import { scheduleTaskCleanup } from "@/lib/services/task-cleanup";
+} from "@/lib/services/notification/reminders";
+import { scheduleTaskCleanup } from "@/lib/services/task/task-cleanup";
 
 interface CreateTaskInput {
   title: string;

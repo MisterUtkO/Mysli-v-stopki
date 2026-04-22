@@ -7,7 +7,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
 import { Platform } from "react-native";
 import "@/lib/_core/nativewind-pressable";
-import { ThemeProvider } from "@/lib/theme-provider";
+import { ThemeProvider } from "@/lib/theme/theme-provider";
 import {
   SafeAreaFrameContext,
   SafeAreaInsetsContext,
@@ -21,17 +21,17 @@ import { initManusRuntime, subscribeSafeAreaInsets } from "@/lib/_core/manus-run
 import { TaskProvider } from "@/lib/context/task-context";
 import { I18nProvider } from "@/lib/context/i18n-context";
 import { AchievementProvider, useAchievements } from "@/lib/context/achievement-context";
-import { AchievementCelebration } from "@/components/achievement-celebration";
-import { OnboardingTutorialProvider } from "@/components/onboarding-tutorial";
+import { AchievementCelebration } from "@/components/achievement/achievement-celebration";
+import { OnboardingTutorialProvider } from "@/components/modals/onboarding-tutorial";
 import { AppVersionProvider } from "@/lib/context/app-version-context";
 import { CustomizationProvider } from "@/lib/context/customization-context";
 import { useTaskContext } from "@/lib/context/task-context";
 import { useI18n } from "@/lib/context/i18n-context";
-import { initializeNotifications } from "@/lib/services/notification-scheduler";
+import { initializeNotifications } from "@/lib/services/notification/notification-scheduler";
 import { Alert } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import * as NavigationBar from "expo-navigation-bar";
-import { useThemeContext } from "@/lib/theme-provider";
+import { useThemeContext } from "@/lib/theme/theme-provider";
 
 // Global navigation ref for reliable navigation from anywhere in the app
 export const navigationRef = React.createRef<any>();

@@ -28,7 +28,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useI18n } from "@/lib/context/i18n-context";
 import { useColors } from "@/hooks/use-colors";
 import { useTaskContext } from "@/lib/context/task-context";
-import { KANBAN_STORAGE_KEY } from "@/lib/kanban-sync";
+import { KANBAN_STORAGE_KEY } from "@/lib/integrations/kanban/kanban-sync";
 import { useCallback, useState, useRef, forwardRef, useImperativeHandle } from "react";
 import React from "react";
 import { KanbanStickerDetailModal } from "./kanban-sticker-detail-modal";

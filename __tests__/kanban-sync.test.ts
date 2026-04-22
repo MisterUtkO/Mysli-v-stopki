@@ -19,7 +19,7 @@ import {
   getTaskStatusFromKanban,
   isTaskOnKanban,
   KANBAN_STORAGE_KEY,
-} from "../lib/kanban-sync";
+} from "../lib/integrations/kanban/kanban-sync";
 import type { Task } from "../lib/domain/types";
 
 const makeTask = (overrides: Partial<Task> = {}): Task => ({

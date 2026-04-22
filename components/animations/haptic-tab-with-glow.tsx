@@ -6,8 +6,8 @@ import Animated from "react-native-reanimated";
 import { useEffect } from "react";
 import { View } from "react-native";
 import { useColors } from "@/hooks/use-colors";
-import { useThemeContext } from "@/lib/theme-provider";
-import { getThemeNeonColor } from "@/lib/theme-neon-colors";
+import { useThemeContext } from "@/lib/theme/theme-provider";
+import { getThemeNeonColor } from "@/lib/theme/theme-neon-colors";
 
 export function HapticTabWithGlow(props: BottomTabBarButtonProps) {
   const glowAnimation = useSharedValue(0);

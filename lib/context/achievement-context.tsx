@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { AchievementDefinition, UnlockedAchievement, Task } from "@/lib/domain/types";
-import { ACHIEVEMENTS } from "@/lib/achievements/definitions";
-import { checkAchievements } from "@/lib/achievements/checker";
+import { ACHIEVEMENTS } from "@/lib/services/achievement/definitions";
+import { checkAchievements } from "@/lib/services/achievement/checker";
 
 const STORAGE_KEY = "@sdvgnote_achievements";
 const FLAGS_KEY = "@sdvgnote_achievement_flags";

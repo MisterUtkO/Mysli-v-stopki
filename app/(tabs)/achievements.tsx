@@ -7,9 +7,9 @@ import {
   Modal,
   useWindowDimensions,
 } from "react-native";
-import { ScreenContainer } from "@/components/screen-container";
-import { ScreenTransition } from "@/components/screen-transition";
-import { AnimatedAchievementCard } from "@/components/animated-achievement-card";
+import { ScreenContainer } from "@/components/common/screen-container";
+import { ScreenTransition } from "@/components/animations/screen-transition";
+import { AnimatedAchievementCard } from "@/components/achievement/animated-achievement-card";
 import { useAchievements } from "@/lib/context/achievement-context";
 import { useI18n } from "@/lib/context/i18n-context";
 import { useColors } from "@/hooks/use-colors";

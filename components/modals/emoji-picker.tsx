@@ -2,7 +2,7 @@ import { View, Text, Pressable, ScrollView, Modal } from "react-native";
 import { TASK_EMOJIS_BASE, ACHIEVEMENT_EMOJI_IDS } from "@/lib/domain/types";
 import { useI18n } from "@/lib/context/i18n-context";
 import { useAchievements } from "@/lib/context/achievement-context";
-import { ACHIEVEMENTS } from "@/lib/achievements/definitions";
+import { ACHIEVEMENTS } from "@/lib/services/achievement/definitions";
 
 interface EmojiPickerProps {
   visible: boolean;

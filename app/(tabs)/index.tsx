@@ -11,18 +11,18 @@ import {
   Animated,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { ScreenContainer } from "@/components/screen-container";
-import { ScreenTransition } from "@/components/screen-transition";
+import { ScreenContainer } from "@/components/common/screen-container";
+import { ScreenTransition } from "@/components/animations/screen-transition";
 import { useTaskContext } from "@/lib/context/task-context";
 import { useI18n } from "@/lib/context/i18n-context";
-import { SwipeableTaskCard } from "@/components/swipeable-task-card";
+import { SwipeableTaskCard } from "@/components/task/swipeable-task-card";
 import { SwipeHint } from "@/components/swipe-hint";
-import { TaskDetailModal } from "@/components/task-detail-modal";
-import { syncTaskToCalendar, formatTaskForCalendar } from "@/lib/calendar-sync";
+import { TaskDetailModal } from "@/components/task/task-detail-modal";
+import { syncTaskToCalendar, formatTaskForCalendar } from "@/lib/integrations/calendar/calendar-sync";
 import type { Task, TaskStatus } from "@/lib/domain/types";
 import { useState, useRef, useMemo, useCallback } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { KANBAN_STORAGE_KEY } from "@/lib/kanban-sync";
+import { KANBAN_STORAGE_KEY } from "@/lib/integrations/kanban/kanban-sync";
 
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);

@@ -1,7 +1,7 @@
 import { Tabs, useRouter } from "expo-router";
 import type { RelativePathString } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { HapticTabWithGlow } from "@/components/haptic-tab-with-glow";
+import { HapticTabWithGlow } from "@/components/animations/haptic-tab-with-glow";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Platform, View } from "react-native";
 import { useColors } from "@/hooks/use-colors";
