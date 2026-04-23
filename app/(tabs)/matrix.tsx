@@ -268,12 +268,6 @@ export default function MatrixScreen() {
               setDetailModalVisible(false);
               setSelectedTaskForDetail(null);
             }}
-            onDelete={async (taskId) => {
-              await deleteTask(taskId);
-              await refreshTasks();
-              setDetailModalVisible(false);
-              setSelectedTaskForDetail(null);
-            }}
             onExportToCalendar={async (task) => {
               try {
                 const calendarEvent = formatTaskForCalendar(task);
