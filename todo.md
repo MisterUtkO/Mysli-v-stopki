@@ -1102,3 +1102,14 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Delete button no longer appears when opening task card on matrix
 - [x] Only "Выполнено" (Complete) button remains for task completion
 - [x] TypeScript: 0 errors
+
+## Phase 103: Matrix Population & Trash Sync ✅
+- [x] Verify all tasks (active + archived) populate matrix correctly
+- [x] Ensure matrix uses new quadrant logic (resolveQuadrant from Phase 94)
+- [x] Filter out deleted/trashed tasks from matrix display (check isDeleted flag)
+- [x] When task moves to trash, remove from matrix automatically
+- [x] When task restored from trash, reappear in matrix with correct quadrant
+- [x] TypeScript: 0 errors
+- [x] Deleted tasks hidden from matrix view
+- [x] Completed tasks hidden from matrix view
+- [x] All active tasks populate matrix with correct quadrant assignment

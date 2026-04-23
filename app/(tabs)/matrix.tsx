@@ -97,6 +97,8 @@ export default function MatrixScreen() {
     tasks.forEach((task) => {
       // Skip completed tasks in matrix view
       if (task.status === "completed") return;
+      // Skip deleted/trashed tasks
+      if (task.isDeleted) return;
       
       const quadrantKey = task.quadrant as QuadrantKey;
       if (result[quadrantKey]) {
