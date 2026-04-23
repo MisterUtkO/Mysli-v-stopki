@@ -410,10 +410,10 @@ export default function SettingsScreen() {
                 🔔 {isRu ? "Отправить тестовое уведомление" : "Send Test Notification"}
               </Text>
             </Pressable>
+            </CollapsibleSection>
 
             {/* ========== SECTION 5: MOTIVATION ========== */}
             <CollapsibleSection title={isRu ? "5. Мотивационные сообщения" : "5. Motivation"} emoji="💪">
-              <View style={{ backgroundColor: colors.background, borderRadius: 10, padding: 12 }}>
               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1 }}>
                   <Text style={{ fontSize: 24 }}>💪</Text>
@@ -597,7 +597,6 @@ export default function SettingsScreen() {
                   </Pressable>
                 </View>
               )}
-              </View>
             </CollapsibleSection>
 
             {/* ========== SECTION 6: CUSTOMIZATION ========== */}
@@ -710,7 +709,6 @@ export default function SettingsScreen() {
                   {isRu ? "Контролирует анимации стикеров и эффекты" : "Controls sticker animations and effects"}
                 </Text>
               </View>
-            </View>
 
             {/* ========== SECTION 7: INFORMATION & SUPPORT ========== */}
             <Text className={sectionTitleStyle}>{isRu ? "7. Информация и поддержка" : "7. Information & Support"}</Text>
