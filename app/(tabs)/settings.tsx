@@ -34,6 +34,7 @@ import { NotificationSettings } from "@/components/customization/notification-se
 import { DeadlineHighlightSettings } from "@/components/customization/deadline-highlight-settings";
 import { useCustomization } from "@/lib/context/customization-context";
 import Slider from "@react-native-community/slider";
+import { CollapsibleSection } from "@/components/customization/collapsible-section";
 
 
 type NotifFrequency = "never" | "hourly" | "daily" | "weekly" | "always";
@@ -301,11 +302,7 @@ export default function SettingsScreen() {
             </View>
 
             {/* ========== SECTION 3: START SCREEN ========== */}
-            <Text className={sectionTitleStyle}>{isRu ? "3. Начальный экран" : "3. Start Screen"}</Text>
-            <View className={sectionStyle}>
-              <Text className="text-muted" style={{ fontSize: 13, marginBottom: 12 }}>
-                {isRu ? "Выберите, какой экран открывается при запуске" : "Choose which screen opens on startup"}
-              </Text>
+            <CollapsibleSection title={isRu ? "3. Начальный экран" : "3. Start Screen"} emoji="🏠">
               <View style={{ gap: 8 }}>
                 {[
                   { value: "index", label: isRu ? "Задачи" : "Tasks", emoji: "📋" },
@@ -339,13 +336,12 @@ export default function SettingsScreen() {
                   </Pressable>
                 ))}
               </View>
-            </View>
+            </CollapsibleSection>
 
             {/* ========== SECTION 4: TASK NOTIFICATIONS ========== */}
-            <Text className={sectionTitleStyle}>{isRu ? "4. Уведомления о задачах" : "4. Task Notifications"}</Text>
-            
-            {/* Task Notifications Toggle */}
-            <View className={sectionStyle}>
+            <CollapsibleSection title={isRu ? "4. Уведомления о задачах" : "4. Task Notifications"} emoji="🔔">
+              {/* Task Notifications Toggle */}
+              <View style={{ backgroundColor: colors.background, borderRadius: 10, padding: 12, marginBottom: 8 }}>
               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1 }}>
                   <Text style={{ fontSize: 24 }}>🔔</Text>
@@ -391,10 +387,10 @@ export default function SettingsScreen() {
                   ))}
                 </View>
               )}
-            </View>
+              </View>
 
-            {/* Test Notification Button */}
-            <Pressable
+              {/* Test Notification Button */}
+              <Pressable
               onPress={() => {
                 if (Platform.OS !== "web") {
                   sendTestNotification(isRu);
@@ -416,8 +412,8 @@ export default function SettingsScreen() {
             </Pressable>
 
             {/* ========== SECTION 5: MOTIVATION ========== */}
-            <Text className={sectionTitleStyle}>{isRu ? "5. Мотивационные сообщения" : "5. Motivation"}</Text>
-            <View className={sectionStyle}>
+            <CollapsibleSection title={isRu ? "5. Мотивационные сообщения" : "5. Motivation"} emoji="💪">
+              <View style={{ backgroundColor: colors.background, borderRadius: 10, padding: 12 }}>
               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1 }}>
                   <Text style={{ fontSize: 24 }}>💪</Text>
@@ -601,7 +597,8 @@ export default function SettingsScreen() {
                   </Pressable>
                 </View>
               )}
-            </View>
+              </View>
+            </CollapsibleSection>
 
             {/* ========== SECTION 6: CUSTOMIZATION ========== */}
             <Text className={sectionTitleStyle}>{isRu ? "6. Кастомизация" : "6. Customization"}</Text>
@@ -634,10 +631,12 @@ export default function SettingsScreen() {
                 <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16, textAlign: "center" }}>
                   {isRu ? "🔊 Звуки и вибрация" : "🔊 Sound & Vibration"}
                 </Text>
-              </Pressable>
+               </Pressable>
+            </View>
 
-              <Pressable
-                onPress={() => setShowCustomizationModal('deadline')}
+            {/* Deadline Highlighting Button */}
+            <Pressable
+              onPress={() => setShowCustomizationModal('deadline')}
                 style={({ pressed }) => [{
                   backgroundColor: colors.primary,
                   borderRadius: 12,
