@@ -11,6 +11,7 @@ interface TaskDetailModalProps {
   onClose: () => void;
   onEdit?: (task: Task) => void;
   onDelete?: (taskId: string) => void;
+  onMarkComplete?: (taskId: string) => void;
   onExportToCalendar?: (task: Task) => void;
   onExportToKanban?: (task: Task) => void;
 }
@@ -21,6 +22,7 @@ export function TaskDetailModal({
   onClose,
   onEdit,
   onDelete,
+  onMarkComplete,
   onExportToCalendar,
   onExportToKanban,
 }: TaskDetailModalProps) {
@@ -43,6 +45,14 @@ export function TaskDetailModal({
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
     onDelete?.(task.id);
+    onClose();
+  };
+
+  const handleMarkComplete = () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    onMarkComplete?.(task.id);
     onClose();
   };
 
@@ -278,6 +288,33 @@ export function TaskDetailModal({
                   }}
                 >
                   {isRu ? "Редактировать" : "Edit"}
+                </Text>
+              </Pressable>
+            )}
+
+            {onMarkComplete && (
+              <Pressable
+                onPress={handleMarkComplete}
+                style={({ pressed }) => [
+                  {
+                    flex: 1,
+                    paddingVertical: 10,
+                    borderRadius: 8,
+                    backgroundColor: "#22C55E",
+                    opacity: pressed ? 0.8 : 1,
+                    justifyContent: "center",
+                    alignItems: "center",
+                  },
+                ]}
+              >
+                <Text
+                  style={{
+                    fontSize: 12,
+                    fontWeight: "600",
+                    color: "#FFFFFF",
+                  }}
+                >
+                  {isRu ? "Выполнено" : "Complete"}
                 </Text>
               </Pressable>
             )}

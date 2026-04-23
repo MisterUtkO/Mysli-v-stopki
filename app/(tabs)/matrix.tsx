@@ -11,6 +11,7 @@ import { SwipeableTaskCard } from "@/components/task/swipeable-task-card";
 import { MatrixTaskCard } from "@/components/matrix/matrix-task-card";
 import { TaskPopupBubble } from "@/components/task/task-popup-bubble";
 import { TaskDetailModal } from "@/components/task/task-detail-modal";
+import { MatrixEditTextModal } from "@/components/matrix/matrix-edit-text-modal";
 import { cn } from "@/lib/utils";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { KANBAN_STORAGE_KEY } from "@/lib/integrations/kanban/kanban-sync";
@@ -75,6 +76,8 @@ export default function MatrixScreen() {
   const [popupPosition, setPopupPosition] = useState({ top: 100, left: 20 });
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [selectedTaskForDetail, setSelectedTaskForDetail] = useState<Task | null>(null);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [selectedTaskForEdit, setSelectedTaskForEdit] = useState<Task | null>(null);
 
   const screenWidth = Dimensions.get("window").width;
   const screenHeight = Dimensions.get("window").height;
@@ -256,6 +259,14 @@ export default function MatrixScreen() {
             onEdit={(task) => {
               setDetailModalVisible(false);
               setSelectedTaskForDetail(null);
+              setSelectedTaskForEdit(task);
+              setEditModalVisible(true);
+            }}
+            onMarkComplete={async (taskId) => {
+              await updateTask(taskId, { status: "completed" });
+              await refreshTasks();
+              setDetailModalVisible(false);
+              setSelectedTaskForDetail(null);
             }}
             onDelete={async (taskId) => {
               await deleteTask(taskId);
@@ -348,6 +359,24 @@ export default function MatrixScreen() {
               onClose={() => setPopupVisible(false)}
             />
           </Pressable>
+        )}
+
+        {/* Matrix Edit Text Modal */}
+        {selectedTaskForEdit && (
+          <MatrixEditTextModal
+            visible={editModalVisible}
+            task={selectedTaskForEdit}
+            onClose={() => {
+              setEditModalVisible(false);
+              setSelectedTaskForEdit(null);
+            }}
+            onSave={async (taskId, newTitle) => {
+              await updateTask(taskId, { title: newTitle });
+              await refreshTasks();
+              setEditModalVisible(false);
+              setSelectedTaskForEdit(null);
+            }}
+          />
         )}
       </ScreenContainer>
     </ScreenTransition>
