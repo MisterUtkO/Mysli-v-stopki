@@ -1119,3 +1119,11 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Verify app.config.ts splash screen configuration points to correct path
 - [x] TypeScript: 0 errors ✅
 - [x] Dev server running and healthy ✅
+
+## Phase 106: Full Task Text in Kanban & Heartbeat Animation ✅
+- [x] Modify task export to kanban: send full task description, not just title
+- [x] Update kanban sticker creation to include full task text
+- [x] Create heartbeat animation component for donate button
+- [x] Apply heartbeat animation to "Поддержать разработчика" button
+- [x] Test animation is subtle and doesn't distract
+- [x] Verify all functionality works correctly

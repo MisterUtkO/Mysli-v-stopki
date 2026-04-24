@@ -308,7 +308,7 @@ export default function MatrixScreen() {
                 
                 const newSticker = {
                   id: `sticker_${Date.now()}`,
-                  text: task.title,
+                  text: task.description || task.title,
                   bgColor: "#FFEB3B",
                   textColor: "#000000",
                 };

@@ -35,6 +35,7 @@ import { DeadlineHighlightSettings } from "@/components/customization/deadline-h
 import { useCustomization } from "@/lib/context/customization-context";
 import Slider from "@react-native-community/slider";
 import { CollapsibleSection } from "@/components/customization/collapsible-section";
+import { HeartbeatEmoji } from "@/components/animations/heartbeat-emoji";
 
 
 type NotifFrequency = "never" | "hourly" | "daily" | "weekly" | "always";
@@ -790,10 +791,15 @@ export default function SettingsScreen() {
                 paddingVertical: 12,
                 paddingHorizontal: 16,
                 opacity: pressed ? 0.7 : 1,
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
               }]}
             >
+              <HeartbeatEmoji emoji="❤️" size={20} />
               <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16, textAlign: "center" }}>
-                ❤️ {isRu ? "Поддержать разработчика" : "Support Developer"}
+                {isRu ? "Поддержать разработчика" : "Support Developer"}
               </Text>
             </Pressable>
 
