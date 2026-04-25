@@ -84,7 +84,9 @@ export default function MatrixScreen() {
   // Use exact half of screen for perfect alignment
   const quadrantWidth = screenWidth / 2;
   // Calculate height to fill available space (accounting for header and safe areas)
-  const quadrantHeight = screenHeight / 2;
+  // Subtract tab bar height (~60px) to prevent overlap
+  const TAB_BAR_HEIGHT = 60;
+  const quadrantHeight = (screenHeight - TAB_BAR_HEIGHT) / 2;
 
   const quadrantTasks = useMemo(() => {
     const result: Record<QuadrantKey, typeof tasks> = {
@@ -233,15 +235,15 @@ export default function MatrixScreen() {
   return (
     <ScreenTransition>
       <ScreenContainer className="p-0">
-        <View className="flex-1 flex-row flex-wrap bg-black">
+        <View className="flex-1 bg-black" style={{ width: screenWidth, height: screenHeight - TAB_BAR_HEIGHT }}>
           {/* Row 1: Q1 and Q2 */}
-          <View className="flex-row">
+          <View className="flex-row" style={{ flex: 1 }}>
             {renderQuadrant("Q1")}
             {renderQuadrant("Q2")}
           </View>
 
           {/* Row 2: Q3 and Q4 */}
-          <View className="flex-row">
+          <View className="flex-row" style={{ flex: 1 }}>
             {renderQuadrant("Q3")}
             {renderQuadrant("Q4")}
           </View>
