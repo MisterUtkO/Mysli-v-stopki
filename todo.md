@@ -1161,3 +1161,13 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Update app version in app-version-context.tsx
 - [x] Force Android to refresh icon cache on update
 - [x] Verify all tests pass (175 tests passing)
+
+## Phase 113: Critical Fixes & Cleanup 🔧
+- [x] Fix app icon: resize from 591x609 to 512x512 (proper square)
+- [x] Optimize icon size: 561KB → 255KB
+- [x] Update splash screen imageWidth from 512 to 720
+- [x] Remove non-functional widget code
+- [x] Clean up widget-related files and directories
+- [x] Verify App Shortcuts deep link handling works
+- [x] Update app version to 1.0.88
+- [x] All tests passing (175 tests)

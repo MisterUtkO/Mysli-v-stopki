@@ -44,45 +44,7 @@ const withAppShortcuts: ConfigPlugin = (config: any) => {
       application["meta-data"].push(shortcutsMetadata);
     }
 
-    // Add widget receiver
-    if (!application["receiver"]) {
-      application["receiver"] = [];
-    }
-
-    const widgetReceiver = {
-      $: {
-        "android:name": "com.eisenhower.widget.CreateTaskWidgetProvider",
-        "android:label": "@string/widget_title",
-      },
-      "intent-filter": [
-        {
-          action: [
-            {
-              $: {
-                "android:name": "android.appwidget.action.APPWIDGET_UPDATE",
-              },
-            },
-          ],
-        },
-      ],
-      "meta-data": [
-        {
-          $: {
-            "android:name": "android.appwidget.provider",
-            "android:resource": "@xml/widget_create_task_info",
-          },
-        },
-      ],
-    };
-
-    // Check if widget receiver already exists
-    const hasWidgetReceiver = application["receiver"].some(
-      (r: any) => r.$["android:name"] === "com.eisenhower.widget.CreateTaskWidgetProvider"
-    );
-
-    if (!hasWidgetReceiver) {
-      application["receiver"].push(widgetReceiver);
-    }
+    // Widget support removed - focusing on App Shortcuts only
 
     return androidConfig;
   });

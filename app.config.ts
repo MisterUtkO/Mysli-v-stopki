@@ -26,7 +26,7 @@ const env = {
   iosBundleId: bundleId,
   androidPackage: bundleId,
   // Version — single source of truth
-  version: "1.0.87",
+  version: "1.0.88",
 };
 
 const config: ExpoConfig = {
@@ -106,7 +106,7 @@ const config: ExpoConfig = {
       "expo-splash-screen",
       {
         image: "./assets/images/splash-icon.png",
-        imageWidth: 512,
+        imageWidth: 720,
         resizeMode: "contain",
         backgroundColor: "#fce4ec",
         dark: {
