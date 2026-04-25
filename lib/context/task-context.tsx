@@ -43,6 +43,7 @@ import {
   requestNotificationPermissions,
 } from "@/lib/services/notification/reminders";
 import { scheduleTaskCleanup } from "@/lib/services/task/task-cleanup";
+import * as SplashScreen from "expo-splash-screen";
 
 interface CreateTaskInput {
   title: string;
@@ -203,6 +204,10 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         console.error("Failed to initialize database:", error);
       } finally {
         setLoading(false);
+        // Hide splash screen after 3 seconds to allow user to read it
+        setTimeout(() => {
+          SplashScreen.hideAsync().catch(() => {});
+        }, 3000);
       }
     };
 
