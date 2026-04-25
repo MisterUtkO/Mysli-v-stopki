@@ -1,0 +1,29 @@
+// Add after existing imports:
+import * as Linking from "expo-linking";
+import { parseDeepLink, handleShortcutAction } from "@/lib/integrations/app-shortcuts/handle-deep-link";
+
+// Add after initManusRuntime useEffect:
+  // Handle deep links from app shortcuts and widgets
+  useEffect(() => {
+    const handleDeepLink = ({ url }: { url: string }) => {
+      const deepLink = parseDeepLink(url);
+      if (deepLink && navigationRef.current) {
+        handleShortcutAction(deepLink.action, (screen: string, params?: any) => {
+          navigationRef.current?.navigate(screen as any, params);
+        });
+      }
+    };
+
+    // Handle initial URL (app launched from deep link)
+    Linking.getInitialURL()
+      .then((url) => {
+        if (url != null) {
+          handleDeepLink({ url });
+        }
+      })
+      .catch((error) => console.error("[DeepLink] Failed to get initial URL:", error));
+
+    // Handle URL changes (app already running)
+    const subscription = Linking.addEventListener("url", handleDeepLink);
+    return () => subscription.remove();
+  }, []);
