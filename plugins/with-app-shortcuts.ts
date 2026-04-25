@@ -11,7 +11,7 @@ import type { ExpoConfig } from "@expo/config";
  */
 
 const withAppShortcuts: ConfigPlugin = (config: any) => {
-  // Android: Add App Shortcuts to AndroidManifest.xml
+  // Android: Add App Shortcuts and Widget Provider to AndroidManifest.xml
   config = withAndroidManifest(config, async (androidConfig: any) => {
     const manifest = androidConfig.modResults;
 
@@ -42,6 +42,46 @@ const withAppShortcuts: ConfigPlugin = (config: any) => {
 
     if (!hasShortcuts) {
       application["meta-data"].push(shortcutsMetadata);
+    }
+
+    // Add widget receiver
+    if (!application["receiver"]) {
+      application["receiver"] = [];
+    }
+
+    const widgetReceiver = {
+      $: {
+        "android:name": "com.eisenhower.widget.CreateTaskWidgetProvider",
+        "android:label": "@string/widget_title",
+      },
+      "intent-filter": [
+        {
+          action: [
+            {
+              $: {
+                "android:name": "android.appwidget.action.APPWIDGET_UPDATE",
+              },
+            },
+          ],
+        },
+      ],
+      "meta-data": [
+        {
+          $: {
+            "android:name": "android.appwidget.provider",
+            "android:resource": "@xml/widget_create_task_info",
+          },
+        },
+      ],
+    };
+
+    // Check if widget receiver already exists
+    const hasWidgetReceiver = application["receiver"].some(
+      (r: any) => r.$["android:name"] === "com.eisenhower.widget.CreateTaskWidgetProvider"
+    );
+
+    if (!hasWidgetReceiver) {
+      application["receiver"].push(widgetReceiver);
     }
 
     return androidConfig;
