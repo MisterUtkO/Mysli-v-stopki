@@ -204,10 +204,10 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         console.error("Failed to initialize database:", error);
       } finally {
         setLoading(false);
-        // Hide splash screen after 3 seconds to allow user to read it
+        // Hide splash screen after 6 seconds to allow user to read it
         setTimeout(() => {
           SplashScreen.hideAsync().catch(() => {});
-        }, 3000);
+        }, 6000);
       }
     };
 
