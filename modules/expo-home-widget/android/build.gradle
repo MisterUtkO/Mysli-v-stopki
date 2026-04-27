@@ -1,0 +1,36 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+
+android {
+    compileSdkVersion 34
+
+    defaultConfig {
+        minSdkVersion 24
+        targetSdkVersion 34
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+
+    kotlinOptions {
+        jvmTarget = '11'
+    }
+
+    sourceSets {
+        main {
+            kotlin.srcDirs += 'src/main/kotlin'
+            res.srcDirs += 'src/main/res'
+        }
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.work:work-runtime-ktx:2.8.1'
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib:1.9.0'
+    
+    // Expo modules
+    api 'expo.modules:expo-modules-core'
+}

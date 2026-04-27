@@ -26,7 +26,7 @@ const env = {
   iosBundleId: bundleId,
   androidPackage: bundleId,
   // Version — single source of truth
-  version: "1.0.90",
+  version: "1.0.91",
 };
 
 const config: ExpoConfig = {
@@ -88,6 +88,7 @@ const config: ExpoConfig = {
     },
   },
   plugins: [
+    "./modules/expo-home-widget/app.plugin.js",
     "expo-router",
     [
       "expo-audio",
@@ -120,6 +121,7 @@ const config: ExpoConfig = {
         android: {
           buildArchs: ["armeabi-v7a", "arm64-v8a"],
           minSdkVersion: 24,
+          usesCleartextTraffic: false,
         },
       },
     ],
