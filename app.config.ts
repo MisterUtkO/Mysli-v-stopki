@@ -88,7 +88,6 @@ const config: ExpoConfig = {
     },
   },
   plugins: [
-    "./modules/expo-home-widget/app.plugin.js",
     "expo-router",
     [
       "expo-audio",

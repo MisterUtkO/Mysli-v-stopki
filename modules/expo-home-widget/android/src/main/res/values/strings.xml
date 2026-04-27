@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="app_name">Мысли в стопки</string>
-    <string name="create_task">➕ Создать задачу</string>
-    <string name="view_matrix">📊 Матрица</string>
-    <string name="view_kanban">📋 Канбан</string>
-    <string name="widget_description">Быстрый доступ к созданию задач</string>
-</resources>
