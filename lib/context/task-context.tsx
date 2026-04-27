@@ -204,10 +204,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         console.error("Failed to initialize database:", error);
       } finally {
         setLoading(false);
-        // Hide splash screen after 6 seconds to allow user to read it
-        setTimeout(() => {
-          SplashScreen.hideAsync().catch(() => {});
-        }, 6000);
+        // Splash screen will be hidden by SplashScreenWrapper component
       }
     };
 
