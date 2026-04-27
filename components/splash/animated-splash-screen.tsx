@@ -1,33 +1,27 @@
 import React, { useEffect } from "react";
-import { View, Text, Animated, Easing, Image, Platform } from "react-native";
+import { View, Animated, Easing, Image, Platform } from "react-native";
 import * as SplashScreen from "expo-splash-screen";
 import { useColors } from "@/hooks/use-colors";
 
 /**
- * AnimatedSplashScreen — Custom splash screen with animated logo and text
+ * AnimatedSplashScreen — Custom splash screen with animated logo
  * 
+ * Simplified version without text to avoid font loading issues
  * Features:
  * - Animated logo fade-in and scale
- * - Animated text fade-in with staggered timing
  * - Loading indicator animation
  * - Smooth transition to main app
- * 
- * Usage in app/_layout.tsx:
- * <AnimatedSplashScreen isReady={!loading} />
  */
 
 interface AnimatedSplashScreenProps {
-  isReady: boolean; // When true, splash screen will hide
+  isReady: boolean;
 }
 
 export function AnimatedSplashScreen({ isReady }: AnimatedSplashScreenProps) {
   const colors = useColors();
   
-  // Animation values
   const logoScale = React.useRef(new Animated.Value(0.3)).current;
   const logoOpacity = React.useRef(new Animated.Value(0)).current;
-  const titleOpacity = React.useRef(new Animated.Value(0)).current;
-  const subtitleOpacity = React.useRef(new Animated.Value(0)).current;
   const loadingOpacity = React.useRef(new Animated.Value(0)).current;
   const dotScale1 = React.useRef(new Animated.Value(1)).current;
   const dotScale2 = React.useRef(new Animated.Value(1)).current;
@@ -36,7 +30,6 @@ export function AnimatedSplashScreen({ isReady }: AnimatedSplashScreenProps) {
   useEffect(() => {
     if (Platform.OS === "web") return;
 
-    // Keep splash screen visible while animating
     SplashScreen.preventAutoHideAsync().catch(() => {});
 
     // Sequence of animations
@@ -56,20 +49,6 @@ export function AnimatedSplashScreen({ isReady }: AnimatedSplashScreenProps) {
           useNativeDriver: true,
         }),
       ]),
-      // Title fade in (200ms delay, then 400ms duration)
-      Animated.timing(titleOpacity, {
-        toValue: 1,
-        duration: 400,
-        easing: Easing.out(Easing.quad),
-        useNativeDriver: true,
-      }),
-      // Subtitle fade in (100ms delay, then 400ms duration)
-      Animated.timing(subtitleOpacity, {
-        toValue: 1,
-        duration: 400,
-        easing: Easing.out(Easing.quad),
-        useNativeDriver: true,
-      }),
       // Loading indicator fade in
       Animated.timing(loadingOpacity, {
         toValue: 1,
@@ -103,7 +82,6 @@ export function AnimatedSplashScreen({ isReady }: AnimatedSplashScreenProps) {
     const dotAnim2 = createDotAnimation(dotScale2);
     const dotAnim3 = createDotAnimation(dotScale3);
 
-    // Stagger the animations
     setTimeout(() => dotAnim1.start(), 0);
     setTimeout(() => dotAnim2.start(), 150);
     setTimeout(() => dotAnim3.start(), 300);
@@ -115,10 +93,8 @@ export function AnimatedSplashScreen({ isReady }: AnimatedSplashScreenProps) {
     };
   }, []);
 
-  // Hide splash screen when ready
   useEffect(() => {
     if (isReady && Platform.OS !== "web") {
-      // Fade out animation before hiding
       Animated.timing(logoOpacity, {
         toValue: 0,
         duration: 300,
@@ -145,7 +121,7 @@ export function AnimatedSplashScreen({ isReady }: AnimatedSplashScreenProps) {
         style={{
           opacity: logoOpacity,
           transform: [{ scale: logoScale }],
-          marginBottom: 32,
+          marginBottom: 48,
         }}
       >
         <Image
@@ -157,34 +133,6 @@ export function AnimatedSplashScreen({ isReady }: AnimatedSplashScreenProps) {
           }}
         />
       </Animated.View>
-
-      {/* Title with animation */}
-      <Animated.Text
-        style={{
-          opacity: titleOpacity,
-          fontSize: 28,
-          fontWeight: "700",
-          color: colors.foreground,
-          textAlign: "center",
-          marginBottom: 8,
-        }}
-      >
-        Мысли в стопки
-      </Animated.Text>
-
-      {/* Subtitle with animation */}
-      <Animated.Text
-        style={{
-          opacity: subtitleOpacity,
-          fontSize: 14,
-          color: colors.muted,
-          textAlign: "center",
-          marginBottom: 48,
-          lineHeight: 20,
-        }}
-      >
-        Управляйте задачами по матрице Эйзенхауэра
-      </Animated.Text>
 
       {/* Loading indicator with animation */}
       <Animated.View
