@@ -65,9 +65,20 @@ export function AnimatedSplashScreen({ isReady }: AnimatedSplashScreenProps) {
   }, []);
 
   useEffect(() => {
+    // Hide splash screen after 1 second or when ready, whichever comes first
+    const timer = setTimeout(() => {
+      if (Platform.OS !== "web") {
+        SplashScreen.hideAsync().catch(() => {});
+      }
+    }, 1000);
+
+    // Also hide immediately if already ready
     if (isReady && Platform.OS !== "web") {
+      clearTimeout(timer);
       SplashScreen.hideAsync().catch(() => {});
     }
+
+    return () => clearTimeout(timer);
   }, [isReady]);
 
   return (
