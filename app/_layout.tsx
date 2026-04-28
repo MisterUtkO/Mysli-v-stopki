@@ -34,8 +34,8 @@ import * as NavigationBar from "expo-navigation-bar";
 import { useThemeContext } from "@/lib/theme/theme-provider";
 import * as Linking from "expo-linking";
 import { parseDeepLink, handleShortcutAction } from "@/lib/integrations/app-shortcuts/handle-deep-link";
-import { AnimatedSplashScreen } from "@/components/splash/animated-splash-screen";
-import { SplashScreenWrapper } from "@/components/splash/splash-screen-wrapper";
+// import { AnimatedSplashScreen } from "@/components/splash/animated-splash-screen";
+// import { SplashScreenWrapper } from "@/components/splash/splash-screen-wrapper";
 
 // Global navigation ref for reliable navigation from anywhere in the app
 export const navigationRef = React.createRef<any>();
@@ -221,21 +221,19 @@ export default function RootLayout() {
             <I18nProvider>
               <CustomizationProvider>
                 <TaskProvider>
-                  <SplashScreenWrapper>
-                    <AchievementProvider>
-                      <OnboardingTutorialProvider>
-                      <AchievementChecker />
-                      <Stack screenOptions={{ headerShown: false }}>
-                        <Stack.Screen name="(tabs)" />
-                        <Stack.Screen name="add-task" options={{ presentation: "modal", title: "Add Task" }} />
-                        <Stack.Screen name="task-detail/[id]" options={{ presentation: "modal", title: "Task Details" }} />
-                        <Stack.Screen name="statistics" options={{ presentation: "modal", title: "Statistics" }} />
-                        <Stack.Screen name="oauth/callback" />
-                      </Stack>
-                      <StatusBar style="auto" hidden={Platform.OS !== "web"} />
-                    </OnboardingTutorialProvider>
-                    </AchievementProvider>
-                  </SplashScreenWrapper>
+                  <AchievementProvider>
+                    <OnboardingTutorialProvider>
+                    <AchievementChecker />
+                    <Stack screenOptions={{ headerShown: false }}>
+                      <Stack.Screen name="(tabs)" />
+                      <Stack.Screen name="add-task" options={{ presentation: "modal", title: "Add Task" }} />
+                      <Stack.Screen name="task-detail/[id]" options={{ presentation: "modal", title: "Task Details" }} />
+                      <Stack.Screen name="statistics" options={{ presentation: "modal", title: "Statistics" }} />
+                      <Stack.Screen name="oauth/callback" />
+                    </Stack>
+                    <StatusBar style="auto" hidden={Platform.OS !== "web"} />
+                  </OnboardingTutorialProvider>
+                  </AchievementProvider>
                 </TaskProvider>
               </CustomizationProvider>
             </I18nProvider>

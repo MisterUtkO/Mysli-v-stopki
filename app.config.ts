@@ -102,18 +102,19 @@ const config: ExpoConfig = {
         supportsPictureInPicture: true,
       },
     ],
-    [
-      "expo-splash-screen",
-      {
-        image: "./assets/images/splash-icon.png",
-        imageWidth: 400,
-        resizeMode: "contain",
-        backgroundColor: "#fce4ec",
-        dark: {
-          backgroundColor: "#fce4ec",
-        },
-      },
-    ],
+    // Splash screen disabled - app loads directly to main screen
+    // [
+    //   "expo-splash-screen",
+    //   {
+    //     image: "./assets/images/splash-icon.png",
+    //     imageWidth: 400,
+    //     resizeMode: "contain",
+    //     backgroundColor: "#fce4ec",
+    //     dark: {
+    //       backgroundColor: "#fce4ec",
+    //     },
+    //   },
+    // ],
     [
       "expo-build-properties",
       {
