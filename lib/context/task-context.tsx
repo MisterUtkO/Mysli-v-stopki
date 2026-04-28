@@ -193,13 +193,17 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
 
         setSettings(loadedSettings);
 
-        // Schedule notifications on startup
-        console.log("[TaskContext] Initializing notifications on startup");
-        await rescheduleNotifications(loadedTasks, loadedSettings);
+        // Schedule notifications and cleanup in background (don't wait for them)
+        console.log("[TaskContext] Scheduling notifications in background");
+        rescheduleNotifications(loadedTasks, loadedSettings).catch(e => {
+          console.error("[TaskContext] Background notification scheduling failed:", e);
+        });
         
-        // Schedule task cleanup (permanently delete tasks older than 7 days)
-        console.log("[TaskContext] Running task cleanup");
-        await scheduleTaskCleanup();
+        // Schedule task cleanup in background
+        console.log("[TaskContext] Scheduling task cleanup in background");
+        scheduleTaskCleanup().catch(e => {
+          console.error("[TaskContext] Background task cleanup failed:", e);
+        });
       } catch (error) {
         console.error("Failed to initialize database:", error);
       } finally {
