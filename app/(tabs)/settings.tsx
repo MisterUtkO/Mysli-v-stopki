@@ -183,14 +183,26 @@ export default function SettingsScreen() {
         document.body.appendChild(element);
         element.click();
         document.body.removeChild(element);
+        Alert.alert(
+          isRu ? "Успешно" : "Success",
+          isRu ? "Резервная копия загружена в папку Downloads" : "Backup downloaded to Downloads folder"
+        );
       } else {
         const { MobileBackupHandlers } = await import("@/lib/services/backup/mobile-backup-handlers");
         await MobileBackupHandlers.exportBackup(tasks, settings);
+        // Success message shown after user completes share action
+        Alert.alert(
+          isRu ? "Успешно" : "Success",
+          isRu ? "Выберите, куда сохранить файл (Downloads, Google Drive, облако и т.д.)" : "Choose where to save the file (Downloads, Google Drive, cloud, etc.)"
+        );
       }
-      Alert.alert(isRu ? "Успешно" : "Success", isRu ? "Резервная копия сохранена" : "Backup saved");
     } catch (error) {
       console.error("Export error:", error);
-      Alert.alert(isRu ? "Ошибка" : "Error", isRu ? "Не удалось экспортировать" : "Failed to export");
+      const errorMsg = error instanceof Error ? error.message : "Unknown error";
+      Alert.alert(
+        isRu ? "Ошибка" : "Error",
+        isRu ? `Не удалось экспортировать: ${errorMsg}` : `Failed to export: ${errorMsg}`
+      );
     } finally {
       setExporting(false);
     }

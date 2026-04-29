@@ -1,21 +1,22 @@
 /**
  * Mobile-compatible backup handlers for export/import
- * Uses expo-file-system and expo-document-picker
+ * Uses expo-file-system, expo-document-picker, and expo-sharing
  */
 
 import * as FileSystem from "expo-file-system/legacy";
 import * as DocumentPicker from "expo-document-picker";
+import * as Sharing from "expo-sharing";
 import { validateBackupData, sanitizeBackupData } from "./backup-validation";
 import type { Task } from "@/lib/domain/types";
 import type { BackupData } from "./backup-service";
 
 export const MobileBackupHandlers = {
   /**
-   * Export backup to file system
+   * Export backup to file system and share it
+   * Uses expo-sharing to allow user to save to Downloads, Drive, etc.
    */
   async exportBackup(tasks: Task[], settings: any): Promise<string> {
     try {
-      // Create backup data
       // Create backup data structure
       const backup: BackupData = {
         version: "1.2.0",
@@ -30,21 +31,34 @@ export const MobileBackupHandlers = {
         },
         achievements: settings.achievements || {},
       };
-      const backup_data = backup;
-      const backupJson = JSON.stringify(backup_data, null, 2);
+      const backupJson = JSON.stringify(backup, null, 2);
 
-      // Save to file system
+      // Create temporary file in cache directory
       const fileName = `tasks-backup-${new Date().toISOString().split("T")[0]}.json`;
-      const documentDir = (FileSystem as any).documentDirectory;
-      if (!documentDir) throw new Error("Document directory not available");
-      const filePath = `${documentDir}${fileName}`;
+      const cacheDir = (FileSystem as any).cacheDirectory;
+      if (!cacheDir) throw new Error("Cache directory not available");
+      const tempFilePath = `${cacheDir}${fileName}`;
 
-      await FileSystem.writeAsStringAsync(filePath, backupJson);
+      // Write to temporary file
+      await FileSystem.writeAsStringAsync(tempFilePath, backupJson);
 
-      return filePath;
+      // Check if sharing is available
+      const isAvailable = await Sharing.isAvailableAsync();
+      if (!isAvailable) {
+        throw new Error("Sharing is not available on this device");
+      }
+
+      // Share the file (user can choose where to save)
+      await Sharing.shareAsync(tempFilePath, {
+        mimeType: "application/json",
+        dialogTitle: "Export Tasks Backup",
+        UTI: "public.json",
+      });
+
+      return tempFilePath;
     } catch (error) {
       console.error("Export backup error:", error);
-      throw new Error("Failed to export backup");
+      throw new Error(`Failed to export backup: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
   },
 
