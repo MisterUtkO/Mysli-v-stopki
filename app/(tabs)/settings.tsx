@@ -186,6 +186,32 @@ export default function SettingsScreen() {
     }
   };
 
+  const handleImportData = async () => {
+    try {
+      Alert.alert(
+        isRu ? "Импортировать данные" : "Import Data",
+        isRu ? "Выберите файл резервной копии для восстановления" : "Select backup file to restore",
+        [
+          {
+            text: isRu ? "Отмена" : "Cancel",
+            onPress: () => {},
+            style: "cancel",
+          },
+          {
+            text: isRu ? "Импортировать" : "Import",
+            onPress: async () => {
+              // Import functionality will be implemented
+              Alert.alert(isRu ? "Информация" : "Info", isRu ? "Функция импорта будет реализована" : "Import feature coming soon");
+            },
+          },
+        ]
+      );
+    } catch (error) {
+      console.error("Error importing data:", error);
+      Alert.alert(isRu ? "Ошибка" : "Error", isRu ? "Ошибка при импорте данных" : "Error importing data");
+    }
+  };
+
   const handleClearAllData = () => {
     Alert.alert(
       isRu ? "Очистить все данные?" : "Clear all data?",
@@ -860,6 +886,21 @@ export default function SettingsScreen() {
               >
                 <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16 }}>
                   📤 {isRu ? "Экспортировать данные" : "Export Data"}
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={handleImportData}
+                style={({ pressed }) => [{
+                  backgroundColor: colors.primary,
+                  borderRadius: 12,
+                  paddingVertical: 12,
+                  alignItems: "center",
+                  opacity: pressed ? 0.7 : 1,
+                }]}
+              >
+                <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16 }}>
+                  📥 {isRu ? "Импортировать данные" : "Import Data"}
                 </Text>
               </Pressable>
 
