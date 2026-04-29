@@ -1,6 +1,8 @@
 import { View, Text, Pressable, Platform } from "react-native";
 import type { Task } from "@/lib/domain/types";
 import * as Haptics from "expo-haptics";
+import { isTaskOverdue } from "@/components/task/swipeable-task-card";
+import { OverdueTaskWrapper, OverdueIndicator } from "@/components/overdue/overdue-task-wrapper";
 
 interface MatrixTaskCardProps {
   task: Task;
@@ -32,32 +34,37 @@ export function MatrixTaskCard({ task, isRu, onPress }: MatrixTaskCardProps) {
 
   const priorityIcon = getPriorityIcon(task.importance);
   const priorityLabel = getPriorityLabel(task.importance);
+  const isOverdue = isTaskOverdue(task);
 
   return (
-    <Pressable
-      onPress={handlePress}
-      style={({ pressed }) => [
-        {
-          marginBottom: 6,
-          marginHorizontal: 6,
-          borderRadius: 6,
-          overflow: "hidden",
-          opacity: pressed ? 0.8 : 1,
-        },
-      ]}
-    >
-      {/* Semi-transparent dark background */}
-      <View
-        style={{
-          backgroundColor: "rgba(0, 0, 0, 0.25)", // Slightly transparent dark
-          paddingVertical: 8,
-          paddingHorizontal: 8,
-          borderRadius: 6,
-          flexDirection: "row",
-          alignItems: "center",
-          gap: 6,
-        }}
+    <OverdueTaskWrapper isOverdue={isOverdue}>
+      <Pressable
+        onPress={handlePress}
+        style={({ pressed }) => [
+          {
+            marginBottom: 6,
+            marginHorizontal: 6,
+            borderRadius: 6,
+            overflow: "hidden",
+            opacity: pressed ? 0.8 : 1,
+          },
+        ]}
       >
+        {/* Semi-transparent dark background */}
+        <View
+          style={{
+            backgroundColor: isOverdue ? "rgba(239, 68, 68, 0.35)" : "rgba(0, 0, 0, 0.25)",
+            paddingVertical: 8,
+            paddingHorizontal: 8,
+            borderRadius: 6,
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 6,
+            position: "relative",
+          }}
+        >
+          {/* Overdue indicator */}
+          <OverdueIndicator isOverdue={isOverdue} />
         {/* Priority Icon */}
         <Text
           style={{
@@ -94,6 +101,7 @@ export function MatrixTaskCard({ task, isRu, onPress }: MatrixTaskCardProps) {
           </Text>
         </View>
       </View>
-    </Pressable>
+      </Pressable>
+    </OverdueTaskWrapper>
   );
 }

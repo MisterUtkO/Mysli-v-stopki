@@ -30,6 +30,7 @@ import { FilePreviewModal } from "@/components/modals/file-preview-modal";
 import { AnimatedEmoji } from "@/components/animations/animated-emoji";
 import { TaskCardGlow } from "@/components/task/task-card-glow";
 import { getTaskGlowType } from "@/lib/theme/glow-colors";
+import { OverdueTaskWrapper, OverdueIndicator } from "@/components/overdue/overdue-task-wrapper";
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -392,20 +393,24 @@ export function SwipeableTaskCard({
 
         {/* Swipeable card */}
         <Animated.View style={[cardAnimStyle, { borderRadius: 14, overflow: "hidden", zIndex: 1 }]}>
-          <Pressable
-            onPress={() => onToggleExpand(task.id)}
-            style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1, borderRadius: 14 }]}
-          >
-            <View
-              style={{
-                borderLeftWidth: 4,
-                borderLeftColor: priorityColor,
-                borderRadius: 14,
-                overflow: "hidden",
-                backgroundColor: bgTint,
-              }}
-              className="bg-surface border border-border rounded-2xl"
+          <OverdueTaskWrapper isOverdue={isOverdue}>
+            <Pressable
+              onPress={() => onToggleExpand(task.id)}
+              style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1, borderRadius: 14 }]}
             >
+              <View
+                style={{
+                  borderLeftWidth: 4,
+                  borderLeftColor: priorityColor,
+                  borderRadius: 14,
+                  overflow: "hidden",
+                  backgroundColor: bgTint,
+                  position: "relative",
+                }}
+                className="bg-surface border border-border rounded-2xl"
+              >
+                {/* Overdue indicator */}
+                <OverdueIndicator isOverdue={isOverdue} />
               {/* Flash overlay */}
               <Animated.View
                 pointerEvents="none"
@@ -636,8 +641,9 @@ export function SwipeableTaskCard({
                   </View>
                 </View>
               )}
-            </View>
-          </Pressable>
+                </View>
+              </Pressable>
+            </OverdueTaskWrapper>
         </Animated.View>
       </Animated.View>
     </GestureDetector>
