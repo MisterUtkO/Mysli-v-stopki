@@ -216,9 +216,12 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const createTask = async (input: CreateTaskInput): Promise<Task> => {
+    // Validate importance and urgency are in range 1-7
+    const importance = Math.max(1, Math.min(7, Math.round(input.importance)));
+    const urgencyManual = Math.max(1, Math.min(7, Math.round(input.urgency)));
+    
     // Use new hybrid quadrant logic
     const now = new Date();
-    const urgencyManual = input.urgency;
     const urgencyDeadline = calculateDeadlineUrgency(
       input.dueDate ? `${input.dueDate}T${input.dueTime || "00:00"}` : null,
       now
@@ -226,24 +229,25 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     const urgencyFinal = calculateFinalUrgency(urgencyManual, urgencyDeadline);
     
     const quadrantType = resolveQuadrant(
-      input.importance,
+      importance,
       urgencyManual,
       input.dueDate ? `${input.dueDate}T${input.dueTime || "00:00"}` : null,
       now
     );
     const quadrant = mapQuadrantTypeToUI(quadrantType);
     const priorityReason = buildPriorityReason(
-      input.importance,
+      importance,
       urgencyManual,
       input.dueDate ? `${input.dueDate}T${input.dueTime || "00:00"}` : null,
       quadrantType,
       now
     );
-
-    const taskWithScoring = {
+    
+    const now_timestamp = new Date().toISOString();
+    const taskData = createTaskWithScoring({
       title: input.title,
       description: input.description,
-      importance: input.importance,
+      importance: importance,
       urgency: urgencyFinal,
       dueDate: input.dueDate,
       dueTime: input.dueTime,
@@ -251,12 +255,12 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       emoji: input.emoji,
       notificationFrequency: input.notificationFrequency || "global",
       attachments: input.attachments || [],
-      quadrant,
-      priorityScore: Math.round(((input.importance - 1) / 6 + (urgencyFinal - 1) / 6) / 2 * 100),
-      sortOrder: 0,
-    };
+    }, {
+      importanceThreshold: settings.importanceThreshold,
+      urgencyThreshold: settings.urgencyThreshold,
+    });
 
-    const newTask = await dbCreateTask(taskWithScoring);
+    const newTask = await dbCreateTask(taskData);
     const updatedTasks = await getAllTasks();
     setTasks(updatedTasks);
     

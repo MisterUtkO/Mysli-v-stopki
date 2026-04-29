@@ -88,6 +88,7 @@ interface DragState {
   startY: number;
 }
 
+// Default data structure (will be replaced with localized data on load)
 const defaultData: KanbanData = {
   columns: [
     { id: "col_1", title: "Start", stickers: [] },
@@ -321,11 +322,10 @@ function DropZoneIndicator({ colors, isRu }: DropZoneIndicatorProps) {
 }
 
 // ─── Main Board ───────────────────────────────────────────────────────────────
-
-export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoardInner(_props, ref) {
+export const KanbanBoard = forwardRef<KanbanBoardRef, {}>(function KanbanBoard(_, ref) {
   const { t, language } = useI18n();
-  const colors = useColors();
   const isRu = language === "ru";
+  const colors = useColors();
   const { updateTask } = useTaskContext();
 
   const [data, setData] = useState<KanbanData>(defaultData);
@@ -381,9 +381,9 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
       } else {
         setData({
           columns: [
-            { id: "col_1", title: isRu ? "Начать" : "Start", stickers: [] },
-            { id: "col_2", title: isRu ? "В процессе" : "In Progress", stickers: [] },
-            { id: "col_3", title: isRu ? "Готово" : "Done", stickers: [] },
+            { id: "col_1", title: t.matrix.columnStart, stickers: [] },
+            { id: "col_2", title: t.matrix.columnInProgress, stickers: [] },
+            { id: "col_3", title: t.matrix.columnDone, stickers: [] },
           ],
         });
       }
@@ -391,7 +391,7 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, object>(function KanbanBoa
       console.log("Failed to load kanban:", e);
     }
     setLoaded(true);
-  }, [isRu]);
+  }, [t]);
 
   React.useEffect(() => { loadData(); }, [loadData]);
   useImperativeHandle(ref, () => ({ reload: loadData }), [loadData]);

@@ -103,6 +103,9 @@ export interface Translations {
     deleteColumn: string;
     emptyColumn: string;
     newSticker: string;
+    columnStart: string;
+    columnInProgress: string;
+    columnDone: string;
   };
 
   // Statistics Screen
@@ -296,6 +299,9 @@ const EN: Translations = {
     deleteColumn: "Delete column",
     emptyColumn: "No stickers yet",
     newSticker: "New sticker",
+    columnStart: "Start",
+    columnInProgress: "In Progress",
+    columnDone: "Done",
   },
 
   statistics: {
@@ -483,6 +489,9 @@ const RU: Translations = {
     deleteColumn: "Удалить столбец",
     emptyColumn: "Пока пусто",
     newSticker: "Новый стикер",
+    columnStart: "Начало",
+    columnInProgress: "В процессе",
+    columnDone: "Выполнено",
   },
 
   statistics: {
