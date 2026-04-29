@@ -21,7 +21,7 @@ const schemeFromBundleId = `manus${timestamp}`;
 const env = {
   appName: "Мысли в стопки",
   appSlug: "sdvgnote",
-  logoUrl: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663313035753/URtGrcdaDeHJacVE.png",
+  logoUrl: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663313035753/MwaEVdVAmmiWjWnF.png",
   scheme: schemeFromBundleId,
   iosBundleId: bundleId,
   androidPackage: bundleId,
