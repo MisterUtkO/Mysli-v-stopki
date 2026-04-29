@@ -1198,18 +1198,24 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Remove development-only features (none found)
 - [x] Verify no sensitive data in logs
 
+### Export/Import Bug Fix
+- [x] Fix Sharing.shareAsync permission error on Android
+- [x] Add fallback to direct Downloads folder saving
+- [x] Improve error messages for permission issues
+- [x] Test export on Android and iOS
+
 ### End-to-End Testing
-- [ ] Test app startup and restore flow
-- [ ] Test all CRUD operations
-- [ ] Test matrix and kanban views
-- [ ] Test notifications
-- [ ] Test achievements unlock
-- [ ] Test export/import functionality
-- [ ] Test language switching
-- [ ] Test theme switching
+- [x] Test app startup and restore flow
+- [x] Test all CRUD operations
+- [x] Test matrix and kanban views
+- [x] Test notifications
+- [x] Test achievements unlock
+- [x] Test export/import functionality (fixed)
+- [x] Test language switching
+- [x] Test theme switching
 
 ### Final Release Preparation
-- [ ] Bump version to 1.3.0
-- [ ] Update changelog
-- [ ] Create final checkpoint
-- [ ] Generate release notes
+- [x] Bump version to 1.3.0
+- [x] Update changelog
+- [x] Create final checkpoint
+- [x] Generate release notes

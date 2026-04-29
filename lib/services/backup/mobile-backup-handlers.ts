@@ -9,17 +9,19 @@ import * as Sharing from "expo-sharing";
 import { validateBackupData, sanitizeBackupData } from "./backup-validation";
 import type { Task } from "@/lib/domain/types";
 import type { BackupData } from "./backup-service";
+import { Platform } from "react-native";
 
 export const MobileBackupHandlers = {
   /**
    * Export backup to file system and share it
-   * Uses expo-sharing to allow user to save to Downloads, Drive, etc.
+   * On Android: Saves to Downloads folder directly
+   * On iOS: Uses native share dialog
    */
   async exportBackup(tasks: Task[], settings: any): Promise<string> {
     try {
       // Create backup data structure
       const backup: BackupData = {
-        version: "1.2.0",
+        version: "1.3.0",
         timestamp: Date.now(),
         tasks,
         settings: {
@@ -33,31 +35,33 @@ export const MobileBackupHandlers = {
       };
       const backupJson = JSON.stringify(backup, null, 2);
 
-      // Create temporary file in cache directory
+      // Create file name with date
       const fileName = `tasks-backup-${new Date().toISOString().split("T")[0]}.json`;
-      const cacheDir = (FileSystem as any).cacheDirectory;
-      if (!cacheDir) throw new Error("Cache directory not available");
-      const tempFilePath = `${cacheDir}${fileName}`;
 
-      // Write to temporary file
-      await FileSystem.writeAsStringAsync(tempFilePath, backupJson);
+      // Platform-specific handling
+      if (Platform.OS === "android") {
+        // On Android, save directly to Downloads folder
+        const downloadsDir = `${FileSystem.documentDirectory}../../../Download/`;
+        const filePath = `${downloadsDir}${fileName}`;
 
-      // Check if sharing is available
-      const isAvailable = await Sharing.isAvailableAsync();
-      if (!isAvailable) {
-        throw new Error("Sharing is not available on this device");
+        try {
+          // Try to write to Downloads
+          await FileSystem.writeAsStringAsync(filePath, backupJson);
+          console.log("[MobileBackupHandlers] Backup saved to Downloads:", filePath);
+          return filePath;
+        } catch (downloadError) {
+          // Fallback: Save to app's document directory and share
+          console.warn("[MobileBackupHandlers] Failed to save to Downloads, using share dialog:", downloadError);
+          return await exportViaSharing(backupJson, fileName);
+        }
+      } else if (Platform.OS === "ios") {
+        // On iOS, use native share dialog
+        return await exportViaSharing(backupJson, fileName);
+      } else {
+        throw new Error("Unsupported platform for mobile backup");
       }
-
-      // Share the file (user can choose where to save)
-      await Sharing.shareAsync(tempFilePath, {
-        mimeType: "application/json",
-        dialogTitle: "Export Tasks Backup",
-        UTI: "public.json",
-      });
-
-      return tempFilePath;
     } catch (error) {
-      console.error("Export backup error:", error);
+      console.error("[MobileBackupHandlers] Export backup error:", error);
       throw new Error(`Failed to export backup: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
   },
@@ -99,7 +103,7 @@ export const MobileBackupHandlers = {
         settings: sanitized.settings as any,
       };
     } catch (error) {
-      console.error("Import backup error:", error);
+      console.error("[MobileBackupHandlers] Import backup error:", error);
       throw new Error("Failed to import backup");
     }
   },
@@ -125,8 +129,50 @@ export const MobileBackupHandlers = {
         created: info.modificationTime ? info.modificationTime * 1000 : Date.now(),
       };
     } catch (error) {
-      console.error("Get backup info error:", error);
+      console.error("[MobileBackupHandlers] Get backup info error:", error);
       return null;
     }
   },
 };
+
+/**
+ * Helper function to export via native share dialog
+ */
+async function exportViaSharing(backupJson: string, fileName: string): Promise<string> {
+  // Check if sharing is available
+  const isAvailable = await Sharing.isAvailableAsync();
+  if (!isAvailable) {
+    throw new Error("Sharing is not available on this device");
+  }
+
+  // Create temporary file in cache directory
+  const cacheDir = (FileSystem as any).cacheDirectory;
+  if (!cacheDir) throw new Error("Cache directory not available");
+  const tempFilePath = `${cacheDir}${fileName}`;
+
+  // Write to temporary file
+  await FileSystem.writeAsStringAsync(tempFilePath, backupJson);
+
+  // Share the file (user can choose where to save)
+  try {
+    await Sharing.shareAsync(tempFilePath, {
+      mimeType: "application/json",
+      dialogTitle: "Export Tasks Backup",
+      UTI: "public.json",
+    });
+  } catch (shareError) {
+    // If sharing fails, provide a more helpful error message
+    const errorMsg = shareError instanceof Error ? shareError.message : String(shareError);
+
+    // Check if it's a permission error
+    if (errorMsg.includes("Permission") || errorMsg.includes("getFilePermission")) {
+      throw new Error(
+        "File sharing permission denied. Please check app permissions in settings and try again."
+      );
+    }
+
+    throw shareError;
+  }
+
+  return tempFilePath;
+}
