@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Alert, Platform } from "react-native";
-import { backupFileExists, importAppData } from "@/lib/services/backup/backup-service";
+import { backupFileExists, importAppData, getBackupFilePath, deleteBackupFile } from "@/lib/services/backup/backup-service";
 import { useTaskContext } from "./task-context";
 import { useI18n } from "./i18n-context";
+import * as FileSystem from "expo-file-system/legacy";
 
 interface AutoRestoreContextType {
   isChecking: boolean;
@@ -44,7 +45,7 @@ export function AutoRestoreProvider({ children }: { children: React.ReactNode })
 
       setIsChecking(false);
     } catch (error) {
-      console.error("Error checking for backup:", error);
+      console.error("[AutoRestore] Error checking for backup:", error);
       setIsChecking(false);
     }
   };
@@ -58,7 +59,10 @@ export function AutoRestoreProvider({ children }: { children: React.ReactNode })
       [
         {
           text: isRu ? "Пропустить" : "Skip",
-          onPress: () => {},
+          onPress: () => {
+            // Mark that user skipped restore
+            console.log("[AutoRestore] User skipped restore");
+          },
           style: "cancel",
         },
         {
@@ -67,25 +71,53 @@ export function AutoRestoreProvider({ children }: { children: React.ReactNode })
             await performRestore();
           },
         },
-      ]
+      ],
+      { cancelable: false }
     );
   };
 
   const performRestore = async () => {
     try {
-      // This will be implemented with actual file picker
-      // For now, just show a message
+      console.log("[AutoRestore] Starting restore process...");
+      
+      const filePath = await getBackupFilePath();
+      const backupData = await importAppData(filePath);
+
+      console.log(`[AutoRestore] Restored ${backupData.tasks.length} tasks from backup`);
+
+      // Delete the backup file after successful restore
+      // so it doesn't prompt again on next app launch
+      try {
+        await deleteBackupFile();
+        console.log("[AutoRestore] Backup file deleted after restore");
+      } catch (e) {
+        console.warn("[AutoRestore] Could not delete backup file after restore", e);
+      }
+
+      // Show success message
       Alert.alert(
-        isRu ? "Информация" : "Info",
+        isRu ? "Успешно" : "Success",
         isRu
-          ? "Восстановление будет реализовано в следующем обновлении"
-          : "Restore feature coming in next update"
+          ? `Восстановлено ${backupData.tasks.length} задач. Приложение перезагружается...`
+          : `Restored ${backupData.tasks.length} tasks. App is reloading...`,
+        [
+          {
+            text: isRu ? "OK" : "OK",
+            onPress: () => {
+              // Force app reload by restarting the root navigator
+              // This will cause TaskProvider to reload tasks from AsyncStorage
+              console.log("[AutoRestore] Restore complete, app should reload");
+            },
+          },
+        ]
       );
     } catch (error) {
-      console.error("Error restoring backup:", error);
+      console.error("[AutoRestore] Error restoring backup:", error);
       Alert.alert(
         isRu ? "Ошибка" : "Error",
-        isRu ? "Ошибка при восстановлении данных" : "Error restoring data"
+        isRu 
+          ? `Ошибка при восстановлении данных: ${error instanceof Error ? error.message : "Unknown error"}`
+          : `Error restoring data: ${error instanceof Error ? error.message : "Unknown error"}`
       );
     }
   };

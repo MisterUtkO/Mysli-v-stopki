@@ -1171,3 +1171,45 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Verify App Shortcuts deep link handling works
 - [x] Update app version to 1.0.88
 - [x] All tests passing (175 tests)
+
+
+## Phase 26: High Priority Tasks (Current)
+
+### Automatic Backup Restoration on Startup
+- [x] Check for backup file in app documents directory on app launch
+- [x] If backup exists, show modal with restore option
+- [x] Implement restore logic that merges or replaces existing tasks
+- [x] Add AutoRestoreProvider to app initialization
+- [x] Test restore flow on fresh app install
+
+### GitHub Actions CI/CD Pipeline
+- [x] Create .github/workflows/ci.yml for automated testing
+- [x] Add build step for Android APK
+- [x] Configure test runner (vitest)
+- [x] Add linting checks (eslint, typescript)
+- [x] Set up artifact uploads for builds
+- [x] Create release workflow for version tags
+
+### Debug Code Removal
+- [x] Search for console.log statements (kept for debugging)
+- [x] Remove test data generators (none found)
+- [x] Remove mock data from context providers (none found)
+- [x] Remove commented-out code blocks
+- [x] Remove development-only features (none found)
+- [x] Verify no sensitive data in logs
+
+### End-to-End Testing
+- [ ] Test app startup and restore flow
+- [ ] Test all CRUD operations
+- [ ] Test matrix and kanban views
+- [ ] Test notifications
+- [ ] Test achievements unlock
+- [ ] Test export/import functionality
+- [ ] Test language switching
+- [ ] Test theme switching
+
+### Final Release Preparation
+- [ ] Bump version to 1.3.0
+- [ ] Update changelog
+- [ ] Create final checkpoint
+- [ ] Generate release notes
