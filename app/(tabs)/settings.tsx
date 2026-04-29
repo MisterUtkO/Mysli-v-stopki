@@ -36,6 +36,10 @@ import { useCustomization } from "@/lib/context/customization-context";
 import Slider from "@react-native-community/slider";
 import { CollapsibleSection } from "@/components/customization/collapsible-section";
 import { HeartbeatEmoji } from "@/components/animations/heartbeat-emoji";
+import * as FileSystem from "expo-file-system";
+import * as DocumentPicker from "expo-document-picker";
+import { BackupService } from "@/lib/services/backup/backup-service";
+import { validateBackupData } from "@/lib/services/backup/backup-validation";
 
 
 type NotifFrequency = "never" | "hourly" | "daily" | "weekly" | "always";
@@ -170,16 +174,22 @@ export default function SettingsScreen() {
   const handleExportTasks = async () => {
     setExporting(true);
     try {
-      const data = await exportTasks();
-      const element = document.createElement("a");
-      element.setAttribute("href", `data:text/plain;charset=utf-8,${encodeURIComponent(data)}`);
-      element.setAttribute("download", `tasks-export-${new Date().toISOString().split("T")[0]}.json`);
-      element.style.display = "none";
-      document.body.appendChild(element);
-      element.click();
-      document.body.removeChild(element);
-      Alert.alert(isRu ? "Успешно" : "Success", isRu ? "Данные экспортированы" : "Data exported");
+      if (Platform.OS === "web") {
+        const data = await exportTasks();
+        const element = document.createElement("a");
+        element.setAttribute("href", `data:text/plain;charset=utf-8,${encodeURIComponent(data)}`);
+        element.setAttribute("download", `tasks-export-${new Date().toISOString().split("T")[0]}.json`);
+        element.style.display = "none";
+        document.body.appendChild(element);
+        element.click();
+        document.body.removeChild(element);
+      } else {
+        const { MobileBackupHandlers } = await import("@/lib/services/backup/mobile-backup-handlers");
+        await MobileBackupHandlers.exportBackup(tasks, settings);
+      }
+      Alert.alert(isRu ? "Успешно" : "Success", isRu ? "Резервная копия сохранена" : "Backup saved");
     } catch (error) {
+      console.error("Export error:", error);
       Alert.alert(isRu ? "Ошибка" : "Error", isRu ? "Не удалось экспортировать" : "Failed to export");
     } finally {
       setExporting(false);
@@ -188,9 +198,16 @@ export default function SettingsScreen() {
 
   const handleImportData = async () => {
     try {
+      const { MobileBackupHandlers } = await import("@/lib/services/backup/mobile-backup-handlers");
+      const result = await MobileBackupHandlers.importBackup();
+      
+      if (!result) {
+        return;
+      }
+      
       Alert.alert(
-        isRu ? "Импортировать данные" : "Import Data",
-        isRu ? "Выберите файл резервной копии для восстановления" : "Select backup file to restore",
+        isRu ? "Восстановить данные?" : "Restore data?",
+        isRu ? `Будут восстановлены ${result.tasks.length} задач` : `Will restore ${result.tasks.length} tasks`,
         [
           {
             text: isRu ? "Отмена" : "Cancel",
@@ -198,10 +215,17 @@ export default function SettingsScreen() {
             style: "cancel",
           },
           {
-            text: isRu ? "Импортировать" : "Import",
+            text: isRu ? "Восстановить" : "Restore",
             onPress: async () => {
-              // Import functionality will be implemented
-              Alert.alert(isRu ? "Информация" : "Info", isRu ? "Функция импорта будет реализована" : "Import feature coming soon");
+              try {
+                const { addTask } = useTaskContext();
+                for (const task of result.tasks) {
+                  await addTask(task);
+                }
+                Alert.alert(isRu ? "Успешно" : "Success", isRu ? "Данные восстановлены" : "Data restored");
+              } catch (err) {
+                Alert.alert(isRu ? "Ошибка" : "Error", isRu ? "Не удалось восстановить" : "Failed to restore");
+              }
             },
           },
         ]
