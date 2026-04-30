@@ -39,7 +39,6 @@ import { CollapsibleSection } from "@/components/customization/collapsible-secti
 import { HeartbeatEmoji } from "@/components/animations/heartbeat-emoji";
 import * as FileSystem from "expo-file-system";
 import * as DocumentPicker from "expo-document-picker";
-import { BackupService } from "@/lib/services/backup/backup-service";
 import { validateBackupData } from "@/lib/services/backup/backup-validation";
 
 
@@ -49,7 +48,7 @@ type MotivFrequency = "never" | "10min" | "30min" | "hourly" | "daily" | "weekly
 export default function SettingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { settings, updateSettings, exportTasks, clearAllData, tasks } = useTaskContext();
+  const { settings, updateSettings, exportTasks, clearAllData, tasks, createTask } = useTaskContext();
   const { language, setLanguage, t } = useI18n();
   const { colorScheme, setColorScheme } = useThemeContext();
   const { triggerCustomFlag, unlocked } = useAchievements();
@@ -242,9 +241,8 @@ export default function SettingsScreen() {
             text: isRu ? "Восстановить" : "Restore",
             onPress: async () => {
               try {
-                const { addTask } = useTaskContext();
                 for (const task of result.tasks) {
-                  await addTask(task);
+                  await createTask(task);
                 }
                 Alert.alert(isRu ? "Успешно" : "Success", isRu ? "Данные восстановлены" : "Data restored");
               } catch (err) {
