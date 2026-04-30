@@ -211,8 +211,12 @@ export default function TaskDetailScreen() {
           text: isRu ? "Удалить" : "Delete",
           style: "destructive",
           onPress: async () => {
-            await deleteTask(task.id);
+            // Navigate back first, then delete to avoid stuck screen
             router.back();
+            // Small delay to let navigation complete before state update
+            setTimeout(async () => {
+              await deleteTask(task.id);
+            }, 100);
           },
         },
       ]

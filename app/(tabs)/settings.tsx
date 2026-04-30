@@ -25,7 +25,8 @@ import { useAchievements } from "@/lib/context/achievement-context";
 import { getThemeNeonColor } from "@/lib/theme/theme-neon-colors";
 import type { MotivationalSettings } from "@/lib/domain/types";
 import type { ColorScheme } from "@/lib/_core/theme";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useOnboarding } from "@/components/modals/onboarding-tutorial";
 import { AppVersionFooter } from "@/components/layout/app-version-footer";
 import { AppAboutSection } from "@/components/layout/app-about-section";
@@ -62,9 +63,17 @@ export default function SettingsScreen() {
 
   const [aboutTapCount, setAboutTapCount] = useState(0);
   const [amoledTapCount, setAmoledTapCount] = useState(0);
+  const [amoledUnlocked, setAmoledUnlocked] = useState(false);
 
   // Check if persistent_explorer achievement is unlocked (for AMOLED)
   const hasExplorerAchievement = unlocked.some((u) => u.achievementId === "persistent_explorer");
+
+  // Load AMOLED unlock state from AsyncStorage on mount
+  useEffect(() => {
+    AsyncStorage.getItem("@amoled_unlocked").then((val) => {
+      if (val === "true") setAmoledUnlocked(true);
+    });
+  }, []);
 
   const isRu = language === "ru";
 
@@ -109,13 +118,16 @@ export default function SettingsScreen() {
   const [triedThemes, setTriedThemes] = useState<Set<string>>(new Set([settings.theme ?? "light"]));
 
   const handleThemeChange = async (theme: "light" | "dark" | "amoled" | "pastel" | "notebook") => {
-    if (theme === "amoled" && !hasExplorerAchievement) {
+    if (theme === "amoled" && !hasExplorerAchievement && !amoledUnlocked) {
       const newCount = amoledTapCount + 1;
       setAmoledTapCount(newCount);
       
       if (newCount >= 10) {
         setColorScheme("amoled");
         await updateSettings({ theme: "amoled" });
+        // Persist AMOLED unlock state permanently
+        await AsyncStorage.setItem("@amoled_unlocked", "true");
+        setAmoledUnlocked(true);
         Alert.alert(
           isRu ? "🖤 AMOLED разблокирована!" : "🖤 AMOLED Unlocked!",
           isRu ? "Тема успешно разблокирована!" : "Theme successfully unlocked!"
@@ -326,7 +338,7 @@ export default function SettingsScreen() {
               <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
                 {themeOptions.map((opt) => {
                   const isActive = colorScheme === opt.key;
-                  const isLocked = opt.key === "amoled" && !hasExplorerAchievement;
+                  const isLocked = opt.key === "amoled" && !hasExplorerAchievement && !amoledUnlocked;
                   const themeNeonColor = getThemeNeonColor(opt.key as ColorScheme);
 
                   return (

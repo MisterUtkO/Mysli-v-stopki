@@ -34,7 +34,8 @@ import {
   formatTaskForCalendar,
   deleteCalendarEventByTaskId,
 } from "@/lib/integrations/calendar/calendar-sync";
-import { syncTaskToKanban, removeTaskFromKanban } from "@/lib/integrations/kanban/kanban-sync";
+import { syncTaskToKanban, removeTaskFromKanban, KANBAN_STORAGE_KEY } from "@/lib/integrations/kanban/kanban-sync";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   scheduleTaskReminder,
   rescheduleTaskReminder,
@@ -458,6 +459,8 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     await dbClearAllData();
     setTasks([]);
     await cancelAllScheduledNotifications();
+    // Also clear kanban stickers data
+    await AsyncStorage.removeItem(KANBAN_STORAGE_KEY);
   };
 
   return (

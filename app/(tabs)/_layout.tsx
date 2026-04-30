@@ -20,7 +20,7 @@ export default function TabLayout() {
   const tabBarHeight = 56 + bottomPadding;
   const [hasNavigated, setHasNavigated] = useState(false);
 
-  // Navigate to start screen after settings are loaded
+  // Navigate to start screen ONLY on initial app load (not when settings change)
   useEffect(() => {
     if (!loading && !hasNavigated && settings.startScreen) {
       const screenMap: Record<string, string> = {
@@ -34,11 +34,11 @@ export default function TabLayout() {
       const targetScreen = screenMap[settings.startScreen] || "index";
       
       console.log("[TabLayout] Attempting navigation to:", targetScreen);
+      setHasNavigated(true); // Mark as navigated immediately to prevent re-triggers
       
       // Use setTimeout to ensure navigation stack is ready
       setTimeout(() => {
         try {
-          // Use router.replace to navigate within the tabs
           const paths: Record<string, any> = {
             index: "/(tabs)/",
             matrix: "/(tabs)/matrix",
@@ -47,14 +47,14 @@ export default function TabLayout() {
             settings: "/(tabs)/settings",
           };
           router.replace(paths[targetScreen] || "/(tabs)/");
-          setHasNavigated(true);
           console.log("[TabLayout] Navigation successful to:", targetScreen);
         } catch (error) {
           console.error("[TabLayout] Navigation error:", error);
         }
       }, 200);
     }
-  }, [loading, settings.startScreen, hasNavigated, router]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading]); // Only depend on loading - navigate once on initial load, ignore startScreen changes
 
   // Show loading state while settings are being loaded
   if (loading) {
@@ -66,6 +66,7 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
+        sceneStyle: { backgroundColor: colors.background },
         tabBarActiveTintColor: colors.primary,
         headerShown: false,
         tabBarButton: HapticTabWithGlow,

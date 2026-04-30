@@ -1224,3 +1224,29 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [ ] Fix Android adaptive icon - add proper padding so foreground image doesn't get cropped
 - [ ] Request WRITE_EXTERNAL_STORAGE / MANAGE_EXTERNAL_STORAGE permission at app startup
 - [ ] Verify export works after permission is granted at startup
+
+## Phase 28: User-Reported Bug Fixes
+
+### Bug 1: AMOLED theme re-unlock
+- [ ] AMOLED theme should stay unlocked permanently once unlocked
+- [ ] Fix: persist unlock state so switching away and back doesn't require re-unlock
+
+### Bug 2: Initial screen selection redirect
+- [ ] On first launch, selecting initial screen in settings redirects immediately
+- [ ] Fix: changing initial screen setting should only save preference, not navigate
+
+### Bug 3: White flash on screen load (dark theme)
+- [ ] First opening of any screen flashes white before dark theme loads
+- [ ] Fix: ensure background color is set before content renders
+
+### Bug 4: Kanban stickers not cleared on data reset
+- [ ] "Clear all data" doesn't remove kanban stickers/columns
+- [ ] Fix: include kanban data in clear all data function
+
+### Bug 5: No attachment indicator in task list
+- [ ] Tasks with attachments have no visual indicator in the list view
+- [ ] Fix: add paperclip/attachment icon to task items that have files
+
+### Bug 6: Delete task doesn't navigate back
+- [ ] Deleting task from edit screen doesn't return user to previous screen
+- [ ] Fix: after successful delete, navigate back automatically

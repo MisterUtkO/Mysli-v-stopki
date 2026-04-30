@@ -465,6 +465,9 @@ export function SwipeableTaskCard({
                   </View>
 
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                    {hasAttachments && (
+                      <Text style={{ fontSize: 12, marginRight: 2 }}>📎</Text>
+                    )}
                     <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: priorityColor, marginRight: 2 }} />
                     <Text style={{ fontSize: 10, color: "#9CA3AF" }}>
                       ⚡{task.importance} 🔥{task.urgency}
