@@ -1,12 +1,12 @@
 /**
  * Mobile-compatible backup handlers for export/import
- * Uses expo-file-system, expo-document-picker, expo-permissions, and expo-sharing
+ * Uses expo-file-system, expo-document-picker, and expo-sharing
+ * No external permissions library - uses native APIs
  */
 
 import * as FileSystem from "expo-file-system/legacy";
 import * as DocumentPicker from "expo-document-picker";
 import * as Sharing from "expo-sharing";
-import * as Permissions from "expo-permissions";
 import { validateBackupData, sanitizeBackupData } from "./backup-validation";
 import type { Task } from "@/lib/domain/types";
 import type { BackupData } from "./backup-service";
@@ -14,48 +14,12 @@ import { Platform, Alert } from "react-native";
 
 export const MobileBackupHandlers = {
   /**
-   * Request file permissions from user
-   */
-  async requestFilePermissions(): Promise<boolean> {
-    if (Platform.OS !== "android") {
-      return true; // iOS doesn't require explicit permission for sharing
-    }
-
-    try {
-      // Request READ_EXTERNAL_STORAGE and WRITE_EXTERNAL_STORAGE
-      const { status: readStatus } = await Permissions.askAsync(
-        Permissions.MEDIA_LIBRARY
-      );
-      
-      if (readStatus !== "granted") {
-        console.warn("[MobileBackupHandlers] File permissions denied");
-        return false;
-      }
-
-      return true;
-    } catch (error) {
-      console.error("[MobileBackupHandlers] Permission request error:", error);
-      return false;
-    }
-  },
-
-  /**
    * Export backup to file system and share it
-   * On Android: Requests permissions, then saves to Downloads folder with fallback to share dialog
+   * On Android: Saves to Downloads folder with fallback to share dialog
    * On iOS: Uses native share dialog
    */
   async exportBackup(tasks: Task[], settings: any): Promise<string> {
     try {
-      // Request permissions on Android
-      if (Platform.OS === "android") {
-        const hasPermission = await this.requestFilePermissions();
-        if (!hasPermission) {
-          throw new Error(
-            "File permissions denied. Please grant storage permissions in app settings and try again."
-          );
-        }
-      }
-
       // Create backup data structure
       const backup: BackupData = {
         version: "1.3.0",

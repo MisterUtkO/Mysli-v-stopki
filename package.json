@@ -51,7 +51,6 @@
     "expo-localization": "^17.0.8",
     "expo-navigation-bar": "^55.0.12",
     "expo-notifications": "~0.32.15",
-    "expo-permissions": "^14.4.0",
     "expo-router": "~6.0.19",
     "expo-secure-store": "~15.0.8",
     "expo-sharing": "^55.0.18",
