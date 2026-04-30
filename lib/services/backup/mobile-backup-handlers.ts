@@ -1,7 +1,7 @@
 /**
  * Mobile-compatible backup handlers for export/import
- * Uses expo-file-system, expo-document-picker, and expo-sharing
- * No external permissions library - uses native APIs
+ * Uses expo-file-system StorageAccessFramework for Android (proper permission request)
+ * Uses expo-sharing for iOS
  */
 
 import * as FileSystem from "expo-file-system/legacy";
@@ -12,10 +12,13 @@ import type { Task } from "@/lib/domain/types";
 import type { BackupData } from "./backup-service";
 import { Platform, Alert } from "react-native";
 
+// StorageAccessFramework from expo-file-system
+const SAF = (FileSystem as any).StorageAccessFramework;
+
 export const MobileBackupHandlers = {
   /**
-   * Export backup to file system and share it
-   * On Android: Saves to Downloads folder with fallback to share dialog
+   * Export backup to file system
+   * On Android: Uses StorageAccessFramework to let user choose save location
    * On iOS: Uses native share dialog
    */
   async exportBackup(tasks: Task[], settings: any): Promise<string> {
@@ -123,35 +126,51 @@ export const MobileBackupHandlers = {
 };
 
 /**
- * Export for Android - tries to save to Downloads, falls back to share dialog
+ * Export for Android - Uses StorageAccessFramework to request directory permission
+ * This shows a native file picker dialog where user chooses where to save
  */
 async function exportAndroid(backupJson: string, fileName: string): Promise<string> {
   try {
-    // Try to save to Downloads folder
-    const downloadsDir = `${FileSystem.documentDirectory}../../../Download/`;
-    const filePath = `${downloadsDir}${fileName}`;
-
-    try {
-      // Write to Downloads
-      await FileSystem.writeAsStringAsync(filePath, backupJson);
-      console.log("[MobileBackupHandlers] Backup saved to Downloads:", filePath);
-      
-      // Show success message
-      Alert.alert(
-        "Успешно",
-        `Резервная копия сохранена в папку Downloads:\n${fileName}`,
-        [{ text: "OK" }]
-      );
-      
-      return filePath;
-    } catch (downloadError) {
-      console.warn("[MobileBackupHandlers] Failed to save to Downloads, using share dialog:", downloadError);
-      // Fallback to share dialog
-      return await exportViaSharing(backupJson, fileName);
+    // Use StorageAccessFramework to request permission and save file
+    // This opens a native directory picker dialog
+    const permissions = await SAF.requestDirectoryPermissionsAsync();
+    
+    if (!permissions.granted) {
+      throw new Error("Доступ к файлам не предоставлен. Пожалуйста, разрешите доступ для сохранения резервной копии.");
     }
+
+    // Create file in the selected directory
+    const fileUri = await SAF.createFileAsync(
+      permissions.directoryUri,
+      fileName,
+      "application/json"
+    );
+
+    // Write content to the file
+    await FileSystem.writeAsStringAsync(fileUri, backupJson, {
+      encoding: FileSystem.EncodingType.UTF8,
+    });
+
+    console.log("[MobileBackupHandlers] Backup saved via SAF:", fileUri);
+    
+    Alert.alert(
+      "Успешно",
+      `Резервная копия сохранена:\n${fileName}`,
+      [{ text: "OK" }]
+    );
+
+    return fileUri;
   } catch (error) {
-    console.error("[MobileBackupHandlers] Android export error:", error);
-    throw error;
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error("[MobileBackupHandlers] Android SAF export error:", errorMsg);
+    
+    // If SAF fails, try sharing as fallback
+    if (errorMsg.includes("not granted") || errorMsg.includes("Доступ")) {
+      throw error;
+    }
+    
+    console.log("[MobileBackupHandlers] Falling back to share dialog");
+    return await exportViaSharing(backupJson, fileName);
   }
 }
 
@@ -163,7 +182,7 @@ async function exportIOS(backupJson: string, fileName: string): Promise<string> 
 }
 
 /**
- * Helper function to export via native share dialog
+ * Helper function to export via native share dialog (fallback)
  */
 async function exportViaSharing(backupJson: string, fileName: string): Promise<string> {
   // Check if sharing is available
@@ -173,7 +192,7 @@ async function exportViaSharing(backupJson: string, fileName: string): Promise<s
   }
 
   // Create temporary file in cache directory
-  const cacheDir = (FileSystem as any).cacheDirectory;
+  const cacheDir = FileSystem.cacheDirectory;
   if (!cacheDir) throw new Error("Cache directory not available");
   const tempFilePath = `${cacheDir}${fileName}`;
 
@@ -181,25 +200,11 @@ async function exportViaSharing(backupJson: string, fileName: string): Promise<s
   await FileSystem.writeAsStringAsync(tempFilePath, backupJson);
 
   // Share the file (user can choose where to save)
-  try {
-    await Sharing.shareAsync(tempFilePath, {
-      mimeType: "application/json",
-      dialogTitle: "Export Tasks Backup",
-      UTI: "public.json",
-    });
-  } catch (shareError) {
-    // If sharing fails, provide a more helpful error message
-    const errorMsg = shareError instanceof Error ? shareError.message : String(shareError);
-
-    // Check if it's a permission error
-    if (errorMsg.includes("Permission") || errorMsg.includes("getFilePermission")) {
-      throw new Error(
-        "File sharing permission denied. Please check app permissions in settings and try again."
-      );
-    }
-
-    throw shareError;
-  }
+  await Sharing.shareAsync(tempFilePath, {
+    mimeType: "application/json",
+    dialogTitle: "Export Tasks Backup",
+    UTI: "public.json",
+  });
 
   return tempFilePath;
 }

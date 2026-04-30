@@ -1219,3 +1219,8 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Update changelog
 - [x] Create final checkpoint
 - [x] Generate release notes
+
+## Phase 27: Critical Bug Fixes - Icon & Export
+- [ ] Fix Android adaptive icon - add proper padding so foreground image doesn't get cropped
+- [ ] Request WRITE_EXTERNAL_STORAGE / MANAGE_EXTERNAL_STORAGE permission at app startup
+- [ ] Verify export works after permission is granted at startup
