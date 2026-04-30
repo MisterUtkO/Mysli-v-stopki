@@ -14,7 +14,7 @@ import { Platform } from "react-native";
 export const MobileBackupHandlers = {
   /**
    * Export backup to file system and share it
-   * On Android: Saves to Downloads folder directly
+   * On Android: Saves to Downloads folder directly with fallback to share dialog
    * On iOS: Uses native share dialog
    */
   async exportBackup(tasks: Task[], settings: any): Promise<string> {
@@ -40,23 +40,9 @@ export const MobileBackupHandlers = {
 
       // Platform-specific handling
       if (Platform.OS === "android") {
-        // On Android, save directly to Downloads folder
-        const downloadsDir = `${FileSystem.documentDirectory}../../../Download/`;
-        const filePath = `${downloadsDir}${fileName}`;
-
-        try {
-          // Try to write to Downloads
-          await FileSystem.writeAsStringAsync(filePath, backupJson);
-          console.log("[MobileBackupHandlers] Backup saved to Downloads:", filePath);
-          return filePath;
-        } catch (downloadError) {
-          // Fallback: Save to app's document directory and share
-          console.warn("[MobileBackupHandlers] Failed to save to Downloads, using share dialog:", downloadError);
-          return await exportViaSharing(backupJson, fileName);
-        }
+        return await exportAndroid(backupJson, fileName);
       } else if (Platform.OS === "ios") {
-        // On iOS, use native share dialog
-        return await exportViaSharing(backupJson, fileName);
+        return await exportIOS(backupJson, fileName);
       } else {
         throw new Error("Unsupported platform for mobile backup");
       }
@@ -134,6 +120,38 @@ export const MobileBackupHandlers = {
     }
   },
 };
+
+/**
+ * Export for Android - tries to save to Downloads, falls back to share dialog
+ */
+async function exportAndroid(backupJson: string, fileName: string): Promise<string> {
+  try {
+    // Try to save to Downloads folder
+    const downloadsDir = `${FileSystem.documentDirectory}../../../Download/`;
+    const filePath = `${downloadsDir}${fileName}`;
+
+    try {
+      // Write to Downloads
+      await FileSystem.writeAsStringAsync(filePath, backupJson);
+      console.log("[MobileBackupHandlers] Backup saved to Downloads:", filePath);
+      return filePath;
+    } catch (downloadError) {
+      console.warn("[MobileBackupHandlers] Failed to save to Downloads, using share dialog:", downloadError);
+      // Fallback to share dialog
+      return await exportViaSharing(backupJson, fileName);
+    }
+  } catch (error) {
+    console.error("[MobileBackupHandlers] Android export error:", error);
+    throw error;
+  }
+}
+
+/**
+ * Export for iOS - uses native share dialog
+ */
+async function exportIOS(backupJson: string, fileName: string): Promise<string> {
+  return await exportViaSharing(backupJson, fileName);
+}
 
 /**
  * Helper function to export via native share dialog

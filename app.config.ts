@@ -62,6 +62,9 @@ const config: ExpoConfig = {
       "POST_NOTIFICATIONS",
       "READ_CALENDAR",
       "WRITE_CALENDAR",
+      "READ_EXTERNAL_STORAGE",
+      "WRITE_EXTERNAL_STORAGE",
+      "MANAGE_EXTERNAL_STORAGE",
     ],
     intentFilters: [
       {

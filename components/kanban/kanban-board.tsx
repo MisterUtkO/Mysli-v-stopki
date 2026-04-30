@@ -377,7 +377,22 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, {}>(function KanbanBoard(_
     try {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
       if (stored) {
-        setData(JSON.parse(stored));
+        const parsedData = JSON.parse(stored);
+        // Update column titles to match current language
+        const updatedData = {
+          columns: parsedData.columns.map((col: KanbanColumn, index: number) => {
+            const titles = [
+              t.matrix.columnStart,
+              t.matrix.columnInProgress,
+              t.matrix.columnDone,
+            ];
+            return {
+              ...col,
+              title: titles[index] || col.title,
+            };
+          }),
+        };
+        setData(updatedData);
       } else {
         setData({
           columns: [
@@ -388,7 +403,7 @@ export const KanbanBoard = forwardRef<KanbanBoardRef, {}>(function KanbanBoard(_
         });
       }
     } catch (e) {
-      console.log("Failed to load kanban:", e);
+      console.log("[KanbanBoard] Failed to load kanban:", e);
     }
     setLoaded(true);
   }, [t]);
