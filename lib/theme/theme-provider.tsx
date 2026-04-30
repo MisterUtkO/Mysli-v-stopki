@@ -5,6 +5,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { SchemeColors } from "@/constants/theme";
 import type { ColorScheme } from "@/lib/_core/theme";
+import { getSetting, setSetting } from "@/lib/database/db";
 
 type ThemeContextValue = {
   colorScheme: ColorScheme;
@@ -18,17 +19,24 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [colorScheme, setColorSchemeState] = useState<ColorScheme>(systemScheme as ColorScheme);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load saved theme on mount
+  // Load saved theme on mount from database (single source of truth)
   useEffect(() => {
     const loadTheme = async () => {
       try {
-        const saved = await AsyncStorage.getItem("app_theme");
+        // First, try to load from settings database (primary source)
+        const saved = await getSetting("theme");
         const validThemes: ColorScheme[] = ["light", "dark", "amoled", "pastel", "notebook", "darkMatte"];
+        
         if (saved && validThemes.includes(saved as ColorScheme)) {
           setColorSchemeState(saved as ColorScheme);
+        } else {
+          // Fallback: use system preference
+          setColorSchemeState(systemScheme as ColorScheme);
         }
       } catch (error) {
-        console.warn("Failed to load theme:", error);
+        console.warn("[ThemeProvider] Failed to load theme:", error);
+        // On error, fallback to system
+        setColorSchemeState(systemScheme as ColorScheme);
       } finally {
         setIsLoading(false);
       }
@@ -49,16 +57,20 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         root.style.setProperty(`--color-${token}`, value);
       });
     }
+    console.log("[ThemeProvider] Applied theme:", scheme);
   }, []);
 
   const setColorScheme = useCallback(
     async (scheme: ColorScheme) => {
+      console.log("[ThemeProvider] Changing theme to:", scheme);
       setColorSchemeState(scheme);
       applyScheme(scheme);
       try {
-        await AsyncStorage.setItem("app_theme", scheme);
+        // Save to database (single source of truth)
+        await setSetting("theme", scheme);
+        console.log("[ThemeProvider] Theme saved to database:", scheme);
       } catch (error) {
-        console.error("Failed to save theme:", error);
+        console.error("[ThemeProvider] Failed to save theme:", error);
       }
     },
     [applyScheme]
