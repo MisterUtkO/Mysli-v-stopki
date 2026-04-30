@@ -19,7 +19,7 @@ const timestamp = bundleId.split(".").pop()?.replace(/^t/, "") ?? "";
 const schemeFromBundleId = `manus${timestamp}`;
 
 const env = {
-  appName: "Мысли в стопки",
+  appName: "Мысли",
   appSlug: "sdvgnote",
   logoUrl: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663313035753/MwaEVdVAmmiWjWnF.png",
   scheme: schemeFromBundleId,
