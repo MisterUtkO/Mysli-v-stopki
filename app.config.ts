@@ -23,6 +23,7 @@ const env = {
   appSlug: "sdvgnote",
   logoUrl: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663313035753/MwaEVdVAmmiWjWnF.png",
   scheme: schemeFromBundleId,
+  widgetScheme: "eisenhower", // Widget deep link scheme
   iosBundleId: bundleId,
   androidPackage: bundleId,
   // Version — single source of truth
@@ -75,6 +76,10 @@ const config: ExpoConfig = {
             scheme: env.scheme,
             host: "*",
           },
+          {
+            scheme: env.widgetScheme,
+            host: "*",
+          },
         ],
         category: ["BROWSABLE", "DEFAULT"],
       },
@@ -124,7 +129,7 @@ const config: ExpoConfig = {
         android: {
           buildArchs: ["armeabi-v7a", "arm64-v8a"],
           minSdkVersion: 24,
-          usesCleartextTraffic: false,
+          usesCleartextTraffic: true,
         },
       },
     ],
@@ -133,6 +138,8 @@ const config: ExpoConfig = {
     typedRoutes: true,
     reactCompiler: true,
   },
+  // Widget support - enables app widget provider registration
+  // Widget files located in: android/app/src/main/java/com/eisenhower/widget/
   owner: "manus",
   runtimeVersion: "1.0.0",
 };

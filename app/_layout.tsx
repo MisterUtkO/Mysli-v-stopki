@@ -122,6 +122,17 @@ export default function RootLayout() {
   // Handle deep links from app shortcuts and widgets
   useEffect(() => {
     const handleDeepLink = ({ url }: { url: string }) => {
+      console.log("[DeepLink] Received URL:", url);
+      
+      // Check for quick-task deep link
+      if (url.includes("quick-task")) {
+        console.log("[DeepLink] Detected quick-task request");
+        if (navigationRef.current) {
+          navigationRef.current?.navigate("quick-task" as any);
+        }
+        return;
+      }
+
       const deepLink = parseDeepLink(url);
       if (deepLink && navigationRef.current) {
         handleShortcutAction(deepLink.action, (screen: string, params?: any) => {
@@ -130,10 +141,11 @@ export default function RootLayout() {
       }
     };
 
-    // Handle initial URL (app launched from deep link)
+    // Handle initial URL (app launched from deep link/widget)
     Linking.getInitialURL()
       .then((url) => {
         if (url != null) {
+          console.log("[DeepLink] Initial URL:", url);
           handleDeepLink({ url });
         }
       })
@@ -229,6 +241,7 @@ export default function RootLayout() {
                       <Stack.Screen name="add-task" options={{ presentation: "modal", title: "Add Task" }} />
                       <Stack.Screen name="task-detail/[id]" options={{ presentation: "modal", title: "Task Details" }} />
                       <Stack.Screen name="statistics" options={{ presentation: "modal", title: "Statistics" }} />
+                      <Stack.Screen name="quick-task" options={{ presentation: "modal", title: "Quick Task", animationEnabled: true }} />
                       <Stack.Screen name="oauth/callback" />
                     </Stack>
                     <StatusBar style="auto" hidden={Platform.OS !== "web"} />

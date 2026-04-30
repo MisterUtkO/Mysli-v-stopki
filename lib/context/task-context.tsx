@@ -205,6 +205,15 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         scheduleTaskCleanup().catch(e => {
           console.error("[TaskContext] Background task cleanup failed:", e);
         });
+        
+        // Sync tasks to widget on app launch
+        try {
+          const { WidgetSync } = await import("@/lib/integrations/widget/widget-sync");
+          await WidgetSync.syncTasksToWidget(finalTasks);
+          console.log("[TaskContext] Synced tasks to widget on app launch");
+        } catch (error) {
+          console.error("[TaskContext] Failed to sync to widget on launch:", error);
+        }
       } catch (error) {
         console.error("Failed to initialize database:", error);
       } finally {
@@ -298,6 +307,15 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       }
     }
     
+    // Sync to widget after task creation
+    try {
+      const { WidgetSync } = await import("@/lib/integrations/widget/widget-sync");
+      await WidgetSync.syncTasksToWidget(updatedTasks);
+      console.log("[TaskContext] Synced to widget after task creation");
+    } catch (error) {
+      console.error("[TaskContext] Failed to sync to widget:", error);
+    }
+    
     return newTask;
   };
 
@@ -339,6 +357,15 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
           }
         }
       }
+    }
+
+    // Sync to widget after task update
+    try {
+      const { WidgetSync } = await import("@/lib/integrations/widget/widget-sync");
+      await WidgetSync.syncTasksToWidget(updatedTasks);
+      console.log("[TaskContext] Synced to widget after task update");
+    } catch (error) {
+      console.error("[TaskContext] Failed to sync to widget:", error);
     }
 
     // Forward-sync to Kanban: update sticker text and column if task is on board
