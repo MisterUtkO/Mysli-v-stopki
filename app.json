@@ -2,7 +2,7 @@
   "expo": {
     "name": "Мысли в стопки",
     "slug": "sdvgnote",
-    "version": "1.3.0",
+    "version": "1.4.0",
     "description": "A task management app for organizing and prioritizing your work",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
