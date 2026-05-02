@@ -1,0 +1,7 @@
+<resources>
+  <string name="app_name">Мысли в стопки</string>
+  <string name="expo_system_ui_user_interface_style" translatable="false">automatic</string>
+  <string name="expo_runtime_version">1.0.0</string>
+  <string name="widget_quick_task_label">⚡ Quick Task</string>
+  <string name="widget_quick_task_description">Создавайте задачи прямо с главного экрана</string>
+</resources>
