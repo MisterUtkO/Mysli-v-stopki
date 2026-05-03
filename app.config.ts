@@ -132,6 +132,7 @@ const config: ExpoConfig = {
         },
       },
     ],
+    "./plugins/with-android-widget",
   ],
   experiments: {
     typedRoutes: true,
