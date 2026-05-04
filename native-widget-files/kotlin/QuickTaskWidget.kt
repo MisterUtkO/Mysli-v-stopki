@@ -44,7 +44,7 @@ class QuickTaskWidget : AppWidgetProvider() {
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        views.setOnClickPendingIntent(R.id.widget_button, pendingIntent)
+        views.setOnClickPendingIntent(R.id.widget_button_quick_task, pendingIntent)
         appWidgetManager.updateAppWidget(appWidgetId, views)
     }
 }
