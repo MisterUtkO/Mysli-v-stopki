@@ -113,6 +113,8 @@ export default function HomeScreen() {
   };
 
   const toggleExpand = (taskId: string) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpandedTaskId((prev) => (prev === taskId ? null : taskId));
     const task = tasks.find((t) => t.id === taskId);
     if (task) {
       setSelectedTaskForDetail(task);
@@ -480,11 +482,14 @@ export default function HomeScreen() {
                 <SwipeableTaskCard
                   key={task.id}
                   task={task}
-                  onPress={() => toggleExpand(task.id)}
-                  onStatusChange={() =>
-                    handleStatusChange(task.id, task.status)
+                  isExpanded={expandedTaskId === task.id}
+                  isRu={isRu}
+                  onToggleExpand={(taskId) => toggleExpand(taskId)}
+                  onStatusChange={(taskId, currentStatus) =>
+                    handleStatusChange(taskId, currentStatus)
                   }
-                  onDelete={() => handleDelete(task.id, task.title)}
+                  onDelete={(taskId, taskTitle) => handleDelete(taskId, taskTitle)}
+                  onExportToCalendar={(task) => handleExportToCalendar(task)}
                 />
               ))}
             </>
@@ -496,6 +501,7 @@ export default function HomeScreen() {
           visible={!!selectedTaskForDetail}
           onClose={() => setSelectedTaskForDetail(null)}
           onEdit={(task) => {
+            setSelectedTaskForDetail(null);
             router.push({
               pathname: "/task-detail/[id]",
               params: { id: task.id },
