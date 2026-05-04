@@ -7,7 +7,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.RemoteViews
-import space.manus.eisenhower.priority.app.xt20260205144419.MainActivity
 import space.manus.eisenhower.priority.app.xt20260205144419.R
 
 class QuickTaskWidget : AppWidgetProvider() {
@@ -29,11 +28,9 @@ class QuickTaskWidget : AppWidgetProvider() {
     ) {
         val views = RemoteViews(context.packageName, R.layout.widget_quick_task)
 
-        val intent = Intent(context, MainActivity::class.java).apply {
-            action = Intent.ACTION_VIEW
-            data = Uri.parse("eisenhower://quick-task")
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-        }
+        // Use deep link to open the app - no MainActivity import needed
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("eisenhower://quick-task"))
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
 
         val pendingIntent = PendingIntent.getActivity(
             context,
