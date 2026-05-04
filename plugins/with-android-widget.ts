@@ -24,7 +24,6 @@ const withAndroidWidget: ConfigPlugin = (config) => {
       application.receiver = [];
     }
 
-    // Check if receiver already added
     const alreadyAdded = application.receiver.some(
       (r: any) => r.$?.["android:name"] === ".widget.QuickTaskWidget"
     );
@@ -58,7 +57,6 @@ const withAndroidWidget: ConfigPlugin = (config) => {
       console.log(`[with-android-widget] Added QuickTaskWidget receiver to manifest`);
     }
 
-    // Add QuickTaskActivity (transparent trampoline, fixes cold-start flicker)
     if (!application.activity) {
       application.activity = [];
     }
@@ -71,7 +69,9 @@ const withAndroidWidget: ConfigPlugin = (config) => {
       (application.activity as any[]).push({
         $: {
           "android:name": ".widget.QuickTaskActivity",
-          "android:theme": "@android:style/Theme.Translucent.NoTitleBar",
+          // Theme.Dialog makes the Activity appear as a floating dialog
+          // without showing the main app behind it
+          "android:theme": "@android:style/Theme.Dialog",
           "android:exported": "false",
           "android:noHistory": "true",
           "android:excludeFromRecents": "true",
@@ -94,13 +94,11 @@ const withAndroidWidget: ConfigPlugin = (config) => {
 
       console.log(`[with-android-widget] Creating widget at: ${androidJavaDir}`);
 
-      // Create directories
       fs.mkdirSync(path.join(androidResDir, "xml"), { recursive: true });
       fs.mkdirSync(path.join(androidResDir, "layout"), { recursive: true });
       fs.mkdirSync(path.join(androidResDir, "drawable"), { recursive: true });
       fs.mkdirSync(androidJavaDir, { recursive: true });
 
-      // Files to copy
       const filesToCopy = [
         {
           src: "res/xml/widget_quick_task_info.xml",
@@ -133,9 +131,7 @@ const withAndroidWidget: ConfigPlugin = (config) => {
         const srcPath = path.join(sourceDir, file.src);
         if (fs.existsSync(srcPath)) {
           let content = fs.readFileSync(srcPath, "utf-8");
-          // Replace package placeholders in Kotlin file
           if (file.needsReplace) {
-            // Replace all variations of the old package with the new one
             content = content.replace(
               /space\.manus\.eisenhower\.priority\.app\.xt?20260205144419/g,
               androidPackage
