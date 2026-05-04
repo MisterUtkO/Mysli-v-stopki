@@ -13,7 +13,7 @@ const withAndroidWidget: ConfigPlugin = (config) => {
 
   console.log(`[with-android-widget] Android package from config: ${androidPackage}`);
 
-  // Step 1: Add <receiver> to AndroidManifest.xml
+  // Step 1: Add <receiver> and <activity> to AndroidManifest.xml
   config = withAndroidManifest(config, (config) => {
     const manifest = config.modResults.manifest;
     const application = manifest.application?.[0];
@@ -58,6 +58,28 @@ const withAndroidWidget: ConfigPlugin = (config) => {
       console.log(`[with-android-widget] Added QuickTaskWidget receiver to manifest`);
     }
 
+    // Add QuickTaskActivity (transparent trampoline, fixes cold-start flicker)
+    if (!application.activity) {
+      application.activity = [];
+    }
+
+    const activityAlreadyAdded = (application.activity as any[]).some(
+      (a: any) => a.$?.["android:name"] === ".widget.QuickTaskActivity"
+    );
+
+    if (!activityAlreadyAdded) {
+      (application.activity as any[]).push({
+        $: {
+          "android:name": ".widget.QuickTaskActivity",
+          "android:theme": "@android:style/Theme.Translucent.NoTitleBar",
+          "android:exported": "false",
+          "android:noHistory": "true",
+          "android:excludeFromRecents": "true",
+        },
+      } as any);
+      console.log(`[with-android-widget] Added QuickTaskActivity to manifest`);
+    }
+
     return config;
   });
 
@@ -66,7 +88,6 @@ const withAndroidWidget: ConfigPlugin = (config) => {
     "android",
     (config) => {
       const projectRoot = config.modRequest.projectRoot;
-
       const androidResDir = path.join(projectRoot, "android/app/src/main/res");
       const androidJavaDir = path.join(projectRoot, `android/app/src/main/java/${packagePath}/widget`);
       const sourceDir = path.join(projectRoot, "plugins/widget-files");
@@ -101,13 +122,17 @@ const withAndroidWidget: ConfigPlugin = (config) => {
           dest: path.join(androidJavaDir, "QuickTaskWidget.kt"),
           needsReplace: true,
         },
+        {
+          src: "QuickTaskActivity.kt",
+          dest: path.join(androidJavaDir, "QuickTaskActivity.kt"),
+          needsReplace: true,
+        },
       ];
 
       for (const file of filesToCopy) {
         const srcPath = path.join(sourceDir, file.src);
         if (fs.existsSync(srcPath)) {
           let content = fs.readFileSync(srcPath, "utf-8");
-
           // Replace package placeholders in Kotlin file
           if (file.needsReplace) {
             // Replace all variations of the old package with the new one
@@ -117,7 +142,6 @@ const withAndroidWidget: ConfigPlugin = (config) => {
             );
             console.log(`[with-android-widget] Replaced package in ${file.src} with: ${androidPackage}`);
           }
-
           fs.writeFileSync(file.dest, content, "utf-8");
           console.log(`[with-android-widget] Copied: ${file.src}`);
         } else {
