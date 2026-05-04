@@ -3,6 +3,7 @@ package com.eisenhower.widget
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.widget.RemoteViews
@@ -30,10 +31,11 @@ class QuickTaskWidget : AppWidgetProvider() {
     ) {
         val views = RemoteViews(context.packageName, R.layout.widget_quick_task)
 
-        // Create intent for widget button tap
-        val intent = Intent(Intent.ACTION_VIEW).apply {
-            data = android.net.Uri.parse("eisenhower://quick-task")
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        // Launch QuickTaskActivity instead of a raw deep-link ACTION_VIEW intent.
+        // A dedicated trampoline Activity eliminates the cold-start white/black
+        // flicker that occurs when Android resolves the URI without a warm process.
+        val intent = Intent(context, QuickTaskActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }
 
         val pendingIntent = PendingIntent.getActivity(
@@ -42,9 +44,7 @@ class QuickTaskWidget : AppWidgetProvider() {
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-
         views.setOnClickPendingIntent(R.id.widget_button, pendingIntent)
-
         appWidgetManager.updateAppWidget(appWidgetId, views)
     }
 }
