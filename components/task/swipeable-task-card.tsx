@@ -45,9 +45,6 @@ const STATUS_ICONS: Record<string, string> = {
 
 const SWIPE_THRESHOLD = 60;
 
-/**
- * Check if a task is overdue (has dueDate and it's in the past)
- */
 export function isTaskOverdue(task: Task): boolean {
   if (!task.dueDate) return false;
   const now = new Date();
@@ -55,9 +52,6 @@ export function isTaskOverdue(task: Task): boolean {
   return dueDate < now;
 }
 
-/**
- * Check if a task is old (no dueDate and created >3 days ago)
- */
 export function isTaskOld(task: Task): boolean {
   if (task.dueDate) return false;
   const now = new Date();
@@ -122,6 +116,11 @@ export function SwipeableTaskCard({
   const [flashColor, setFlashColor] = useState("#22C55E");
   const isSwiping = useSharedValue(false);
 
+  // Ref so gesture callbacks always read the latest isRu value
+  // without being stale from the initial render closure
+  const isRuRef = useRef(isRu);
+  isRuRef.current = isRu;
+
   const getNextStatusColor = (currentStatus: TaskStatus): string => {
     switch (currentStatus) {
       case "not_started": return "#3B82F6";
@@ -173,7 +172,6 @@ export function SwipeableTaskCard({
     }
   };
 
-  // Callbacks that run on JS thread
   const handleSwipeRight = () => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -186,29 +184,28 @@ export function SwipeableTaskCard({
     if (Platform.OS !== "web") {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     }
-    
-    // Show small confirmation dialog
+
+    // Always read the latest language from ref — avoids stale closure in gesture handler
+    const ru = isRuRef.current;
+
     Alert.alert(
-      isRu ? "Точно удалить?" : "Sure delete?",
+      ru ? "Точно удалить?" : "Sure delete?",
       "",
       [
         {
-          text: isRu ? "Нет" : "No",
+          text: ru ? "Нет" : "No",
           onPress: () => {
-            // Snap back without deleting
             translateX.value = withTiming(0, { duration: 280, easing: Easing.out(Easing.cubic) });
           },
           style: "cancel",
         },
         {
-          text: isRu ? "Да" : "Yes",
+          text: ru ? "Да" : "Yes",
           onPress: () => {
             onDelete(task.id, task.title);
-            
-            // Show toast notification
             if (Platform.OS === "android") {
               ToastAndroid.show(
-                isRu ? "Задача удалена" : "Task deleted",
+                ru ? "Задача перемещена в корзину" : "Task moved to trash",
                 ToastAndroid.SHORT
               );
             }
@@ -219,7 +216,6 @@ export function SwipeableTaskCard({
     );
   };
 
-  // Gesture.Pan with simultaneousWithExternalGesture disabled
   const panGesture = Gesture.Pan()
     .activeOffsetX([-10, 10])
     .failOffsetY([-15, 15])
@@ -232,19 +228,16 @@ export function SwipeableTaskCard({
     .onEnd((event) => {
       isSwiping.value = false;
       if (event.translationX > SWIPE_THRESHOLD) {
-        // Swipe right → change status
         translateX.value = withTiming(120, { duration: 120 }, () => {
           runOnJS(handleSwipeRight)();
           translateX.value = withTiming(0, { duration: 280, easing: Easing.out(Easing.cubic) });
         });
       } else if (event.translationX < -SWIPE_THRESHOLD) {
-        // Swipe left → delete
         translateX.value = withTiming(-120, { duration: 120 }, () => {
           runOnJS(handleSwipeLeft)();
           translateX.value = withTiming(0, { duration: 280, easing: Easing.out(Easing.cubic) });
         });
       } else {
-        // Snap back without bounce
         translateX.value = withTiming(0, { duration: 250, easing: Easing.out(Easing.cubic) });
       }
     })
@@ -272,25 +265,23 @@ export function SwipeableTaskCard({
   const [cardSelectedAttachment, setCardSelectedAttachment] = useState<TaskAttachment | null>(null);
 
   const { quadrantColors, deadlineHighlightSettings } = useCustomization();
-  
-  // Get quadrant-based color from customization
+
   const getQuadrantColor = () => {
     if (task.importance >= 5 && task.urgency >= 5) return quadrantColors.q1;
     if (task.importance >= 5 && task.urgency < 5) return quadrantColors.q2;
     if (task.importance < 5 && task.urgency >= 5) return quadrantColors.q3;
     return quadrantColors.q4;
   };
-  
-  // Check if task is overdue or expiring soon
+
   const isOverdue = isTaskOverdue(task);
-  const isExpiringSoon = task.dueDate && !isOverdue && 
+  const isExpiringSoon = task.dueDate && !isOverdue &&
     (new Date(task.dueDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24) <= deadlineHighlightSettings.expiringThresholdDays;
-  
+
   const priorityColor = getQuadrantColor();
   let highlightColor = priorityColor;
   if (isOverdue) highlightColor = deadlineHighlightSettings.expiredTaskColor;
   else if (isExpiringSoon) highlightColor = deadlineHighlightSettings.expiringTaskColor;
-  
+
   const bgTint = getPriorityBgTint(task.importance, task.urgency);
   const hasAttachments = task.attachments && task.attachments.length > 0;
 
@@ -299,7 +290,6 @@ export function SwipeableTaskCard({
     return (
       <GestureDetector gesture={panGesture}>
         <View style={{ marginBottom: 6, borderRadius: 8, position: "relative" }}>
-          {/* Background actions */}
           <View style={{ position: "absolute", top: 0, bottom: 0, left: 0, right: 0, flexDirection: "row", borderRadius: 8, overflow: "hidden", zIndex: 0 }}>
             <Animated.View style={[{ flex: 1, backgroundColor: "#22C55E", justifyContent: "center", paddingLeft: 12 }, rightBgOpacity]}>
               <Text style={{ color: "#FFFFFF", fontWeight: "700", fontSize: 11 }}>
@@ -312,8 +302,6 @@ export function SwipeableTaskCard({
               </Text>
             </Animated.View>
           </View>
-
-          {/* Card */}
           <Animated.View style={cardAnimStyle}>
             <Pressable
               onPress={(e) => {
@@ -377,7 +365,6 @@ export function SwipeableTaskCard({
       <Animated.View style={{ marginBottom: 8, borderRadius: 14, position: "relative" }}>
         <TaskCardGlow glowType={glowType} borderRadius={14} intensity="high" />
 
-        {/* Background actions */}
         <View style={{ position: "absolute", top: 0, bottom: 0, left: 0, right: 0, flexDirection: "row", borderRadius: 14, overflow: "hidden", zIndex: 0 }}>
           <Animated.View style={[{ flex: 1, backgroundColor: "#22C55E", justifyContent: "center", paddingLeft: 16, borderRadius: 14 }, rightBgOpacity]}>
             <Text style={{ color: "#FFFFFF", fontWeight: "700", fontSize: 13 }}>
@@ -391,7 +378,6 @@ export function SwipeableTaskCard({
           </Animated.View>
         </View>
 
-        {/* Swipeable card */}
         <Animated.View style={[cardAnimStyle, { borderRadius: 14, overflow: "hidden", zIndex: 1 }]}>
           <OverdueTaskWrapper isOverdue={isOverdue}>
             <Pressable
@@ -409,9 +395,7 @@ export function SwipeableTaskCard({
                 }}
                 className="bg-surface border border-border rounded-2xl"
               >
-                {/* Overdue indicator */}
                 <OverdueIndicator isOverdue={isOverdue} />
-              {/* Flash overlay */}
               <Animated.View
                 pointerEvents="none"
                 style={[{
@@ -423,7 +407,6 @@ export function SwipeableTaskCard({
                 }, flashStyle]}
               />
 
-              {/* COLLAPSED VIEW */}
               <View style={{ paddingHorizontal: 12, paddingVertical: 10 }}>
                 <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
                   <View style={{ flexDirection: "row", alignItems: "center", flex: 1, marginRight: 8 }}>
@@ -481,7 +464,6 @@ export function SwipeableTaskCard({
                 </View>
               </View>
 
-              {/* EXPANDED VIEW */}
               {isExpanded && (
                 <View style={{ paddingHorizontal: 12, paddingBottom: 12, borderTopWidth: 1, borderTopColor: "rgba(128,128,128,0.15)" }}>
                   {task.description && task.description !== task.title && (
@@ -510,7 +492,6 @@ export function SwipeableTaskCard({
                     )}
                   </View>
 
-                  {/* Priority bar */}
                   <View style={{ marginTop: 8 }}>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
                       <Text style={{ fontSize: 10, color: "#9CA3AF", width: 60 }}>
@@ -620,7 +601,7 @@ export function SwipeableTaskCard({
                             ? (isRu ? "Добавлено" : "Added")
                             : (isRu ? "Уже есть" : "Already added"),
                           added
-                            ? (isRu ? `"​${task.title}"​ добавлено в канбан` : `"​${task.title}"​ added to Kanban`)
+                            ? (isRu ? `"\u200b${task.title}"\u200b добавлено в канбан` : `"\u200b${task.title}"\u200b added to Kanban`)
                             : (isRu ? "Задача уже есть на доске" : "Task is already on the board")
                         );
                       }}
