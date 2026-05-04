@@ -1,4 +1,4 @@
-package space.manus.eisenhower.priority.app.xt20260205144419.widget
+package space.manus.eisenhower.priority.app.t20260205144419.widget
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
@@ -7,7 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.RemoteViews
-import space.manus.eisenhower.priority.app.xt20260205144419.R
+import space.manus.eisenhower.priority.app.t20260205144419.R
 
 class QuickTaskWidget : AppWidgetProvider() {
 
