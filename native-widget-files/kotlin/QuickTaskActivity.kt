@@ -1,19 +1,25 @@
 package com.eisenhower.widget
 
 import android.app.Activity
-import android.content.Intent
-import android.net.Uri
+import android.app.AlertDialog
+import android.content.ContentValues
+import android.database.sqlite.SQLiteDatabase
 import android.os.Bundle
+import android.text.InputType
+import android.widget.EditText
+import android.widget.LinearLayout
+import android.widget.Toast
+import java.util.UUID
 
 /**
- * Transparent trampoline Activity launched by the home screen widget.
+ * QuickTaskActivity — показывает нативный диалог добавления задачи
+ * прямо поверх рабочего стола, без запуска основного приложения.
  *
- * Using a real Activity as the PendingIntent target instead of a deep-link
- * ACTION_VIEW intent eliminates the cold-start white/black flicker that occurs
- * when Android has to resolve the URI and start the main process from scratch.
+ * Пишет задачу напрямую в SQLite-базу expo-sqlite.
+ * После сохранения (или отмены) Activity завершается, приложение не открывается.
  *
- * Attributes set in AndroidManifest:
- *   theme="@android:style/Theme.Translucent.NoTitleBar"
+ * Атрибуты в AndroidManifest:
+ *   theme="@android:style/Theme.Dialog"
  *   noHistory="true"
  *   excludeFromRecents="true"
  */
@@ -22,14 +28,73 @@ class QuickTaskActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Forward to the main app via deep link so Expo Router can handle routing
-        val deepLinkIntent = Intent(Intent.ACTION_VIEW).apply {
-            data = Uri.parse("eisenhower://quick-task")
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
-                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
-                    Intent.FLAG_ACTIVITY_SINGLE_TOP
+        // EditText для ввода названия задачи
+        val input = EditText(this).apply {
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+            hint = "Название задачи"
+            setSingleLine(false)
+            maxLines = 3
         }
-        startActivity(deepLinkIntent)
-        finish()
+
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            val pad = (16 * resources.displayMetrics.density).toInt()
+            setPadding(pad, pad / 2, pad, 0)
+            addView(input)
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle("Быстрая задача")
+            .setView(container)
+            .setPositiveButton("Добавить") { _, _ ->
+                val title = input.text.toString().trim()
+                if (title.isNotEmpty()) {
+                    saveTask(title)
+                    Toast.makeText(this, "Задача добавлена", Toast.LENGTH_SHORT).show()
+                }
+                finish()
+            }
+            .setNegativeButton("Отмена") { _, _ ->
+                finish()
+            }
+            .setOnCancelListener {
+                finish()
+            }
+            .show()
+    }
+
+    /**
+     * Сохраняет задачу напрямую в SQLite-базу, которую использует expo-sqlite.
+     * Имя файла БД совпадает с тем, что передаётся в SQLite.openDatabaseSync() в JS.
+     */
+    private fun saveTask(title: String) {
+        // expo-sqlite хранит БД в filesDir/SQLite/<dbName>
+        val dbPath = "${filesDir.parent}/databases/SQLite/tasks.db"
+        try {
+            val db = SQLiteDatabase.openOrCreateDatabase(dbPath, null)
+            val now = System.currentTimeMillis()
+            val id = UUID.randomUUID().toString()
+
+            val values = ContentValues().apply {
+                put("id", id)
+                put("title", title)
+                put("description", "")
+                put("importance", 4)      // низкая важность по умолчанию
+                put("urgency", 4)         // низкая срочность по умолчанию
+                put("status", "not_started")
+                put("quadrant", "Q4")
+                put("priorityScore", 0)
+                put("sortOrder", 0)
+                put("createdAt", now)
+                put("updatedAt", now)
+            }
+
+            db.insertOrThrow("tasks", null, values)
+            db.close()
+        } catch (e: Exception) {
+            // Если БД ещё не существует или путь неверный — тихо игнорируем;
+            // пользователь увидит задачу после первого открытия приложения
+            e.printStackTrace()
+        }
     }
 }
