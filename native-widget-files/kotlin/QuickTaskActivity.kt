@@ -15,7 +15,7 @@ import java.util.UUID
  * QuickTaskActivity — показывает нативный диалог добавления задачи
  * прямо поверх рабочего стола, без запуска основного приложения.
  *
- * Пишет задачу напрямую в SQLite-базу expo-sqlite.
+ * Пишет задачу напрямую в SQLite-базу expo-sqlite (eisenhower_v2.db).
  * После сохранения (или отмены) Activity завершается, приложение не открывается.
  *
  * Атрибуты в AndroidManifest:
@@ -25,10 +25,11 @@ import java.util.UUID
  */
 class QuickTaskActivity : Activity() {
 
+    private val DB_NAME = "eisenhower_v2.db"
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // EditText для ввода названия задачи
         val input = EditText(this).apply {
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
             hint = "Название задачи"
@@ -64,12 +65,11 @@ class QuickTaskActivity : Activity() {
     }
 
     /**
-     * Сохраняет задачу напрямую в SQLite-базу, которую использует expo-sqlite.
-     * Имя файла БД совпадает с тем, что передаётся в SQLite.openDatabaseSync() в JS.
+     * Сохраняет задачу напрямую в SQLite-базу expo-sqlite.
+     * Используем getDatabasePath() — это стандартный путь Android для хранения БД.
      */
     private fun saveTask(title: String) {
-        // expo-sqlite хранит БД в filesDir/SQLite/<dbName>
-        val dbPath = "${filesDir.parent}/databases/SQLite/tasks.db"
+        val dbPath = getDatabasePath(DB_NAME).absolutePath
         try {
             val db = SQLiteDatabase.openOrCreateDatabase(dbPath, null)
             val now = System.currentTimeMillis()
@@ -79,8 +79,8 @@ class QuickTaskActivity : Activity() {
                 put("id", id)
                 put("title", title)
                 put("description", "")
-                put("importance", 4)      // низкая важность по умолчанию
-                put("urgency", 4)         // низкая срочность по умолчанию
+                put("importance", 4)
+                put("urgency", 4)
                 put("status", "not_started")
                 put("quadrant", "Q4")
                 put("priorityScore", 0)
@@ -92,8 +92,6 @@ class QuickTaskActivity : Activity() {
             db.insertOrThrow("tasks", null, values)
             db.close()
         } catch (e: Exception) {
-            // Если БД ещё не существует или путь неверный — тихо игнорируем;
-            // пользователь увидит задачу после первого открытия приложения
             e.printStackTrace()
         }
     }
