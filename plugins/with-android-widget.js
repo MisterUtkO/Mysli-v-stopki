@@ -10,18 +10,15 @@ const withAndroidWidget = (config) => {
   config = withAndroidManifest(config, (config) => {
     const manifest = config.modResults.manifest;
     const application = manifest.application?.[0];
-
     if (!application) return config;
 
+    // Add QuickTaskWidget receiver if not exists
     if (!application.receiver) {
       application.receiver = [];
     }
-
-    // Check if receiver already added
     const alreadyAdded = application.receiver.some(
       (r) => r.$?.["android:name"] === ".widget.QuickTaskWidget"
     );
-
     if (!alreadyAdded) {
       application.receiver.push({
         $: {
@@ -32,9 +29,7 @@ const withAndroidWidget = (config) => {
           {
             action: [
               {
-                $: {
-                  "android:name": "android.appwidget.action.APPWIDGET_UPDATE",
-                },
+                $: { "android:name": "android.appwidget.action.APPWIDGET_UPDATE" },
               },
             ],
           },
@@ -51,20 +46,18 @@ const withAndroidWidget = (config) => {
       console.log("[with-android-widget] Added QuickTaskWidget receiver to manifest");
     }
 
-    // Add QuickTaskActivity (transparent trampoline, fixes cold-start flicker)
+    // Add QuickTaskActivity (native dialog, no main app launch)
     if (!application.activity) {
       application.activity = [];
     }
-
     const activityAlreadyAdded = application.activity.some(
       (a) => a.$?.["android:name"] === ".widget.QuickTaskActivity"
     );
-
     if (!activityAlreadyAdded) {
       application.activity.push({
         $: {
           "android:name": ".widget.QuickTaskActivity",
-          "android:theme": "@android:style/Theme.Translucent.NoTitleBar",
+          "android:theme": "@android:style/Theme.Dialog",
           "android:exported": "false",
           "android:noHistory": "true",
           "android:excludeFromRecents": "true",
@@ -72,7 +65,6 @@ const withAndroidWidget = (config) => {
       });
       console.log("[with-android-widget] Added QuickTaskActivity to manifest");
     }
-
     return config;
   });
 
@@ -81,10 +73,7 @@ const withAndroidWidget = (config) => {
     "android",
     (config) => {
       const projectRoot = config.modRequest.projectRoot;
-      const androidResDir = path.join(
-        projectRoot,
-        "android/app/src/main/res"
-      );
+      const androidResDir = path.join(projectRoot, "android/app/src/main/res");
       const androidJavaDir = path.join(
         projectRoot,
         "android/app/src/main/java/space/manus/eisenhower/priority/app/xt20260205144419/widget"
@@ -109,10 +98,7 @@ const withAndroidWidget = (config) => {
         },
         {
           src: "res/drawable/widget_button_background.xml",
-          dest: path.join(
-            androidResDir,
-            "drawable/widget_button_background.xml"
-          ),
+          dest: path.join(androidResDir, "drawable/widget_button_background.xml"),
         },
         {
           src: "QuickTaskWidget.kt",
@@ -133,7 +119,6 @@ const withAndroidWidget = (config) => {
           console.warn(`[with-android-widget] Source not found: ${srcPath}`);
         }
       }
-
       return config;
     },
   ]);
