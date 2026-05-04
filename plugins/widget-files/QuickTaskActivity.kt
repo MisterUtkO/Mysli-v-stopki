@@ -1,35 +1,100 @@
 package space.manus.eisenhower.priority.app.t20260205144419.widget
 
 import android.app.Activity
-import android.content.Intent
-import android.net.Uri
+import android.app.AlertDialog
+import android.content.ContentValues
+import android.database.sqlite.SQLiteDatabase
 import android.os.Bundle
+import android.view.Gravity
+import android.view.WindowManager
+import android.widget.*
+import java.util.UUID
 
 /**
- * Transparent trampoline Activity launched by the home screen widget.
+ * Native dialog Activity launched by the home screen widget.
+ * Shows a simple input dialog, saves the task directly to SQLite,
+ * then finishes without ever showing the main Expo/RN app.
  *
- * Using a real Activity as the PendingIntent target instead of a deep-link
- * ACTION_VIEW intent eliminates the cold-start white/black flicker that occurs
- * when Android has to resolve the URI and start the main process from scratch.
- *
- * Attributes set in AndroidManifest:
- *   theme="@android:style/Theme.Translucent.NoTitleBar"
- *   noHistory="true"
- *   excludeFromRecents="true"
+ * Theme in AndroidManifest: Theme.Dialog (or Theme.Translucent.NoTitleBar)
+ * noHistory="true", excludeFromRecents="true"
  */
 class QuickTaskActivity : Activity() {
+
+    private val DB_NAME = "eisenhower_v2.db"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Forward to the main app via deep link so Expo Router can handle routing
-        val deepLinkIntent = Intent(Intent.ACTION_VIEW).apply {
-            data = Uri.parse("eisenhower://quick-task")
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
-                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
-                    Intent.FLAG_ACTIVITY_SINGLE_TOP
+        // Make window float as dialog
+        window.setGravity(Gravity.CENTER)
+        window.setLayout(
+            WindowManager.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.WRAP_CONTENT
+        )
+
+        showQuickTaskDialog()
+    }
+
+    private fun showQuickTaskDialog() {
+        val input = EditText(this).apply {
+            hint = "Описание задачи"
+            setPadding(48, 24, 48, 24)
+            minLines = 2
+            maxLines = 5
         }
-        startActivity(deepLinkIntent)
-        finish()
+
+        AlertDialog.Builder(this)
+            .setTitle("Быстрая задача")
+            .setView(input)
+            .setPositiveButton("Добавить") { _, _ ->
+                val text = input.text.toString().trim()
+                if (text.isNotEmpty()) {
+                    saveTask(text)
+                    Toast.makeText(this, "Задача добавлена", Toast.LENGTH_SHORT).show()
+                }
+                finish()
+            }
+            .setNegativeButton("Отмена") { _, _ ->
+                finish()
+            }
+            .setOnCancelListener {
+                finish()
+            }
+            .show()
+    }
+
+    private fun saveTask(description: String) {
+        try {
+            // expo-sqlite stores DB in app's standard database dir
+            val dbPath = getDatabasePath(DB_NAME).absolutePath
+            val db = SQLiteDatabase.openDatabase(
+                dbPath,
+                null,
+                SQLiteDatabase.OPEN_READWRITE
+            )
+
+            val now = System.currentTimeMillis()
+            val id = "task_${now}_${(Math.random() * 1000000).toLong()}"
+
+            // Default values: importance=4, urgency=4 -> Q1 borderline
+            // priorityScore = ((3/6 + 3/6) / 2) * 100 = 50
+            val values = ContentValues().apply {
+                put("id", id)
+                put("title", description.take(50))
+                put("description", description)
+                put("importance", 4)
+                put("urgency", 4)
+                put("status", "not_started")
+                put("quadrant", "Q1")
+                put("priorityScore", 50)
+                put("createdAt", now)
+                put("updatedAt", now)
+            }
+
+            db.insert("tasks", null, values)
+            db.close()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 }
