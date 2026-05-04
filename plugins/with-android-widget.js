@@ -6,7 +6,7 @@ const fs = require("fs");
 const path = require("path");
 
 const withAndroidWidget = (config) => {
-  // Step 1: Add <receiver> to AndroidManifest.xml
+  // Step 1: Add <receiver> and <activity> to AndroidManifest.xml
   config = withAndroidManifest(config, (config) => {
     const manifest = config.modResults.manifest;
     const application = manifest.application?.[0];
@@ -49,6 +49,28 @@ const withAndroidWidget = (config) => {
         ],
       });
       console.log("[with-android-widget] Added QuickTaskWidget receiver to manifest");
+    }
+
+    // Add QuickTaskActivity (transparent trampoline, fixes cold-start flicker)
+    if (!application.activity) {
+      application.activity = [];
+    }
+
+    const activityAlreadyAdded = application.activity.some(
+      (a) => a.$?.["android:name"] === ".widget.QuickTaskActivity"
+    );
+
+    if (!activityAlreadyAdded) {
+      application.activity.push({
+        $: {
+          "android:name": ".widget.QuickTaskActivity",
+          "android:theme": "@android:style/Theme.Translucent.NoTitleBar",
+          "android:exported": "false",
+          "android:noHistory": "true",
+          "android:excludeFromRecents": "true",
+        },
+      });
+      console.log("[with-android-widget] Added QuickTaskActivity to manifest");
     }
 
     return config;
@@ -95,6 +117,10 @@ const withAndroidWidget = (config) => {
         {
           src: "QuickTaskWidget.kt",
           dest: path.join(androidJavaDir, "QuickTaskWidget.kt"),
+        },
+        {
+          src: "QuickTaskActivity.kt",
+          dest: path.join(androidJavaDir, "QuickTaskActivity.kt"),
         },
       ];
 
