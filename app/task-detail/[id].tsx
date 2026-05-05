@@ -7,7 +7,7 @@ import {
   Alert,
   Image,
 } from "react-native";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import Slider from "@react-native-community/slider";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -18,8 +18,15 @@ import { useTaskContext } from "@/lib/context/task-context";
 import { useI18n } from "@/lib/context/i18n-context";
 import { EmojiPicker } from "@/components/modals/emoji-picker";
 import { FilePreviewModal } from "@/components/modals/file-preview-modal";
-import { determineQuadrant, calculatePriorityScore } from "@/lib/domain/scoring";
-import type { Task, NotificationFrequency, TaskAttachment } from "@/lib/domain/types";
+import {
+  determineQuadrant,
+  calculatePriorityScore,
+} from "@/lib/domain/scoring";
+import type {
+  Task,
+  NotificationFrequency,
+  TaskAttachment,
+} from "@/lib/domain/types";
 
 const QUADRANT_LABELS: Record<string, { en: string; ru: string; color: string }> = {
   Q1: { en: "Do Now", ru: "Сделать сейчас", color: "#FF6B6B" },
@@ -38,6 +45,51 @@ const NOTIF_OPTIONS: { value: NotificationFrequency; en: string; ru: string }[] 
   { value: "weekly", en: "Weekly", ru: "Еженедельно" },
 ];
 
+// Helpers for slider labels
+function getImportanceLabel(value: number, isRu: boolean): string {
+  if (value <= 3) return isRu ? "Низкая" : "Low";
+  if (value <= 6) return isRu ? "Средняя" : "Medium";
+  if (value <= 9) return isRu ? "Высокая" : "High";
+  return isRu ? "Максимальная" : "Critical";
+}
+
+function getUrgencyLabel(value: number, isRu: boolean): string {
+  if (value <= 3) return isRu ? "Низкая" : "Low";
+  if (value <= 6) return isRu ? "Средняя" : "Medium";
+  if (value <= 9) return isRu ? "Высокая" : "High";
+  return isRu ? "Максимальная" : "Critical";
+}
+
+function getImportanceHint(value: number, isRu: boolean): string {
+  if (value <= 3)
+    return isRu
+      ? "Задача не критична для целей"
+      : "Not critical for your goals";
+  if (value <= 6)
+    return isRu ? "Важная, но не горит" : "Important but not burning";
+  if (value <= 9)
+    return isRu
+      ? "Важная задача, влияет на цели"
+      : "Important task, affects goals";
+  return isRu
+    ? "Критически важна для успеха"
+    : "Critical for success";
+}
+
+function getUrgencyHint(value: number, isRu: boolean): string {
+  if (value <= 3)
+    return isRu ? "Можно отложить" : "Can be postponed";
+  if (value <= 6)
+    return isRu ? "Желательно сделать скоро" : "Should be done soon";
+  if (value <= 9)
+    return isRu
+      ? "Нужно сделать в ближайшее время"
+      : "Needs to be done soon";
+  return isRu
+    ? "Срочно! Требует немедленных действий"
+    : "Urgent! Requires immediate action";
+}
+
 export default function TaskDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -52,15 +104,22 @@ export default function TaskDetailScreen() {
   const [emoji, setEmoji] = useState<string | undefined>();
   const [dueDate, setDueDate] = useState<Date | null>(null);
   const [dueTime, setDueTime] = useState<Date | null>(null);
-  const [notifFrequency, setNotifFrequency] = useState<NotificationFrequency>("global");
+  const [notifFrequency, setNotifFrequency] =
+    useState<NotificationFrequency>("global");
   const [attachments, setAttachments] = useState<TaskAttachment[]>([]);
+
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [loading, setLoading] = useState(false);
+
   const [showFilePreview, setShowFilePreview] = useState(false);
-  const [selectedAttachment, setSelectedAttachment] = useState<TaskAttachment | null>(null);
+  const [selectedAttachment, setSelectedAttachment] =
+    useState<TaskAttachment | null>(null);
+
+  // Auto-save after 1.5s of inactivity
+  const autoSaveTimer = useRef<NodeJS.Timeout | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -73,6 +132,7 @@ export default function TaskDetailScreen() {
         setEmoji(foundTask.emoji || undefined);
         setNotifFrequency(foundTask.notificationFrequency || "global");
         setAttachments(foundTask.attachments || []);
+
         if (foundTask.dueDate) {
           setDueDate(new Date(foundTask.dueDate));
         }
@@ -86,6 +146,67 @@ export default function TaskDetailScreen() {
     }
   }, [id, tasks]);
 
+  // Auto-save logic
+  const triggerAutoSave = () => {
+    if (autoSaveTimer.current) {
+      clearTimeout(autoSaveTimer.current);
+    }
+    setIsSaving(true);
+    autoSaveTimer.current = setTimeout(() => {
+      performAutoSave();
+    }, 1500);
+  };
+
+  const performAutoSave = async () => {
+    if (!task || !description.trim()) {
+      setIsSaving(false);
+      return;
+    }
+    try {
+      const title =
+        description.length > 50
+          ? description.substring(0, 50) + "..."
+          : description;
+      const dueDateStr = dueDate
+        ? dueDate.toISOString().split("T")[0]
+        : undefined;
+      const dueTimeStr = dueTime
+        ? dueTime.toTimeString().substring(0, 5)
+        : undefined;
+      const priorityScore = calculatePriorityScore(importance, urgency);
+      const quadrant = determineQuadrant(importance, urgency, {
+        importanceThreshold: settings.importanceThreshold,
+        urgencyThreshold: settings.urgencyThreshold,
+      });
+
+      await updateTask(task.id, {
+        title,
+        description,
+        importance,
+        urgency,
+        dueDate: dueDateStr,
+        dueTime: dueTimeStr,
+        emoji,
+        priorityScore,
+        quadrant,
+        notificationFrequency: notifFrequency,
+        attachments,
+      });
+      setIsSaving(false);
+    } catch (error) {
+      console.error("Auto-save failed:", error);
+      setIsSaving(false);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimer.current) {
+        clearTimeout(autoSaveTimer.current);
+      }
+    };
+  }, []);
+
   const currentQuadrant = determineQuadrant(importance, urgency, {
     importanceThreshold: settings.importanceThreshold,
     urgencyThreshold: settings.urgencyThreshold,
@@ -94,12 +215,18 @@ export default function TaskDetailScreen() {
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
     setShowDatePicker(false);
-    if (selectedDate) setDueDate(selectedDate);
+    if (selectedDate) {
+      setDueDate(selectedDate);
+      triggerAutoSave();
+    }
   };
 
   const handleTimeChange = (event: any, selectedTime?: Date) => {
     setShowTimePicker(false);
-    if (selectedTime) setDueTime(selectedTime);
+    if (selectedTime) {
+      setDueTime(selectedTime);
+      triggerAutoSave();
+    }
   };
 
   const formatDate = (date: Date): string => {
@@ -123,6 +250,7 @@ export default function TaskDetailScreen() {
         quality: 0.7,
         allowsMultipleSelection: true,
       });
+
       if (!result.canceled && result.assets) {
         const newAttachments: TaskAttachment[] = result.assets.map(
           (asset: { uri: string; fileName?: string | null }) => ({
@@ -132,6 +260,7 @@ export default function TaskDetailScreen() {
           })
         );
         setAttachments((prev) => [...prev, ...newAttachments]);
+        triggerAutoSave();
       }
     } catch (e) {
       console.log("Image picker error:", e);
@@ -140,7 +269,10 @@ export default function TaskDetailScreen() {
 
   const handlePickFile = async () => {
     try {
-      const result = await DocumentPicker.getDocumentAsync({ multiple: true });
+      const result = await DocumentPicker.getDocumentAsync({
+        multiple: true,
+      });
+
       if (!result.canceled && result.assets) {
         const newAttachments: TaskAttachment[] = result.assets.map(
           (asset: { uri: string; name?: string }) => ({
@@ -150,6 +282,7 @@ export default function TaskDetailScreen() {
           })
         );
         setAttachments((prev) => [...prev, ...newAttachments]);
+        triggerAutoSave();
       }
     } catch (e) {
       console.log("Document picker error:", e);
@@ -158,46 +291,7 @@ export default function TaskDetailScreen() {
 
   const removeAttachment = (index: number) => {
     setAttachments((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const handleSave = async () => {
-    if (!task) return;
-
-    setLoading(true);
-    try {
-      const title = description.length > 50 ? description.substring(0, 50) + "..." : description;
-      const dueDateStr = dueDate ? dueDate.toISOString().split("T")[0] : undefined;
-      const dueTimeStr = dueTime ? dueTime.toTimeString().substring(0, 5) : undefined;
-      const priorityScore = calculatePriorityScore(importance, urgency);
-      const quadrant = determineQuadrant(importance, urgency, {
-        importanceThreshold: settings.importanceThreshold,
-        urgencyThreshold: settings.urgencyThreshold,
-      });
-
-      await updateTask(task.id, {
-        title,
-        description,
-        importance,
-        urgency,
-        dueDate: dueDateStr,
-        dueTime: dueTimeStr,
-        emoji,
-        priorityScore,
-        quadrant,
-        notificationFrequency: notifFrequency,
-        attachments,
-      });
-
-      router.back();
-    } catch (error) {
-      console.error("Failed to update task:", error);
-      Alert.alert(
-        isRu ? "Ошибка" : "Error",
-        isRu ? "Не удалось сохранить задачу" : "Failed to save task"
-      );
-    } finally {
-      setLoading(false);
-    }
+    triggerAutoSave();
   };
 
   const handleDelete = () => {
@@ -211,9 +305,7 @@ export default function TaskDetailScreen() {
           text: isRu ? "Удалить" : "Delete",
           style: "destructive",
           onPress: async () => {
-            // Navigate back first, then delete to avoid stuck screen
             router.back();
-            // Small delay to let navigation complete before state update
             setTimeout(async () => {
               await deleteTask(task.id);
             }, 100);
@@ -225,294 +317,423 @@ export default function TaskDetailScreen() {
 
   if (!task) {
     return (
-      <ScreenContainer className="p-4 justify-center items-center">
-        <Text className="text-foreground" style={{ fontSize: 16 }}>
-          {isRu ? "Загрузка..." : "Loading..."}
-        </Text>
+      <ScreenContainer>
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+          <Text style={{ fontSize: 16, color: "#9CA3AF" }}>
+            {isRu ? "Загрузка..." : "Loading..."}
+          </Text>
+        </View>
       </ScreenContainer>
     );
   }
 
   return (
-    <ScreenContainer className="p-4">
-      <ScrollView
-        contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View className="gap-4">
-          {/* Header */}
-          <View className="flex-row items-center justify-between">
-            <Text className="text-foreground font-bold" style={{ fontSize: 24, lineHeight: 30 }}>
-              {isRu ? "Редактировать" : "Edit Task"}
-            </Text>
-            <View
+    <ScreenContainer>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16 }}>
+        {/* Header */}
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 16,
+          }}
+        >
+          <Text style={{ fontSize: 20, fontWeight: "600", color: "#1F2937" }}>
+            {isRu ? "Редактировать" : "Edit Task"}
+          </Text>
+          <View
+            style={{
+              paddingHorizontal: 10,
+              paddingVertical: 4,
+              borderRadius: 8,
+              backgroundColor: quadrantInfo.color + "20",
+            }}
+          >
+            <Text
               style={{
-                backgroundColor: quadrantInfo.color,
-                paddingHorizontal: 10,
-                paddingVertical: 4,
-                borderRadius: 10,
+                fontSize: 12,
+                fontWeight: "600",
+                color: quadrantInfo.color,
               }}
             >
-              <Text style={{ color: "#FFF", fontSize: 12, fontWeight: "700" }}>
-                {currentQuadrant}
-              </Text>
-            </View>
+              {currentQuadrant}
+            </Text>
           </View>
+        </View>
 
-          {/* Description */}
-          <TextInput
-            value={description}
-            onChangeText={setDescription}
-            placeholder={isRu ? "Описание задачи..." : "Task description..."}
-            placeholderTextColor="#999"
-            multiline
-            numberOfLines={3}
-            className="bg-surface border border-border rounded-2xl p-4 text-foreground"
-            style={{ fontSize: 16, lineHeight: 22, minHeight: 80, textAlignVertical: "top" }}
+        {/* Auto-save indicator */}
+        {isSaving && (
+          <View
+            style={{
+              paddingVertical: 6,
+              paddingHorizontal: 12,
+              backgroundColor: "#FEF3C7",
+              borderRadius: 8,
+              marginBottom: 12,
+            }}
+          >
+            <Text style={{ fontSize: 12, color: "#92400E" }}>
+              💾 {isRu ? "Сохранение..." : "Saving..."}
+            </Text>
+          </View>
+        )}
+
+        {/* Description */}
+        <TextInput
+          style={{
+            borderWidth: 1,
+            borderColor: "#E5E7EB",
+            borderRadius: 12,
+            padding: 12,
+            fontSize: 15,
+            minHeight: 100,
+            textAlignVertical: "top",
+            marginBottom: 16,
+          }}
+          placeholder={isRu ? "Описание задачи" : "Task description"}
+          placeholderTextColor="#9CA3AF"
+          value={description}
+          onChangeText={(text) => {
+            setDescription(text);
+            triggerAutoSave();
+          }}
+          multiline
+        />
+
+        {/* Quick emoji + date row */}
+        <View
+          style={{
+            flexDirection: "row",
+            gap: 8,
+            marginBottom: 20,
+            alignItems: "center",
+          }}
+        >
+          <Pressable
+            onPress={() => setShowEmojiPicker(true)}
+            style={({ pressed }) => [
+              {
+                width: 40,
+                height: 40,
+                borderRadius: 12,
+                borderWidth: 1,
+                borderColor: emoji ? "#0a7ea4" : "#E5E7EB",
+                backgroundColor: emoji ? "#0a7ea410" : "transparent",
+                alignItems: "center",
+                justifyContent: "center",
+                opacity: pressed ? 0.7 : 1,
+              },
+            ]}
+          >
+            <Text style={{ fontSize: 20 }}>{emoji || "😀"}</Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => setShowDatePicker(true)}
+            style={({ pressed }) => [
+              {
+                paddingHorizontal: 12,
+                paddingVertical: 8,
+                borderRadius: 12,
+                borderWidth: 1,
+                borderColor: dueDate ? "#0a7ea4" : "#E5E7EB",
+                backgroundColor: dueDate ? "#0a7ea410" : "transparent",
+                opacity: pressed ? 0.7 : 1,
+              },
+            ]}
+          >
+            <Text style={{ fontSize: 13, color: "#1F2937" }}>
+              📅 {dueDate ? formatDate(dueDate) : isRu ? "Дата" : "Date"}
+            </Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => setShowTimePicker(true)}
+            style={({ pressed }) => [
+              {
+                paddingHorizontal: 12,
+                paddingVertical: 8,
+                borderRadius: 12,
+                borderWidth: 1,
+                borderColor: dueTime ? "#0a7ea4" : "#E5E7EB",
+                backgroundColor: dueTime ? "#0a7ea410" : "transparent",
+                opacity: pressed ? 0.7 : 1,
+              },
+            ]}
+          >
+            <Text style={{ fontSize: 13, color: "#1F2937" }}>
+              ⏰ {dueTime ? formatTime(dueTime) : isRu ? "Время" : "Time"}
+            </Text>
+          </Pressable>
+
+          {(dueDate || dueTime) && (
+            <Pressable
+              onPress={() => {
+                setDueDate(null);
+                setDueTime(null);
+                triggerAutoSave();
+              }}
+              style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1 }]}
+            >
+              <Text style={{ fontSize: 16, color: "#EF4444" }}>✕</Text>
+            </Pressable>
+          )}
+        </View>
+
+        {/* Importance slider */}
+        <View style={{ marginBottom: 20 }}>
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 8,
+            }}
+          >
+            <Text style={{ fontSize: 15, fontWeight: "500", color: "#1F2937" }}>
+              🔥 {isRu ? "Важность" : "Importance"}
+            </Text>
+            <Text style={{ fontSize: 13, fontWeight: "600", color: "#0a7ea4" }}>
+              {getImportanceLabel(importance, isRu)}
+            </Text>
+          </View>
+          <Slider
+            style={{ width: "100%", height: 40 }}
+            minimumValue={1}
+            maximumValue={10}
+            step={1}
+            value={importance}
+            onValueChange={(val) => {
+              setImportance(val);
+              triggerAutoSave();
+            }}
+            minimumTrackTintColor="#0a7ea4"
+            maximumTrackTintColor="#E5E7EB"
+            thumbTintColor="#0a7ea4"
           />
+          <Text
+            style={{
+              fontSize: 12,
+              color: "#6B7280",
+              fontStyle: "italic",
+              marginTop: 4,
+            }}
+          >
+            {getImportanceHint(importance, isRu)}
+          </Text>
+        </View>
 
-          {/* Quick emoji + date row */}
-          <View className="flex-row items-center gap-2">
+        {/* Urgency slider */}
+        <View style={{ marginBottom: 20 }}>
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 8,
+            }}
+          >
+            <Text style={{ fontSize: 15, fontWeight: "500", color: "#1F2937" }}>
+              ⚡ {isRu ? "Срочность" : "Urgency"}
+            </Text>
+            <Text style={{ fontSize: 13, fontWeight: "600", color: "#0a7ea4" }}>
+              {getUrgencyLabel(urgency, isRu)}
+            </Text>
+          </View>
+          <Slider
+            style={{ width: "100%", height: 40 }}
+            minimumValue={1}
+            maximumValue={10}
+            step={1}
+            value={urgency}
+            onValueChange={(val) => {
+              setUrgency(val);
+              triggerAutoSave();
+            }}
+            minimumTrackTintColor="#0a7ea4"
+            maximumTrackTintColor="#E5E7EB"
+            thumbTintColor="#0a7ea4"
+          />
+          <Text
+            style={{
+              fontSize: 12,
+              color: "#6B7280",
+              fontStyle: "italic",
+              marginTop: 4,
+            }}
+          >
+            {getUrgencyHint(urgency, isRu)}
+          </Text>
+        </View>
+
+        {/* File attachments */}
+        <View style={{ marginBottom: 20 }}>
+          <Text
+            style={{
+              fontSize: 15,
+              fontWeight: "500",
+              color: "#1F2937",
+              marginBottom: 8,
+            }}
+          >
+            📎 {isRu ? "Вложения" : "Attachments"}
+          </Text>
+          <View style={{ flexDirection: "row", gap: 8, marginBottom: 12 }}>
             <Pressable
-              onPress={() => setShowEmojiPicker(true)}
+              onPress={handlePickImage}
               style={({ pressed }) => [
                 {
-                  width: 40,
-                  height: 40,
-                  borderRadius: 12,
-                  borderWidth: 1,
-                  borderColor: emoji ? "#0a7ea4" : "#E5E7EB",
-                  backgroundColor: emoji ? "#0a7ea410" : "transparent",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  paddingHorizontal: 10,
+                  paddingVertical: 4,
+                  borderRadius: 10,
+                  backgroundColor: "#0a7ea420",
                   opacity: pressed ? 0.7 : 1,
                 },
               ]}
             >
-              <Text style={{ fontSize: 22 }}>{emoji || "😀"}</Text>
+              <Text style={{ fontSize: 13, color: "#0a7ea4" }}>
+                🖼 {isRu ? "Фото" : "Photo"}
+              </Text>
             </Pressable>
-
             <Pressable
-              onPress={() => setShowDatePicker(true)}
+              onPress={handlePickFile}
               style={({ pressed }) => [
                 {
-                  paddingHorizontal: 12,
-                  paddingVertical: 8,
-                  borderRadius: 12,
-                  borderWidth: 1,
-                  borderColor: dueDate ? "#0a7ea4" : "#E5E7EB",
-                  backgroundColor: dueDate ? "#0a7ea410" : "transparent",
+                  paddingHorizontal: 10,
+                  paddingVertical: 4,
+                  borderRadius: 10,
+                  backgroundColor: "#0a7ea420",
                   opacity: pressed ? 0.7 : 1,
                 },
               ]}
             >
-              <Text style={{ fontSize: 13, color: dueDate ? "#0a7ea4" : "#999" }}>
-                📅 {dueDate ? formatDate(dueDate) : isRu ? "Дата" : "Date"}
+              <Text style={{ fontSize: 13, color: "#0a7ea4" }}>
+                📄 {isRu ? "Файл" : "File"}
               </Text>
             </Pressable>
-
-            <Pressable
-              onPress={() => setShowTimePicker(true)}
-              style={({ pressed }) => [
-                {
-                  paddingHorizontal: 12,
-                  paddingVertical: 8,
-                  borderRadius: 12,
-                  borderWidth: 1,
-                  borderColor: dueTime ? "#0a7ea4" : "#E5E7EB",
-                  backgroundColor: dueTime ? "#0a7ea410" : "transparent",
-                  opacity: pressed ? 0.7 : 1,
-                },
-              ]}
-            >
-              <Text style={{ fontSize: 13, color: dueTime ? "#0a7ea4" : "#999" }}>
-                ⏰ {dueTime ? formatTime(dueTime) : isRu ? "Время" : "Time"}
-              </Text>
-            </Pressable>
-
-            {(dueDate || dueTime) && (
-              <Pressable
-                onPress={() => { setDueDate(null); setDueTime(null); }}
-                style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1 }]}
-              >
-                <Text style={{ color: "#EF4444", fontSize: 16 }}>✕</Text>
-              </Pressable>
-            )}
           </View>
 
-          {/* Importance slider */}
-          <View>
-            <View className="flex-row justify-between mb-1">
-              <Text className="text-foreground font-semibold" style={{ fontSize: 14 }}>
-                🔥 {isRu ? "Важность" : "Importance"}
-              </Text>
-              <Text style={{ fontSize: 16, fontWeight: "800", color: "#FF6B6B" }}>
-                {importance}/7
-              </Text>
-            </View>
-            <Slider
-              style={{ height: 36 }}
-              minimumValue={1}
-              maximumValue={7}
-              step={1}
-              value={importance}
-              onValueChange={setImportance}
-              minimumTrackTintColor="#FF6B6B"
-              maximumTrackTintColor="#E5E7EB"
-              thumbTintColor="#FF6B6B"
-            />
-          </View>
-
-          {/* Urgency slider */}
-          <View>
-            <View className="flex-row justify-between mb-1">
-              <Text className="text-foreground font-semibold" style={{ fontSize: 14 }}>
-                ⚡ {isRu ? "Срочность" : "Urgency"}
-              </Text>
-              <Text style={{ fontSize: 16, fontWeight: "800", color: "#FFA94D" }}>
-                {urgency}/7
-              </Text>
-            </View>
-            <Slider
-              style={{ height: 36 }}
-              minimumValue={1}
-              maximumValue={7}
-              step={1}
-              value={urgency}
-              onValueChange={setUrgency}
-              minimumTrackTintColor="#FFA94D"
-              maximumTrackTintColor="#E5E7EB"
-              thumbTintColor="#FFA94D"
-            />
-          </View>
-
-          {/* File attachments */}
-          <View>
-            <View className="flex-row items-center gap-2 mb-2">
-              <Text className="text-foreground font-semibold" style={{ fontSize: 14 }}>
-                📎 {isRu ? "Вложения" : "Attachments"}
-              </Text>
-              <Pressable
-                onPress={handlePickImage}
-                style={({ pressed }) => [
-                  {
-                    paddingHorizontal: 10,
-                    paddingVertical: 4,
-                    borderRadius: 10,
-                    backgroundColor: "#0a7ea420",
-                    opacity: pressed ? 0.7 : 1,
-                  },
-                ]}
-              >
-                <Text style={{ fontSize: 12, color: "#0a7ea4", fontWeight: "600" }}>
-                  🖼 {isRu ? "Фото" : "Photo"}
-                </Text>
-              </Pressable>
-              <Pressable
-                onPress={handlePickFile}
-                style={({ pressed }) => [
-                  {
-                    paddingHorizontal: 10,
-                    paddingVertical: 4,
-                    borderRadius: 10,
-                    backgroundColor: "#0a7ea420",
-                    opacity: pressed ? 0.7 : 1,
-                  },
-                ]}
-              >
-                <Text style={{ fontSize: 12, color: "#0a7ea4", fontWeight: "600" }}>
-                  📄 {isRu ? "Файл" : "File"}
-                </Text>
-              </Pressable>
-            </View>
-
-            {attachments.length > 0 && (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-                {attachments.map((att: TaskAttachment, idx: number) => (
-                  <Pressable
-                    key={idx}
-                    onPress={() => {
-                      setSelectedAttachment(att);
-                      setShowFilePreview(true);
-                    }}
-                    style={{ position: "relative" }}
-                  >
+          {attachments.length > 0 && (
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+              {attachments.map((att: TaskAttachment, idx: number) => (
+                <Pressable
+                  key={idx}
+                  onPress={() => {
+                    setSelectedAttachment(att);
+                    setShowFilePreview(true);
+                  }}
+                  style={{ position: "relative" }}
+                >
+                  {att.type === "image" ? (
+                    <Image
+                      source={{ uri: att.uri }}
+                      style={{
+                        width: 60,
+                        height: 60,
+                        borderRadius: 8,
+                        backgroundColor: "#F3F4F6",
+                      }}
+                    />
+                  ) : (
                     <View
                       style={{
                         width: 60,
                         height: 60,
-                        borderRadius: 10,
-                        backgroundColor: "rgba(128,128,128,0.15)",
-                        overflow: "hidden",
-                        alignItems: "center",
+                        borderRadius: 8,
+                        backgroundColor: "#E5E7EB",
                         justifyContent: "center",
+                        alignItems: "center",
                       }}
                     >
-                      {att.type === "image" ? (
-                        <Image source={{ uri: att.uri }} style={{ width: 60, height: 60 }} resizeMode="cover" />
-                      ) : (
-                        <View style={{ alignItems: "center" }}>
-                          <Text style={{ fontSize: 24 }}>📄</Text>
-                          <Text style={{ fontSize: 8, color: "#999" }} numberOfLines={1}>{att.name}</Text>
-                        </View>
-                      )}
+                      <Text style={{ fontSize: 20 }}>📄</Text>
+                      <Text
+                        style={{
+                          fontSize: 8,
+                          color: "#6B7280",
+                          marginTop: 2,
+                          textAlign: "center",
+                        }}
+                        numberOfLines={1}
+                      >
+                        {att.name}
+                      </Text>
                     </View>
-                    <Pressable
-                      onPress={() => removeAttachment(idx)}
-                      style={({ pressed }) => [
-                        {
-                          position: "absolute",
-                          top: -4,
-                          right: -4,
-                          width: 18,
-                          height: 18,
-                          borderRadius: 9,
-                          backgroundColor: "#EF4444",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          opacity: pressed ? 0.7 : 1,
-                        },
-                      ]}
-                    >
-                      <Text style={{ color: "#FFF", fontSize: 10, fontWeight: "700" }}>✕</Text>
-                    </Pressable>
+                  )}
+                  <Pressable
+                    onPress={() => removeAttachment(idx)}
+                    style={({ pressed }) => [
+                      {
+                        position: "absolute",
+                        top: -4,
+                        right: -4,
+                        width: 18,
+                        height: 18,
+                        borderRadius: 9,
+                        backgroundColor: "#EF4444",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        opacity: pressed ? 0.7 : 1,
+                      },
+                    ]}
+                  >
+                    <Text style={{ fontSize: 10, color: "#FFFFFF" }}>✕</Text>
                   </Pressable>
-                ))}
-              </ScrollView>
-            )}
-          </View>
+                </Pressable>
+              ))}
+            </View>
+          )}
+        </View>
 
-          {/* Advanced: per-task notification frequency */}
+        {/* Advanced: per-task notification frequency */}
+        <View style={{ marginBottom: 20 }}>
           <Pressable
             onPress={() => setShowAdvanced(!showAdvanced)}
             style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1, paddingVertical: 4 }]}
           >
-            <Text style={{ fontSize: 13, color: "#0a7ea4", fontWeight: "600" }}>
+            <Text style={{ fontSize: 14, color: "#6B7280" }}>
               {showAdvanced
-                ? isRu ? "▲ Скрыть доп. настройки" : "▲ Hide advanced"
-                : isRu ? "▼ Доп. настройки (уведомления)" : "▼ Advanced (notifications)"}
+                ? isRu
+                  ? "▲ Скрыть доп. настройки"
+                  : "▲ Hide advanced"
+                : isRu
+                ? "▼ Доп. настройки (уведомления)"
+                : "▼ Advanced (notifications)"}
             </Text>
           </Pressable>
 
           {showAdvanced && (
-            <View className="bg-surface rounded-2xl p-3 border border-border">
-              <Text className="text-foreground font-semibold" style={{ fontSize: 13, marginBottom: 8 }}>
+            <View style={{ marginTop: 12 }}>
+              <Text
+                style={{
+                  fontSize: 14,
+                  fontWeight: "500",
+                  color: "#1F2937",
+                  marginBottom: 8,
+                }}
+              >
                 🔔 {isRu ? "Частота уведомлений" : "Notification frequency"}
               </Text>
-              <View className="flex-row flex-wrap gap-2">
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
                 {NOTIF_OPTIONS.map((opt) => (
                   <Pressable
                     key={opt.value}
-                    onPress={() => setNotifFrequency(opt.value)}
+                    onPress={() => {
+                      setNotifFrequency(opt.value);
+                      triggerAutoSave();
+                    }}
                     style={({ pressed }) => [
                       {
                         paddingHorizontal: 10,
                         paddingVertical: 6,
                         borderRadius: 10,
                         borderWidth: 1.5,
-                        borderColor: notifFrequency === opt.value ? "#0a7ea4" : "#E5E7EB",
-                        backgroundColor: notifFrequency === opt.value ? "#0a7ea420" : "transparent",
+                        borderColor:
+                          notifFrequency === opt.value ? "#0a7ea4" : "#E5E7EB",
+                        backgroundColor:
+                          notifFrequency === opt.value
+                            ? "#0a7ea420"
+                            : "transparent",
                         opacity: pressed ? 0.7 : 1,
                       },
                     ]}
@@ -520,8 +741,8 @@ export default function TaskDetailScreen() {
                     <Text
                       style={{
                         fontSize: 12,
-                        fontWeight: notifFrequency === opt.value ? "700" : "500",
-                        color: notifFrequency === opt.value ? "#0a7ea4" : "#9CA3AF",
+                        color:
+                          notifFrequency === opt.value ? "#0a7ea4" : "#6B7280",
                       }}
                     >
                       {isRu ? opt.ru : opt.en}
@@ -531,97 +752,103 @@ export default function TaskDetailScreen() {
               </View>
             </View>
           )}
+        </View>
 
-          {showDatePicker && (
-            <DateTimePicker
-              value={dueDate || new Date()}
-              mode="date"
-              display="default"
-              onChange={handleDateChange}
-            />
-          )}
-
-          {showTimePicker && (
-            <DateTimePicker
-              value={dueTime || new Date()}
-              mode="time"
-              display="default"
-              onChange={handleTimeChange}
-            />
-          )}
-
-          <EmojiPicker
-            visible={showEmojiPicker}
-            onSelect={setEmoji}
-            onClose={() => setShowEmojiPicker(false)}
-            selectedEmoji={emoji}
+        {showDatePicker && (
+          <DateTimePicker
+            value={dueDate || new Date()}
+            mode="date"
+            display="default"
+            onChange={handleDateChange}
           />
+        )}
 
-          {/* Action buttons */}
-          <View className="flex-row gap-3 mt-1">
-            <Pressable
-              onPress={() => router.back()}
-              style={({ pressed }) => [
-                {
-                  flex: 1,
-                  padding: 14,
-                  borderRadius: 16,
-                  borderWidth: 1,
-                  borderColor: "#E5E7EB",
-                  opacity: pressed ? 0.7 : 1,
-                },
-              ]}
-            >
-              <Text className="text-foreground" style={{ textAlign: "center", fontWeight: "600", fontSize: 16 }}>
-                {isRu ? "Отмена" : "Cancel"}
-              </Text>
-            </Pressable>
+        {showTimePicker && (
+          <DateTimePicker
+            value={dueTime || new Date()}
+            mode="time"
+            display="default"
+            onChange={handleTimeChange}
+          />
+        )}
 
-            <Pressable
-              onPress={handleSave}
-              disabled={!description.trim() || loading}
-              style={({ pressed }) => [
-                {
-                  flex: 1,
-                  padding: 14,
-                  borderRadius: 16,
-                  backgroundColor: !description.trim() || loading ? "#9CA3AF" : "#0a7ea4",
-                  opacity: pressed ? 0.8 : 1,
-                  transform: [{ scale: pressed ? 0.98 : 1 }],
-                },
-              ]}
-            >
-              <Text style={{ textAlign: "center", color: "#FFFFFF", fontWeight: "700", fontSize: 16 }}>
-                {loading ? (isRu ? "Сохранение..." : "Saving...") : isRu ? "Сохранить" : "Save"}
-              </Text>
-            </Pressable>
-          </View>
+        <EmojiPicker
+          visible={showEmojiPicker}
+          onClose={() => setShowEmojiPicker(false)}
+          onSelect={(selected) => {
+            setEmoji(selected);
+            setShowEmojiPicker(false);
+            triggerAutoSave();
+          }}
+          selectedEmoji={emoji}
+        />
 
-          {/* Delete button */}
+        {/* Action buttons */}
+        <View
+          style={{
+            flexDirection: "row",
+            gap: 12,
+            marginTop: 12,
+            marginBottom: 16,
+          }}
+        >
           <Pressable
-            onPress={handleDelete}
+            onPress={() => router.back()}
             style={({ pressed }) => [
               {
+                flex: 1,
                 padding: 14,
                 borderRadius: 16,
-                backgroundColor: "#EF444420",
+                borderWidth: 1,
+                borderColor: "#E5E7EB",
                 opacity: pressed ? 0.7 : 1,
               },
             ]}
           >
-            <Text style={{ textAlign: "center", color: "#EF4444", fontWeight: "600", fontSize: 16 }}>
-              🗑 {isRu ? "Удалить задачу" : "Delete task"}
+            <Text
+              style={{
+                textAlign: "center",
+                fontSize: 15,
+                fontWeight: "600",
+                color: "#6B7280",
+              }}
+            >
+              {isRu ? "Назад" : "Back"}
             </Text>
           </Pressable>
         </View>
-      </ScrollView>
 
-      {/* File Preview Modal */}
-      <FilePreviewModal
-        visible={showFilePreview}
-        attachment={selectedAttachment}
-        onClose={() => setShowFilePreview(false)}
-      />
+        {/* Delete button */}
+        <Pressable
+          onPress={handleDelete}
+          style={({ pressed }) => [
+            {
+              padding: 14,
+              borderRadius: 16,
+              backgroundColor: "#EF444420",
+              opacity: pressed ? 0.7 : 1,
+            },
+          ]}
+        >
+          <Text
+            style={{
+              textAlign: "center",
+              fontSize: 15,
+              fontWeight: "600",
+              color: "#EF4444",
+            }}
+          >
+            🗑 {isRu ? "Удалить задачу" : "Delete task"}
+          </Text>
+        </Pressable>
+
+        {/* File Preview Modal */}
+        <FilePreviewModal
+          visible={showFilePreview}
+          attachment={selectedAttachment}
+          onClose={() => setShowFilePreview(false)}
+        />
+      </ScrollView>
     </ScreenContainer>
   );
 }
