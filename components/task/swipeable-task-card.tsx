@@ -317,8 +317,10 @@ export function SwipeableTaskCard({
           <Animated.View style={cardAnimStyle}>
             <Pressable
               onPress={(e) => {
-                const { pageX, pageY } = e.nativeEvent;
-                onToggleExpand(task.id, { x: pageX, y: pageY });
+                if (onToggleExpand) {
+                  const { pageX, pageY } = e.nativeEvent || {};
+                  onToggleExpand(task.id, pageX && pageY ? { x: pageX, y: pageY } : undefined);
+                }
               }}
               style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1, borderRadius: 8 }]}
             >
@@ -395,7 +397,11 @@ export function SwipeableTaskCard({
         <Animated.View style={[cardAnimStyle, { borderRadius: 14, overflow: "hidden", zIndex: 1 }]}>
           <OverdueTaskWrapper isOverdue={isOverdue}>
             <Pressable
-              onPress={() => onToggleExpand(task.id)}
+              onPress={() => {
+                if (onToggleExpand) {
+                  onToggleExpand(task.id);
+                }
+              }}
               style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1, borderRadius: 14 }]}
             >
               <View

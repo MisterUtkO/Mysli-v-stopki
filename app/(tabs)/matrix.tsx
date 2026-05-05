@@ -333,6 +333,25 @@ export default function MatrixScreen() {
                 );
               }
             }}
+            onDelete={async (taskId) => {
+              Alert.alert(
+                isRu ? "Удалить задачу?" : "Delete task?",
+                isRu ? "Это действие нельзя отменить" : "This action cannot be undone",
+                [
+                  { text: isRu ? "Отмена" : "Cancel", style: "cancel" },
+                  {
+                    text: isRu ? "Удалить" : "Delete",
+                    style: "destructive",
+                    onPress: async () => {
+                      await deleteTask(taskId);
+                      await refreshTasks();
+                      setDetailModalVisible(false);
+                      setSelectedTaskForDetail(null);
+                    },
+                  },
+                ]
+              );
+            }}
           />
         )}
 

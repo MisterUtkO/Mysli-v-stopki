@@ -20,7 +20,7 @@ import { SwipeHint } from "@/components/swipe-hint";
 import { TaskDetailModal } from "@/components/task/task-detail-modal";
 import { syncTaskToCalendar, formatTaskForCalendar } from "@/lib/integrations/calendar/calendar-sync";
 import type { Task, TaskStatus } from "@/lib/domain/types";
-import { useState, useRef, useMemo, useCallback } from "react";
+import { useState, useRef, useMemo, useCallback, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { KANBAN_STORAGE_KEY } from "@/lib/integrations/kanban/kanban-sync";
 
@@ -96,12 +96,12 @@ export default function HomeScreen() {
     deleteTask(taskId);
   };
 
-  const toggleExpand = (taskId: string) => {
+  const toggleExpand = useCallback((taskId: string) => {
     const task = tasks.find((t) => t.id === taskId);
     if (task) {
       setSelectedTaskForDetail(task);
     }
-  };
+  }, [tasks]);
 
   const toggleSearch = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
