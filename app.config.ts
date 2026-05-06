@@ -27,7 +27,7 @@ const env = {
   iosBundleId: bundleId,
   androidPackage: bundleId,
   // Version — single source of truth
-  version: "1.4.0",
+  version: "1.4.2",
 };
 
 const config: ExpoConfig = {
