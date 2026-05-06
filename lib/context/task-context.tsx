@@ -214,11 +214,12 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         } catch (error) {
           console.error("[TaskContext] Failed to sync to widget on launch:", error);
         }
+        
+        // All initialization complete - hide splash screen
+        setLoading(false);
       } catch (error) {
         console.error("Failed to initialize database:", error);
-      } finally {
         setLoading(false);
-        // Splash screen will be hidden by SplashScreenWrapper component
       }
     };
 
