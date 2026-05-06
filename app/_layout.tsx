@@ -5,7 +5,7 @@ import { StatusBar } from "expo-status-bar";
 import React, { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
-import { Platform } from "react-native";
+import { Platform, AppState, type AppStateStatus } from "react-native";
 import "@/lib/_core/nativewind-pressable";
 import { ThemeProvider } from "@/lib/theme/theme-provider";
 import {
@@ -83,11 +83,27 @@ function NavBarThemeSync() {
  * and shows celebration overlay for newly unlocked achievements
  */
 function AchievementChecker() {
-  const { tasks } = useTaskContext();
+  const { tasks, refreshTasks } = useTaskContext();
   const { language } = useI18n();
   const { newlyUnlocked, dismissNewAchievement, checkAndUnlock } = useAchievements();
   const isRu = language === "ru";
   const prevTaskCountRef = useRef(tasks.length);
+  const appStateRef = useRef<AppStateStatus>("active");
+
+  // Listen for app state changes and refresh tasks when returning from background
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", async (state: AppStateStatus) => {
+      appStateRef.current = state;
+      if (state === "active") {
+        console.log("[AchievementChecker] App became active - refreshing tasks from widget");
+        await refreshTasks();
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [refreshTasks]);
 
   useEffect(() => {
     // Check achievements whenever tasks change
@@ -95,7 +111,7 @@ function AchievementChecker() {
       checkAndUnlock(tasks);
     }
     prevTaskCountRef.current = tasks.length;
-  }, [tasks]);
+  }, [tasks, checkAndUnlock]);
 
   if (!newlyUnlocked) return null;
 
@@ -187,6 +203,20 @@ export default function RootLayout() {
       return () => {};
     }, [])
   );
+
+  // Sync tasks when app returns from background
+  // This ensures tasks added via widget are visible when app is brought to foreground
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (state: AppStateStatus) => {
+      if (state === "active") {
+        console.log("[AppState] App became active - tasks will be synced by TaskContext");
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 
   const handleSafeAreaUpdate = useCallback((metrics: Metrics) => {
     setInsets(metrics.insets);
