@@ -11,6 +11,7 @@ import {
   Animated,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { useFocusEffect } from "expo-router";
 import { ScreenContainer } from "@/components/common/screen-container";
 import { ScreenTransition } from "@/components/animations/screen-transition";
 import { useTaskContext } from "@/lib/context/task-context";
@@ -39,19 +40,25 @@ const STATUS_ICONS: Record<string, string> = {
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { tasks, deleteTask, updateTask } = useTaskContext();
+  const { tasks, deleteTask, updateTask, refreshTasks } = useTaskContext();
   const { t, language } = useI18n();
   const isRu = language === "ru";
 
   const [search, setSearch] = useState("");
   const [searchVisible, setSearchVisible] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<TaskStatus | null>(null);
-  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [selectedTaskForDetail, setSelectedTaskForDetail] =
     useState<Task | null>(null);
 
   const searchInputRef = useRef<TextInput>(null);
+
+  // Обновляем задачи при переключении на вкладку (задача #1)
+  useFocusEffect(
+    useCallback(() => {
+      refreshTasks();
+    }, [refreshTasks])
+  );
 
   // Filter out deleted tasks from display
   const activeTasks = useMemo(() => tasks.filter((t) => !t.isDeleted), [tasks]);
@@ -60,7 +67,6 @@ export default function HomeScreen() {
     [tasks]
   );
 
-  // Compute task counts for each filter (only active tasks)
   const taskCounts = useMemo(() => {
     let base = [...activeTasks];
     if (search.trim()) {
@@ -109,13 +115,11 @@ export default function HomeScreen() {
   };
 
   const handleDelete = (taskId: string, taskTitle: string) => {
-    // Direct soft delete (no confirmation) - user can restore from trash
     deleteTask(taskId);
   };
 
-  const toggleExpand = useCallback((taskId: string) => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setExpandedTaskId((prev) => (prev === taskId ? null : taskId));
+  // Задача #2: только открываем модал, аккордеон в карточке не раскрываем
+  const openTaskDetail = useCallback((taskId: string) => {
     const task = tasks.find((t) => t.id === taskId);
     if (task) {
       setSelectedTaskForDetail(task);
@@ -203,7 +207,7 @@ export default function HomeScreen() {
   return (
     <ScreenContainer>
       <ScreenTransition>
-        {/* Header: title center, search + trash icons right */}
+        {/* Header */}
         <View
           style={{
             flexDirection: "row",
@@ -214,14 +218,11 @@ export default function HomeScreen() {
             paddingBottom: 12,
           }}
         >
-          {/* Title */}
           <Text style={{ fontSize: 24, fontWeight: "700", color: "#1F2937" }}>
             {t.home.title}
           </Text>
 
-          {/* Right icons container */}
           <View style={{ flexDirection: "row", gap: 12 }}>
-            {/* Search icon */}
             <Pressable
               onPress={toggleSearch}
               style={({ pressed }) => [
@@ -241,7 +242,6 @@ export default function HomeScreen() {
               <Text style={{ fontSize: 18 }}>🔍</Text>
             </Pressable>
 
-            {/* Trash icon - navigate to trash screen */}
             <Pressable
               onPress={() => router.push("/trash")}
               style={({ pressed }) => [
@@ -281,27 +281,30 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Search field (hidden by default) */}
+        {/* Задача #3: поисковая строка с явным белым фоном и чёрным текстом */}
         {searchVisible && (
           <View style={{ paddingHorizontal: 16, marginBottom: 12 }}>
             <TextInput
               ref={searchInputRef}
               style={{
+                fontSize: 15,
+                backgroundColor: "#FFFFFF",
+                color: "#000000",
+                borderRadius: 12,
+                paddingHorizontal: 12,
+                paddingVertical: 8,
                 borderWidth: 1,
                 borderColor: "#E5E7EB",
-                borderRadius: 12,
-                padding: 10,
-                fontSize: 14,
               }}
               placeholder={isRu ? "Поиск задач..." : "Search tasks..."}
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor="#999"
               value={search}
               onChangeText={setSearch}
             />
           </View>
         )}
 
-        {/* Compact status filter tabs */}
+        {/* Status filter tabs */}
         <View
           style={{
             flexDirection: "row",
@@ -311,7 +314,6 @@ export default function HomeScreen() {
             flexWrap: "wrap",
           }}
         >
-          {/* All filter */}
           <Pressable
             onPress={() => setSelectedStatus(null)}
             style={({ pressed }) => [
@@ -362,7 +364,6 @@ export default function HomeScreen() {
             </View>
           </Pressable>
 
-          {/* Status filters */}
           {(["not_started", "in_progress", "completed"] as TaskStatus[]).map((status) => {
             const count = taskCounts[status];
             const color = getStatusColor(status);
@@ -448,32 +449,13 @@ export default function HomeScreen() {
                 paddingTop: 60,
               }}
             >
-              <Text
-                style={{
-                  fontSize: 48,
-                  marginBottom: 16,
-                }}
-              >
-                📝
-              </Text>
-              <Text
-                style={{
-                  fontSize: 16,
-                  color: "#9CA3AF",
-                  textAlign: "center",
-                }}
-              >
+              <Text style={{ fontSize: 48, marginBottom: 16 }}>📝</Text>
+              <Text style={{ fontSize: 16, color: "#9CA3AF", textAlign: "center" }}>
                 {selectedStatus === "completed"
-                  ? isRu
-                    ? "Нет выполненных задач"
-                    : "No completed tasks"
+                  ? isRu ? "Нет выполненных задач" : "No completed tasks"
                   : selectedStatus === "in_progress"
-                  ? isRu
-                    ? "Нет задач в процессе выполнения"
-                    : "No tasks in progress"
-                  : isRu
-                  ? "Нет задач. Создайте первую!"
-                  : "No tasks yet. Create your first!"}
+                  ? isRu ? "Нет задач в процессе выполнения" : "No tasks in progress"
+                  : isRu ? "Нет задач. Создайте первую!" : "No tasks yet. Create your first!"}
               </Text>
             </View>
           ) : (
@@ -483,9 +465,9 @@ export default function HomeScreen() {
                 <SwipeableTaskCard
                   key={task.id}
                   task={task}
-                  isExpanded={expandedTaskId === task.id}
+                  isExpanded={false}
                   isRu={isRu}
-                  onToggleExpand={(taskId) => toggleExpand(taskId)}
+                  onToggleExpand={openTaskDetail}
                   onStatusChange={(taskId, currentStatus) =>
                     handleStatusChange(taskId, currentStatus)
                   }
@@ -542,22 +524,18 @@ export default function HomeScreen() {
               );
 
               setSelectedTaskForDetail(null);
-              router.push({
-                pathname: "/(tabs)/kanban",
-              });
+              router.push({ pathname: "/(tabs)/kanban" });
             } catch (error) {
               console.error("Export to Kanban error:", error);
               Alert.alert(
                 isRu ? "Ошибка" : "Error",
-                isRu
-                  ? "Ошибка при добавлении в канбан"
-                  : "Error adding to Kanban"
+                isRu ? "Ошибка при добавлении в канбан" : "Error adding to Kanban"
               );
             }
           }}
         />
 
-        {/* Floating Action Button (FAB) - bottom right */}
+        {/* FAB */}
         <Pressable
           onPress={() => router.push("/add-task")}
           style={({ pressed }) => [
