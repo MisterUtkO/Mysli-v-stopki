@@ -118,6 +118,17 @@ export default function TaskDetailScreen() {
 
   const handlePickImage = async () => {
     try {
+      // Explicitly request media library permissions (required for Android 13+)
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(
+          isRu ? "Нет доступа" : "Permission denied",
+          isRu
+            ? "Разрешите доступ к фото в настройках устройства"
+            : "Please allow photo access in your device settings"
+        );
+        return;
+      }
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ["images"],
         quality: 0.7,
