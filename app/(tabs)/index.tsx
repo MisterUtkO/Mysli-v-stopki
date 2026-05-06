@@ -11,6 +11,7 @@ import {
   Animated,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { useFocusEffect } from "expo-router";
 import { ScreenContainer } from "@/components/common/screen-container";
 import { ScreenTransition } from "@/components/animations/screen-transition";
 import { useTaskContext } from "@/lib/context/task-context";
@@ -36,15 +37,21 @@ const STATUS_ICONS: Record<string, string> = {
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { tasks, deleteTask, updateTask } = useTaskContext();
+  const { tasks, deleteTask, updateTask, refreshTasks } = useTaskContext();
   const { t, language } = useI18n();
   const isRu = language === "ru";
   const [search, setSearch] = useState("");
   const [searchVisible, setSearchVisible] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
-  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
   const [selectedTaskForDetail, setSelectedTaskForDetail] = useState<Task | null>(null);
   const searchInputRef = useRef<TextInput>(null);
+
+  // Refresh tasks when screen comes into focus (tab switch)
+  useFocusEffect(
+    useCallback(() => {
+      refreshTasks();
+    }, [refreshTasks])
+  );
 
   // Filter out deleted tasks from display
   const activeTasks = useMemo(() => tasks.filter((t) => !t.isDeleted), [tasks]);
@@ -96,6 +103,7 @@ export default function HomeScreen() {
     deleteTask(taskId);
   };
 
+  // Open detail modal only — accordion on home screen is disabled
   const toggleExpand = (taskId: string) => {
     const task = tasks.find((t) => t.id === taskId);
     if (task) {
@@ -272,8 +280,15 @@ export default function HomeScreen() {
             placeholder={t.home.search}
             placeholderTextColor="#999"
             returnKeyType="done"
-            className="bg-surface border border-border rounded-xl p-3 text-foreground mb-2"
-            style={{ fontSize: 15 }}
+            style={{
+              fontSize: 15,
+              backgroundColor: "#FFFFFF",
+              color: "#000000",
+              borderRadius: 12,
+              paddingHorizontal: 12,
+              paddingVertical: 8,
+              marginBottom: 8,
+            }}
           />
         )}
 
@@ -384,7 +399,7 @@ export default function HomeScreen() {
                 <SwipeableTaskCard
                   key={task.id}
                   task={task}
-                  isExpanded={expandedTaskId === task.id}
+                  isExpanded={false}
                   isRu={isRu}
                   onToggleExpand={toggleExpand}
                   onStatusChange={handleStatusChange}
