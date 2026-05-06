@@ -301,72 +301,82 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* 2x2 Grid status filter tabs */}
-        <View style={{ paddingHorizontal: 16, marginBottom: 16 }}>
-          {/* Row 1: All, Not started */}
-          <View style={{ flexDirection: "row", gap: 8, marginBottom: 8 }}>
-            {/* All filter */}
-            <Pressable
-              onPress={() => setSelectedStatus(null)}
-              style={({ pressed }) => [
-                {
-                  flex: 1,
-                  paddingVertical: 12,
-                  borderRadius: 12,
-                  backgroundColor: selectedStatus === null ? "#0a7ea4" : "transparent",
-                  borderWidth: 1,
-                  borderColor: selectedStatus === null ? "#0a7ea4" : "#D1D5DB",
-                  opacity: pressed ? 0.6 : 1,
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 4,
-                },
-              ]}
+        {/* Compact status filter tabs */}
+        <View
+          style={{
+            flexDirection: "row",
+            gap: 8,
+            paddingHorizontal: 16,
+            marginBottom: 16,
+            flexWrap: "wrap",
+          }}
+        >
+          {/* All filter */}
+          <Pressable
+            onPress={() => setSelectedStatus(null)}
+            style={({ pressed }) => [
+              {
+                paddingHorizontal: 10,
+                paddingVertical: 0,
+                borderRadius: 12,
+                backgroundColor: selectedStatus === null ? "#0a7ea4" : "transparent",
+                borderWidth: 1,
+                borderColor: selectedStatus === null ? "#0a7ea4" : "#D1D5DB",
+                opacity: pressed ? 0.6 : 1,
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 4,
+                minWidth: 50,
+                height: 28,
+              },
+            ]}
+          >
+            <Text
+              style={{
+                fontSize: 12,
+                fontWeight: "600",
+                color: selectedStatus === null ? "#FFFFFF" : "#6B7280",
+              }}
+            >
+              {isRu ? "Все" : "All"}
+            </Text>
+            <View
+              style={{
+                paddingHorizontal: 6,
+                paddingVertical: 1,
+                borderRadius: 8,
+                backgroundColor:
+                  selectedStatus === null ? "#FFFFFF20" : "#F3F4F6",
+              }}
             >
               <Text
                 style={{
-                  fontSize: 12,
-                  fontWeight: "600",
+                  fontSize: 10,
+                  fontWeight: "700",
                   color: selectedStatus === null ? "#FFFFFF" : "#6B7280",
                 }}
               >
-                {isRu ? "Все" : "All"}
+                {taskCounts.all}
               </Text>
-              <View
-                style={{
-                  paddingHorizontal: 6,
-                  paddingVertical: 1,
-                  borderRadius: 8,
-                  backgroundColor:
-                    selectedStatus === null ? "#FFFFFF20" : "#F3F4F6",
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: 10,
-                    fontWeight: "700",
-                    color: selectedStatus === null ? "#FFFFFF" : "#6B7280",
-                  }}
-                >
-                  {taskCounts.all}
-                </Text>
-              </View>
-            </Pressable>
+            </View>
+          </Pressable>
 
-            {/* Not started filter */}
-            <Pressable
-              onPress={() =>
-                setSelectedStatus(selectedStatus === "not_started" ? null : "not_started")
-              }
-              style={({ pressed }) => {
-                const status = "not_started";
-                const color = getStatusColor(status);
-                const icon = getStatusIcon(status);
-                return [
+          {/* Status filters */}
+          {(["not_started", "in_progress", "completed"] as TaskStatus[]).map((status) => {
+            const count = taskCounts[status];
+            const color = getStatusColor(status);
+            const icon = getStatusIcon(status);
+            return (
+              <Pressable
+                key={status}
+                onPress={() =>
+                  setSelectedStatus(selectedStatus === status ? null : status)
+                }
+                style={({ pressed }) => [
                   {
-                    flex: 1,
-                    paddingVertical: 12,
+                    paddingHorizontal: 10,
+                    paddingVertical: 0,
                     borderRadius: 12,
                     backgroundColor:
                       selectedStatus === status ? color : "transparent",
@@ -378,129 +388,50 @@ export default function HomeScreen() {
                     alignItems: "center",
                     justifyContent: "center",
                     gap: 3,
+                    minWidth: 65,
+                    height: 28,
                   },
-                ];
-              }}
-            >
-              {(() => {
-                const status = "not_started";
-                const color = getStatusColor(status);
-                const icon = getStatusIcon(status);
-                const count = taskCounts[status];
-                return (
-                  <>
-                    <Text
-                      style={{
-                        fontSize: 12,
-                        color: selectedStatus === status ? "#FFFFFF" : color,
-                      }}
-                    >
-                      {icon}
-                    </Text>
-                    <Text
-                      style={{
-                        fontSize: 11,
-                        fontWeight: "600",
-                        color: selectedStatus === status ? "#FFFFFF" : "#6B7280",
-                      }}
-                    >
-                      {getStatusLabel(status)}
-                    </Text>
-                    <View
-                      style={{
-                        paddingHorizontal: 5,
-                        paddingVertical: 1,
-                        borderRadius: 8,
-                        backgroundColor:
-                          selectedStatus === status ? "#FFFFFF20" : "#F3F4F6",
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontSize: 10,
-                          fontWeight: "700",
-                          color: selectedStatus === status ? "#FFFFFF" : "#6B7280",
-                        }}
-                      >
-                        {count}
-                      </Text>
-                    </View>
-                  </>
-                );
-              })()}
-            </Pressable>
-          </View>
-
-          {/* Row 2: In progress, Completed */}
-          <View style={{ flexDirection: "row", gap: 8 }}>
-            {(["in_progress", "completed"] as TaskStatus[]).map((status) => {
-              const count = taskCounts[status];
-              const color = getStatusColor(status);
-              const icon = getStatusIcon(status);
-              return (
-                <Pressable
-                  key={status}
-                  onPress={() =>
-                    setSelectedStatus(selectedStatus === status ? null : status)
-                  }
-                  style={({ pressed }) => [
-                    {
-                      flex: 1,
-                      paddingVertical: 12,
-                      borderRadius: 12,
-                      backgroundColor:
-                        selectedStatus === status ? color : "transparent",
-                      borderWidth: 1,
-                      borderColor:
-                        selectedStatus === status ? color : "#D1D5DB",
-                      opacity: pressed ? 0.6 : 1,
-                      flexDirection: "row",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: 3,
-                    },
-                  ]}
+                ]}
+              >
+                <Text
+                  style={{
+                    fontSize: 12,
+                    color: selectedStatus === status ? "#FFFFFF" : color,
+                  }}
+                >
+                  {icon}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 11,
+                    fontWeight: "600",
+                    color: selectedStatus === status ? "#FFFFFF" : "#6B7280",
+                  }}
+                >
+                  {getStatusLabel(status)}
+                </Text>
+                <View
+                  style={{
+                    paddingHorizontal: 5,
+                    paddingVertical: 1,
+                    borderRadius: 8,
+                    backgroundColor:
+                      selectedStatus === status ? "#FFFFFF20" : "#F3F4F6",
+                  }}
                 >
                   <Text
                     style={{
-                      fontSize: 12,
-                      color: selectedStatus === status ? "#FFFFFF" : color,
-                    }}
-                  >
-                    {icon}
-                  </Text>
-                  <Text
-                    style={{
-                      fontSize: 11,
-                      fontWeight: "600",
+                      fontSize: 10,
+                      fontWeight: "700",
                       color: selectedStatus === status ? "#FFFFFF" : "#6B7280",
                     }}
                   >
-                    {getStatusLabel(status)}
+                    {count}
                   </Text>
-                  <View
-                    style={{
-                      paddingHorizontal: 5,
-                      paddingVertical: 1,
-                      borderRadius: 8,
-                      backgroundColor:
-                        selectedStatus === status ? "#FFFFFF20" : "#F3F4F6",
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontSize: 10,
-                        fontWeight: "700",
-                        color: selectedStatus === status ? "#FFFFFF" : "#6B7280",
-                      }}
-                    >
-                      {count}
-                    </Text>
-                  </View>
-                </Pressable>
-              );
-            })}
-          </View>
+                </View>
+              </Pressable>
+            );
+          })}
         </View>
 
         {/* Task list */}

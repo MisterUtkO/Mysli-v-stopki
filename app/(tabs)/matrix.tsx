@@ -97,8 +97,8 @@ export default function MatrixScreen() {
     };
 
     tasks.forEach((task) => {
-      // Skip completed tasks and deleted tasks in matrix view
-      if (task.status === "completed" || task.isDeleted) return;
+      // Skip completed tasks in matrix view
+      if (task.status === "completed") return;
       
       const quadrantKey = task.quadrant as QuadrantKey;
       if (result[quadrantKey]) {
@@ -190,7 +190,7 @@ export default function MatrixScreen() {
         }}
       >
         {/* Header */}
-        <View className="bg-black/20 px-3 py-2">
+        <View className="bg-black/20 px-3 py-2" style={{ marginBottom: 4 }}>
           <Text className="text-sm font-bold text-white">{config.label}</Text>
           <Text className="text-xs text-white/80">{config.description}</Text>
         </View>
@@ -216,8 +216,8 @@ export default function MatrixScreen() {
             handleScroll(quadrant, hasMore && contentOffset.y > 0);
           }}
           scrollEventThrottle={16}
-          style={{ flex: 1 }}
-          contentContainerStyle={{ paddingBottom: 8 }}
+          style={{ flex: 1, marginTop: 2 }}
+          contentContainerStyle={{ paddingTop: 6, paddingBottom: 16 }}
         />
 
         {/* Scroll Indicator */}

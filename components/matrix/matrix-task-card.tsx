@@ -10,6 +10,33 @@ interface MatrixTaskCardProps {
   onPress: (task: Task) => void;
 }
 
+const getStatusColor = (status: string): string => {
+  switch (status) {
+    case "completed":   return "#22c55e";
+    case "in_progress": return "#3b82f6";
+    case "on_hold":     return "#f59e0b";
+    default:            return "#6b7280"; // not_started
+  }
+};
+
+const getStatusIcon = (status: string): string => {
+  switch (status) {
+    case "completed":   return "✅";
+    case "in_progress": return "⏳";
+    case "on_hold":     return "⏸️";
+    default:            return "○";
+  }
+};
+
+const getStatusLabel = (status: string, isRu: boolean): string => {
+  switch (status) {
+    case "completed":   return isRu ? "Готово"   : "Done";
+    case "in_progress": return isRu ? "В работе" : "In Progress";
+    case "on_hold":     return isRu ? "Пауза"    : "On Hold";
+    default:            return isRu ? "Не начато" : "Todo";
+  }
+};
+
 export function MatrixTaskCard({ task, isRu, onPress }: MatrixTaskCardProps) {
   const handlePress = () => {
     if (Platform.OS !== "web") {
@@ -57,50 +84,56 @@ export function MatrixTaskCard({ task, isRu, onPress }: MatrixTaskCardProps) {
             paddingVertical: 8,
             paddingHorizontal: 8,
             borderRadius: 6,
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 6,
+            gap: 4,
             position: "relative",
           }}
         >
           {/* Overdue indicator */}
           <OverdueIndicator isOverdue={isOverdue} />
-        {/* Priority Icon */}
-        <Text
-          style={{
-            fontSize: 14,
-            fontWeight: "700",
-            minWidth: 20,
-            textAlign: "center",
-          }}
-        >
-          {priorityIcon}
-        </Text>
 
-        {/* Task Title and Priority */}
-        <View style={{ flex: 1 }}>
-          <Text
-            numberOfLines={2}
-            style={{
-              fontSize: 13,
-              fontWeight: "600",
-              color: "#FFFFFF",
-              lineHeight: 16,
-            }}
-          >
-            {task.title}
-          </Text>
-          <Text
-            style={{
-              fontSize: 11,
-              color: "rgba(255, 255, 255, 0.7)",
-              marginTop: 2,
-            }}
-          >
-            {priorityLabel}
-          </Text>
+          {/* Top row: priority icon + title */}
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+            {/* Priority Icon */}
+            <Text
+              style={{
+                fontSize: 14,
+                fontWeight: "700",
+                minWidth: 20,
+                textAlign: "center",
+              }}
+            >
+              {priorityIcon}
+            </Text>
+
+            {/* Task Title */}
+            <Text
+              numberOfLines={2}
+              style={{
+                flex: 1,
+                fontSize: 13,
+                fontWeight: "600",
+                color: "#FFFFFF",
+                lineHeight: 16,
+              }}
+            >
+              {task.title}
+            </Text>
+          </View>
+
+          {/* Status badge */}
+          <View style={{
+            backgroundColor: getStatusColor(task.status),
+            borderRadius: 999,
+            paddingHorizontal: 7,
+            paddingVertical: 2,
+            alignSelf: "flex-start",
+            marginLeft: 26, // align with title (after icon)
+          }}>
+            <Text style={{ color: "#fff", fontSize: 9, fontWeight: "700" }}>
+              {getStatusIcon(task.status)} {getStatusLabel(task.status, isRu)}
+            </Text>
+          </View>
         </View>
-      </View>
       </Pressable>
     </OverdueTaskWrapper>
   );

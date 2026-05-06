@@ -1336,9 +1336,3 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Created ANDROID_WIDGET_SETUP.md - Setup and integration guide
 - [x] Created WIDGET_TESTING.md - Comprehensive 13-point testing checklist
 - [x] Created WIDGET_IMPLEMENTATION_COMPLETE.md - Full implementation summary
-
-
-## Phase 15: Critical Fixes (Current)
-- [ ] Fix task deletion: deleted tasks should disappear from matrix and restore properly from trash
-- [ ] Reorganize filter buttons on Tasks screen to 2x2 grid layout (matching matrix layout)
-- [ ] Eliminate screen transition flicker by preloading all app data on startup

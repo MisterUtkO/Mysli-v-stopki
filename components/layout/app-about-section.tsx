@@ -88,6 +88,27 @@ const FEATURES: Feature[] = [
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.3.0",
+    dateRu: "6 мая 2026",
+    dateEn: "May 6, 2026",
+    changesRu: [
+      "🔄 Виджет: задачи обновляются без перезапуска — подписка на AppState и useFocusEffect",
+      "👆 Исправлено двойное действие при нажатии на задачу — детали только в модале",
+      "🔍 Цвет текста поисковой строки теперь виден во всех темах",
+      "📊 Устранена обрезка карточек в матрице Эйзенхауэра",
+      "🏷️ Добавлены овальные бейджи статусов в карточках матрицы",
+      "📷 Исправлено прикрепление фото: явный запрос разрешений на Android 13+",
+    ],
+    changesEn: [
+      "🔄 Widget: tasks refresh without restart — AppState subscription + useFocusEffect",
+      "👆 Fixed double action on task tap — details open in modal only",
+      "🔍 Search bar text color now visible in all themes",
+      "📊 Fixed card clipping in Eisenhower Matrix",
+      "🏷️ Added oval status badges in Matrix task cards",
+      "📷 Fixed photo attachment: explicit permission request on Android 13+",
+    ],
+  },
+  {
     version: "1.0.80",
     dateRu: "15 апреля 2026",
     dateEn: "April 15, 2026",
@@ -127,7 +148,7 @@ const CHANGELOG: ChangelogEntry[] = [
     dateEn: "April 13, 2026",
     changesRu: [
       "🖼 Просмотр фото по нажатию — полноэкранный режим с зумом (щипок и двойной тап)",
-      "📄 Просмотр файлов по нажатию — красивый экран с кнопкой 'Открыть / Поделиться'",
+      "📄 Просмотр файлов по нажатию — красивый экран с кнопкой \u2018Открыть / Поделиться\u2019",
       "📎 Вложения в карточках задач теперь кликабельны",
       "👆 Исправлены свайпы обучения на реальном устройстве (iOS/Android)",
     ],

@@ -118,7 +118,7 @@ export default function TaskDetailScreen() {
     useState<TaskAttachment | null>(null);
 
   // Auto-save after 1.5s of inactivity
-  const autoSaveTimer = useRef<NodeJS.Timeout | null>(null);
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -154,7 +154,7 @@ export default function TaskDetailScreen() {
     setIsSaving(true);
     autoSaveTimer.current = setTimeout(() => {
       performAutoSave();
-    }, 1500) as unknown as NodeJS.Timeout;
+    }, 1500);
   };
 
   const performAutoSave = async () => {
@@ -245,6 +245,17 @@ export default function TaskDetailScreen() {
 
   const handlePickImage = async () => {
     try {
+      // Explicitly request media library permissions (required for Android 13+)
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(
+          isRu ? "Нет доступа" : "Permission denied",
+          isRu
+            ? "Разрешите доступ к фото в настройках устройства"
+            : "Please allow photo access in your device settings"
+        );
+        return;
+      }
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ["images"],
         quality: 0.7,

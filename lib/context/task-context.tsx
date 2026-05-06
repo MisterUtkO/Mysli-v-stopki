@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { AppState } from "react-native";
 import type { Task, Settings, NotificationFrequency, TaskAttachment, MotivationalSettings } from "@/lib/domain/types";
 import {
   createTask as dbCreateTask,
@@ -116,6 +117,16 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // Subscribe to AppState: refresh tasks when app comes to foreground (e.g. after widget write)
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (nextState) => {
+      if (nextState === "active") {
+        refreshTasks();
+      }
+    });
+    return () => subscription.remove();
+  }, [refreshTasks]);
+
   // Schedule notifications whenever tasks or settings change
   const rescheduleNotifications = useCallback(async (currentTasks: Task[], currentSettings: Settings) => {
     try {
@@ -214,12 +225,11 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         } catch (error) {
           console.error("[TaskContext] Failed to sync to widget on launch:", error);
         }
-        
-        // All initialization complete - hide splash screen
-        setLoading(false);
       } catch (error) {
         console.error("Failed to initialize database:", error);
+      } finally {
         setLoading(false);
+        // Splash screen will be hidden by SplashScreenWrapper component
       }
     };
 
