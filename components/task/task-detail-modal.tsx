@@ -84,7 +84,7 @@ export function TaskDetailModal({
           backgroundColor: "rgba(0, 0, 0, 0.5)",
           justifyContent: "flex-end",
         }}
-        edges={["top", "left", "right"]}
+        edges={["top", "left", "right", "bottom"]}
       >
         {/* Overlay background - tappable to close */}
         <Pressable
@@ -101,7 +101,7 @@ export function TaskDetailModal({
             borderTopRightRadius: 20,
             paddingHorizontal: 16,
             paddingTop: 16,
-            paddingBottom: 24,
+            paddingBottom: 32,
             maxHeight: "80%",
             zIndex: 1000,
           }}
