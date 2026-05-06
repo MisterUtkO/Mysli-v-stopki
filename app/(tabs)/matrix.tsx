@@ -190,7 +190,7 @@ export default function MatrixScreen() {
         }}
       >
         {/* Header */}
-        <View className="bg-black/20 px-3 py-2" style={{ marginBottom: 4 }}>
+        <View className="bg-black/20 px-3 py-2">
           <Text className="text-sm font-bold text-white">{config.label}</Text>
           <Text className="text-xs text-white/80">{config.description}</Text>
         </View>
