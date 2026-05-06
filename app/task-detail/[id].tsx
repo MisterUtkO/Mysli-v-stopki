@@ -154,7 +154,7 @@ export default function TaskDetailScreen() {
     setIsSaving(true);
     autoSaveTimer.current = setTimeout(() => {
       performAutoSave();
-    }, 1500);
+    }, 1500) as unknown as NodeJS.Timeout;
   };
 
   const performAutoSave = async () => {

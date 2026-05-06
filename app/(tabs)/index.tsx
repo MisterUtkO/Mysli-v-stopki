@@ -478,7 +478,7 @@ export default function HomeScreen() {
             </View>
           ) : (
             <>
-              <SwipeHint visible={filteredTasks.length > 0} />
+              <SwipeHint isRu={isRu} hasTask={filteredTasks.length > 0} />
               {filteredTasks.map((task) => (
                 <SwipeableTaskCard
                   key={task.id}
