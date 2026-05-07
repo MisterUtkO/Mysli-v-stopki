@@ -249,12 +249,7 @@ export default function MatrixScreen() {
               setDetailModalVisible(false);
               setSelectedTaskForDetail(null);
             }}
-            onEdit={(task) => {
-              setDetailModalVisible(false);
-              setSelectedTaskForDetail(null);
-              setSelectedTaskForEdit(task);
-              setEditModalVisible(true);
-            }}
+            onEdit={undefined}
             onMarkComplete={async (taskId) => {
               await updateTask(taskId, { status: "completed" });
               await refreshTasks();

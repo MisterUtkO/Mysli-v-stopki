@@ -16,6 +16,7 @@ import * as DocumentPicker from "expo-document-picker";
 import { ScreenContainer } from "@/components/common/screen-container";
 import { useTaskContext } from "@/lib/context/task-context";
 import { useI18n } from "@/lib/context/i18n-context";
+import { useColors } from "@/hooks/use-colors";
 import { EmojiPicker } from "@/components/modals/emoji-picker";
 import { FilePreviewModal } from "@/components/modals/file-preview-modal";
 import {
@@ -96,6 +97,7 @@ export default function TaskDetailScreen() {
   const { tasks, updateTask, deleteTask, settings } = useTaskContext();
   const { language } = useI18n();
   const isRu = language === "ru";
+  const colors = useColors();
 
   const [task, setTask] = useState<Task | null>(null);
   const [description, setDescription] = useState("");
@@ -330,7 +332,7 @@ export default function TaskDetailScreen() {
     return (
       <ScreenContainer>
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-          <Text style={{ fontSize: 16, color: "#9CA3AF" }}>
+          <Text style={{ fontSize: 16, color: colors.muted }}>
             {isRu ? "Загрузка..." : "Loading..."}
           </Text>
         </View>
@@ -350,7 +352,7 @@ export default function TaskDetailScreen() {
             marginBottom: 16,
           }}
         >
-          <Text style={{ fontSize: 20, fontWeight: "600", color: "#1F2937" }}>
+          <Text style={{ fontSize: 20, fontWeight: "600", color: colors.foreground }}>
             {isRu ? "Редактировать" : "Edit Task"}
           </Text>
           <View
@@ -384,7 +386,7 @@ export default function TaskDetailScreen() {
               marginBottom: 12,
             }}
           >
-            <Text style={{ fontSize: 12, color: "#92400E" }}>
+            <Text style={{ fontSize: 12, color: colors.warning }}>
               💾 {isRu ? "Сохранение..." : "Saving..."}
             </Text>
           </View>
@@ -394,16 +396,18 @@ export default function TaskDetailScreen() {
         <TextInput
           style={{
             borderWidth: 1,
-            borderColor: "#E5E7EB",
+            borderColor: colors.border,
             borderRadius: 12,
             padding: 12,
             fontSize: 15,
             minHeight: 100,
             textAlignVertical: "top",
             marginBottom: 16,
+            backgroundColor: colors.surface,
+            color: colors.foreground,
           }}
           placeholder={isRu ? "Описание задачи" : "Task description"}
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={colors.muted}
           value={description}
           onChangeText={(text) => {
             setDescription(text);
@@ -603,8 +607,8 @@ export default function TaskDetailScreen() {
                 },
               ]}
             >
-              <Text style={{ fontSize: 13, color: "#0a7ea4" }}>
-                🖼 {isRu ? "Фото" : "Photo"}
+              <Text style={{ fontSize: 13, color: colors.foreground }}>
+                {isRu ? "Время" : "Time"}
               </Text>
             </Pressable>
             <Pressable
@@ -619,8 +623,8 @@ export default function TaskDetailScreen() {
                 },
               ]}
             >
-              <Text style={{ fontSize: 13, color: "#0a7ea4" }}>
-                📄 {isRu ? "Файл" : "File"}
+              <Text style={{ fontSize: 13, color: colors.foreground }}>
+                {isRu ? "Дата" : "Date"}
               </Text>
             </Pressable>
           </View>

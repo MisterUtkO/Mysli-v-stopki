@@ -312,6 +312,7 @@ export default function HomeScreen() {
             paddingHorizontal: 16,
             marginBottom: 16,
             flexWrap: "wrap",
+            justifyContent: "space-between",
           }}
         >
           <Pressable
@@ -329,8 +330,8 @@ export default function HomeScreen() {
                 alignItems: "center",
                 justifyContent: "center",
                 gap: 4,
-                minWidth: 50,
-                height: 28,
+                flex: 1,
+                height: 48,
               },
             ]}
           >
@@ -389,8 +390,8 @@ export default function HomeScreen() {
                     alignItems: "center",
                     justifyContent: "center",
                     gap: 3,
-                    minWidth: 65,
-                    height: 28,
+                    flex: 1,
+                    height: 48,
                   },
                 ]}
               >
