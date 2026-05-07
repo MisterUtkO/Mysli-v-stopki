@@ -88,6 +88,27 @@ const FEATURES: Feature[] = [
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.5.0",
+    dateRu: "7 мая 2026",
+    dateEn: "May 7, 2026",
+    changesRu: [
+      "🔄 Виджет: задачи обновляются при возврате в приложение без перезапуска",
+      "👆 Исправлено двойное действие при нажатии на задачу — детали только в модале",
+      "🔍 Цвет текста поисковой строки теперь читаем во всех темах",
+      "📊 Устранена обрезка карточек сверху и снизу в матрице Эйзенхауэра",
+      "🏷️ Добавлены цветные овальные бейджи статусов на карточках матрицы",
+      "📷 Исправлено прикрепление фото к задачам на Android 13+",
+    ],
+    changesEn: [
+      "🔄 Widget: tasks refresh on app resume without restart",
+      "👆 Fixed double action on task tap — details open in modal only",
+      "🔍 Search bar text color is now readable in all themes",
+      "📊 Fixed card clipping in Eisenhower Matrix",
+      "🏷️ Added colored oval status badges on matrix cards",
+      "📷 Fixed photo attachment for Android 13+",
+    ],
+  },
+  {
     version: "1.0.80",
     dateRu: "15 апреля 2026",
     dateEn: "April 15, 2026",
