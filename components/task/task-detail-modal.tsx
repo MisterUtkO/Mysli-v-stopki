@@ -4,6 +4,8 @@ import { useColors } from "@/hooks/use-colors";
 import { useI18n } from "@/lib/context/i18n-context";
 import type { Task } from "@/lib/domain/types";
 import * as Haptics from "expo-haptics";
+import { AttachmentViewer } from "./attachment-viewer";
+import { useState } from "react";
 
 interface TaskDetailModalProps {
   visible: boolean;
@@ -29,6 +31,7 @@ export function TaskDetailModal({
   const colors = useColors();
   const { language } = useI18n();
   const isRu = language === "ru";
+  const [attachmentViewerVisible, setAttachmentViewerVisible] = useState(false);
 
   if (!task) return null;
 
@@ -229,6 +232,62 @@ export function TaskDetailModal({
                   : isRu ? "Выполнено" : "Completed"}
               </Text>
             </View>
+
+            {/* Attachments */}
+            {task.attachments && task.attachments.length > 0 && (
+              <View style={{ marginBottom: 16 }}>
+                <Text
+                  style={{
+                    fontSize: 12,
+                    color: colors.muted,
+                    marginBottom: 8,
+                  }}
+                >
+                  {isRu ? "Вложения" : "Attachments"} ({task.attachments.length})
+                </Text>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    flexWrap: "wrap",
+                    gap: 8,
+                  }}
+                >
+                  {task.attachments.map((attachment, index) => (
+                    <Pressable
+                      key={index}
+                      onPress={() => {
+                        if (Platform.OS !== "web") {
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        }
+                        setAttachmentViewerVisible(true);
+                      }}
+                      style={({ pressed }) => [{
+                        paddingHorizontal: 10,
+                        paddingVertical: 6,
+                        borderRadius: 6,
+                        backgroundColor: colors.surface,
+                        opacity: pressed ? 0.7 : 1,
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 6,
+                      }]}
+                    >
+                      <Text style={{ fontSize: 14 }}>📎</Text>
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          color: colors.foreground,
+                          maxWidth: 100,
+                        }}
+                        numberOfLines={1}
+                      >
+                        {attachment.name}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+            )}
           </ScrollView>
 
           {/* Action buttons - Row 1 */}
@@ -412,6 +471,15 @@ export function TaskDetailModal({
           </View>
         </View>
       </SafeAreaView>
+
+      {/* Attachment Viewer Modal */}
+      {task.attachments && task.attachments.length > 0 && (
+        <AttachmentViewer
+          visible={attachmentViewerVisible}
+          attachments={task.attachments}
+          onClose={() => setAttachmentViewerVisible(false)}
+        />
+      )}
     </Modal>
   );
 }
