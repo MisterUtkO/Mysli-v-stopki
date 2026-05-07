@@ -60,7 +60,6 @@ export default function AddTaskScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Live quadrant preview
   const currentQuadrant = determineQuadrant(importance, urgency, {
     importanceThreshold: settings.importanceThreshold,
     urgencyThreshold: settings.urgencyThreshold,
@@ -91,18 +90,20 @@ export default function AddTaskScreen() {
     });
   };
 
+  // Правка #4: явный запрос разрешений перед открытием галереи (Android 13+)
   const handlePickImage = async () => {
     try {
-      // Explicitly request media library permissions (required for Android 13+)
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert(
-          isRu ? "Нет доступа" : "Permission denied",
-          isRu
-            ? "Разрешите доступ к фото в настройках устройства"
-            : "Please allow photo access in your device settings"
-        );
-        return;
+      if (Platform.OS !== "web") {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== "granted") {
+          Alert.alert(
+            isRu ? "Нет доступа" : "Permission denied",
+            isRu
+              ? "Разрешите доступ к фото в настройках устройства"
+              : "Please allow photo access in device settings"
+          );
+          return;
+        }
       }
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ["images"],
@@ -110,11 +111,13 @@ export default function AddTaskScreen() {
         allowsMultipleSelection: true,
       });
       if (!result.canceled && result.assets) {
-        const newAttachments: TaskAttachment[] = result.assets.map((asset: { uri: string; fileName?: string | null }) => ({
-          uri: asset.uri,
-          type: "image" as const,
-          name: asset.fileName || "photo.jpg",
-        }));
+        const newAttachments: TaskAttachment[] = result.assets.map(
+          (asset: { uri: string; fileName?: string | null }) => ({
+            uri: asset.uri,
+            type: "image" as const,
+            name: asset.fileName || "photo.jpg",
+          })
+        );
         setAttachments((prev) => [...prev, ...newAttachments]);
       }
     } catch (e) {
@@ -128,11 +131,13 @@ export default function AddTaskScreen() {
         multiple: true,
       });
       if (!result.canceled && result.assets) {
-        const newAttachments: TaskAttachment[] = result.assets.map((asset: { uri: string; name?: string }) => ({
-          uri: asset.uri,
-          type: "file" as const,
-          name: asset.name || "file",
-        }));
+        const newAttachments: TaskAttachment[] = result.assets.map(
+          (asset: { uri: string; name?: string }) => ({
+            uri: asset.uri,
+            type: "file" as const,
+            name: asset.name || "file",
+          })
+        );
         setAttachments((prev) => [...prev, ...newAttachments]);
       }
     } catch (e) {
@@ -192,7 +197,12 @@ export default function AddTaskScreen() {
       router.back();
     } catch (err) {
       console.error("Failed to create task:", err);
-      const errorMessage = err instanceof Error ? err.message : isRu ? "Ошибка при создании задачи" : "Error creating task";
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : isRu
+          ? "Ошибка при создании задачи"
+          : "Error creating task";
       setError(errorMessage);
       Alert.alert(t.common.error, errorMessage);
     } finally {
@@ -229,15 +239,26 @@ export default function AddTaskScreen() {
 
           {/* Error */}
           {error && (
-            <View style={{ backgroundColor: "#FEE2E2", borderWidth: 1, borderColor: "#EF4444", borderRadius: 12, padding: 10 }}>
+            <View
+              style={{
+                backgroundColor: "#FEE2E2",
+                borderWidth: 1,
+                borderColor: "#EF4444",
+                borderRadius: 12,
+                padding: 10,
+              }}
+            >
               <Text style={{ color: "#EF4444", fontSize: 13 }}>{error}</Text>
             </View>
           )}
 
-          {/* Task description — primary input */}
+          {/* Task description */}
           <TextInput
             value={input}
-            onChangeText={(text) => { setInput(text); setError(null); }}
+            onChangeText={(text) => {
+              setInput(text);
+              setError(null);
+            }}
             placeholder={isRu ? "Что нужно сделать?" : "What needs to be done?"}
             placeholderTextColor="#999"
             multiline
@@ -269,7 +290,6 @@ export default function AddTaskScreen() {
               <Text style={{ fontSize: 22 }}>{emoji || "😀"}</Text>
             </Pressable>
 
-            {/* Quick date */}
             <Pressable
               onPress={() => setShowDatePicker(true)}
               style={({ pressed }) => [
@@ -289,7 +309,6 @@ export default function AddTaskScreen() {
               </Text>
             </Pressable>
 
-            {/* Quick time */}
             <Pressable
               onPress={() => setShowTimePicker(true)}
               style={({ pressed }) => [
@@ -309,10 +328,12 @@ export default function AddTaskScreen() {
               </Text>
             </Pressable>
 
-            {/* Clear deadline */}
             {(dueDate || dueTime) && (
               <Pressable
-                onPress={() => { setDueDate(null); setDueTime(null); }}
+                onPress={() => {
+                  setDueDate(null);
+                  setDueTime(null);
+                }}
                 style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1 }]}
               >
                 <Text style={{ color: "#EF4444", fontSize: 16 }}>✕</Text>
@@ -407,7 +428,11 @@ export default function AddTaskScreen() {
             </View>
 
             {attachments.length > 0 && (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ gap: 8 }}
+              >
                 {attachments.map((att, idx) => (
                   <View key={idx} style={{ position: "relative" }}>
                     <View
@@ -422,11 +447,18 @@ export default function AddTaskScreen() {
                       }}
                     >
                       {att.type === "image" ? (
-                        <Image source={{ uri: att.uri }} style={{ width: 60, height: 60 }} resizeMode="cover" />
+                        <Image
+                          source={{ uri: att.uri }}
+                          style={{ width: 60, height: 60 }}
+                          resizeMode="cover"
+                        />
                       ) : (
                         <View style={{ alignItems: "center" }}>
                           <Text style={{ fontSize: 24 }}>📄</Text>
-                          <Text style={{ fontSize: 8, color: "#999" }} numberOfLines={1}>
+                          <Text
+                            style={{ fontSize: 8, color: "#999" }}
+                            numberOfLines={1}
+                          >
                             {att.name}
                           </Text>
                         </View>
@@ -464,15 +496,21 @@ export default function AddTaskScreen() {
           >
             <Text style={{ fontSize: 13, color: "#0a7ea4", fontWeight: "600" }}>
               {showAdvanced
-                ? isRu ? "▲ Скрыть доп. настройки" : "▲ Hide advanced"
-                : isRu ? "▼ Доп. настройки (уведомления)" : "▼ Advanced (notifications)"}
+                ? isRu
+                  ? "▲ Скрыть доп. настройки"
+                  : "▲ Hide advanced"
+                : isRu
+                ? "▼ Доп. настройки (уведомления)"
+                : "▼ Advanced (notifications)"}
             </Text>
           </Pressable>
 
-          {/* Advanced: per-task notification frequency */}
           {showAdvanced && (
             <View className="bg-surface rounded-2xl p-3 border border-border">
-              <Text className="text-foreground font-semibold" style={{ fontSize: 13, marginBottom: 8 }}>
+              <Text
+                className="text-foreground font-semibold"
+                style={{ fontSize: 13, marginBottom: 8 }}
+              >
                 🔔 {isRu ? "Частота уведомлений" : "Notification frequency"}
               </Text>
               <View className="flex-row flex-wrap gap-2">
@@ -486,8 +524,10 @@ export default function AddTaskScreen() {
                         paddingVertical: 6,
                         borderRadius: 10,
                         borderWidth: 1.5,
-                        borderColor: notifFrequency === opt.value ? "#0a7ea4" : "#E5E7EB",
-                        backgroundColor: notifFrequency === opt.value ? "#0a7ea420" : "transparent",
+                        borderColor:
+                          notifFrequency === opt.value ? "#0a7ea4" : "#E5E7EB",
+                        backgroundColor:
+                          notifFrequency === opt.value ? "#0a7ea420" : "transparent",
                         opacity: pressed ? 0.7 : 1,
                       },
                     ]}
@@ -547,7 +587,10 @@ export default function AddTaskScreen() {
                 },
               ]}
             >
-              <Text className="text-foreground" style={{ textAlign: "center", fontWeight: "600", fontSize: 16 }}>
+              <Text
+                className="text-foreground"
+                style={{ textAlign: "center", fontWeight: "600", fontSize: 16 }}
+              >
                 {t.common.cancel}
               </Text>
             </Pressable>
@@ -560,14 +603,26 @@ export default function AddTaskScreen() {
                   flex: 1,
                   padding: 14,
                   borderRadius: 16,
-                  backgroundColor: !input.trim() || loading ? "#9CA3AF" : "#0a7ea4",
+                  backgroundColor:
+                    !input.trim() || loading ? "#9CA3AF" : "#0a7ea4",
                   opacity: pressed ? 0.8 : 1,
                   transform: [{ scale: pressed ? 0.98 : 1 }],
                 },
               ]}
             >
-              <Text style={{ textAlign: "center", color: "#FFFFFF", fontWeight: "700", fontSize: 16 }}>
-                {loading ? (isRu ? "Добавление..." : "Adding...") : t.common.add}
+              <Text
+                style={{
+                  textAlign: "center",
+                  color: "#FFFFFF",
+                  fontWeight: "700",
+                  fontSize: 16,
+                }}
+              >
+                {loading
+                  ? isRu
+                    ? "Добавление..."
+                    : "Adding..."
+                  : t.common.add}
               </Text>
             </Pressable>
           </View>

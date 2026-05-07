@@ -81,10 +81,7 @@ export default function MatrixScreen() {
 
   const screenWidth = Dimensions.get("window").width;
   const screenHeight = Dimensions.get("window").height;
-  // Use exact half of screen for perfect alignment
   const quadrantWidth = screenWidth / 2;
-  // Calculate height to fill available space (accounting for header and safe areas)
-  // Subtract tab bar height (~60px) to prevent overlap
   const TAB_BAR_HEIGHT = 60;
   const quadrantHeight = (screenHeight - TAB_BAR_HEIGHT) / 2;
 
@@ -97,9 +94,7 @@ export default function MatrixScreen() {
     };
 
     tasks.forEach((task) => {
-      // Skip completed tasks in matrix view
       if (task.status === "completed") return;
-      
       const quadrantKey = task.quadrant as QuadrantKey;
       if (result[quadrantKey]) {
         result[quadrantKey].push(task);
@@ -124,15 +119,13 @@ export default function MatrixScreen() {
     setSelectedTaskId(taskId);
     
     if (position) {
-      // Position popup near the task, but keep it within screen bounds
-      const maxWidth = 280; // popup max width
-      const maxHeight = 300; // approximate popup height
+      const maxWidth = 280;
+      const maxHeight = 300;
       
-      let top = position.y - maxHeight - 10; // above the task
-      let left = position.x - maxWidth / 2; // centered on task
+      let top = position.y - maxHeight - 10;
+      let left = position.x - maxWidth / 2;
       
-      // Keep popup within screen bounds
-      if (top < 20) top = position.y + 40; // move below if too high
+      if (top < 20) top = position.y + 40;
       if (left < 10) left = 10;
       if (left + maxWidth > screenWidth - 10) left = screenWidth - maxWidth - 10;
       
@@ -165,10 +158,8 @@ export default function MatrixScreen() {
     const quadrantTaskList = quadrantTasks[quadrant] || [];
     const hasScroll = scrollStates[quadrant];
     
-    // Use customized color from CustomizationContext if available
     const quadrantColorKey = quadrant.toLowerCase() as keyof typeof customization.quadrantColors;
     const quadrantColor = customization?.quadrantColors?.[quadrantColorKey] || config.color;
-    // Apply brightness: 1.0 = full color, 0.0 = almost transparent (very dim)
     const brightness = customization?.matrixBrightness ?? 0.7;
 
     return (
@@ -178,7 +169,7 @@ export default function MatrixScreen() {
           width: quadrantWidth,
           height: quadrantHeight,
           backgroundColor: quadrantColor,
-          opacity: 0.2 + brightness * 0.8, // range: 0.2 (dim) to 1.0 (full)
+          opacity: 0.2 + brightness * 0.8,
           borderWidth: 2,
           borderColor: quadrantColor,
           overflow: "hidden",
@@ -190,12 +181,12 @@ export default function MatrixScreen() {
         }}
       >
         {/* Header */}
-        <View className="bg-black/20 px-3 py-2">
+        <View className="bg-black/20 px-3 py-2" style={{ marginBottom: 6 }}>
           <Text className="text-sm font-bold text-white">{config.label}</Text>
           <Text className="text-xs text-white/80">{config.description}</Text>
         </View>
 
-        {/* Tasks List */}
+        {/* Tasks List — правка #5: paddingTop + увеличенный paddingBottom */}
         <FlatList
           data={quadrantTaskList}
           keyExtractor={(item) => item.id}

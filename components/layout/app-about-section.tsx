@@ -88,24 +88,24 @@ const FEATURES: Feature[] = [
 
 const CHANGELOG: ChangelogEntry[] = [
   {
-    version: "1.3.0",
-    dateRu: "6 мая 2026",
-    dateEn: "May 6, 2026",
+    version: "1.5.0",
+    dateRu: "7 мая 2026",
+    dateEn: "May 7, 2026",
     changesRu: [
-      "🔄 Виджет: задачи обновляются без перезапуска — подписка на AppState и useFocusEffect",
+      "🔄 Виджет: задачи обновляются при возврате в приложение без перезапуска",
       "👆 Исправлено двойное действие при нажатии на задачу — детали только в модале",
-      "🔍 Цвет текста поисковой строки теперь виден во всех темах",
-      "📊 Устранена обрезка карточек в матрице Эйзенхауэра",
-      "🏷️ Добавлены овальные бейджи статусов в карточках матрицы",
-      "📷 Исправлено прикрепление фото: явный запрос разрешений на Android 13+",
+      "🔍 Цвет текста поисковой строки теперь читаем во всех темах",
+      "📊 Устранена обрезка карточек сверху и снизу в матрице Эйзенхауэра",
+      "🏷️ Добавлены цветные овальные бейджи статусов на карточках матрицы",
+      "📷 Исправлено прикрепление фото к задачам на Android 13+",
     ],
     changesEn: [
-      "🔄 Widget: tasks refresh without restart — AppState subscription + useFocusEffect",
+      "🔄 Widget: tasks refresh on app resume without restart",
       "👆 Fixed double action on task tap — details open in modal only",
-      "🔍 Search bar text color now visible in all themes",
+      "🔍 Search bar text color is now readable in all themes",
       "📊 Fixed card clipping in Eisenhower Matrix",
-      "🏷️ Added oval status badges in Matrix task cards",
-      "📷 Fixed photo attachment: explicit permission request on Android 13+",
+      "🏷️ Added colored oval status badges on matrix cards",
+      "📷 Fixed photo attachment for Android 13+",
     ],
   },
   {
@@ -148,7 +148,7 @@ const CHANGELOG: ChangelogEntry[] = [
     dateEn: "April 13, 2026",
     changesRu: [
       "🖼 Просмотр фото по нажатию — полноэкранный режим с зумом (щипок и двойной тап)",
-      "📄 Просмотр файлов по нажатию — красивый экран с кнопкой \u2018Открыть / Поделиться\u2019",
+      "📄 Просмотр файлов по нажатию — красивый экран с кнопкой 'Открыть / Поделиться'",
       "📎 Вложения в карточках задач теперь кликабельны",
       "👆 Исправлены свайпы обучения на реальном устройстве (iOS/Android)",
     ],

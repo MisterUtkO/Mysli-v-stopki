@@ -66,9 +66,9 @@ interface TaskContextType {
   loading: boolean;
   createTask: (task: CreateTaskInput) => Promise<Task>;
   updateTask: (id: string, updates: Partial<Task>) => Promise<void>;
-  deleteTask: (id: string) => Promise<void>; // Soft delete (move to trash)
-  permanentlyDeleteTask: (id: string) => Promise<void>; // Permanent delete
-  restoreTask: (id: string) => Promise<void>; // Restore from trash
+  deleteTask: (id: string) => Promise<void>;
+  permanentlyDeleteTask: (id: string) => Promise<void>;
+  restoreTask: (id: string) => Promise<void>;
   updateSettings: (settings: Partial<Settings>) => Promise<void>;
   exportTasks: () => Promise<string>;
   importTasks: (jsonData: string) => Promise<void>;
@@ -103,7 +103,6 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   const refreshTasks = useCallback(async () => {
     try {
       const loadedTasks = await getAllTasks();
-      // Filter out permanently deleted tasks (older than 7 days)
       const now = Date.now();
       const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
       const activeTasks = loadedTasks.filter((task) => {
@@ -117,7 +116,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Subscribe to AppState: refresh tasks when app comes to foreground (e.g. after widget write)
+  // Подписка на AppState — обновляем задачи при возврате в приложение (задача #1)
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (nextState) => {
       if (nextState === "active") {
@@ -127,7 +126,6 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.remove();
   }, [refreshTasks]);
 
-  // Schedule notifications whenever tasks or settings change
   const rescheduleNotifications = useCallback(async (currentTasks: Task[], currentSettings: Settings) => {
     try {
       console.log("[TaskContext] Rescheduling notifications...");
@@ -137,7 +135,6 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       
       await scheduleTaskNotifications(currentTasks, currentSettings);
       
-      // Also reschedule motivational if enabled
       if (currentSettings.motivational?.enabled && currentSettings.motivational.text) {
         console.log("[TaskContext] Scheduling motivational:", currentSettings.motivational.frequency);
         await scheduleMotivationalNotification(
@@ -158,7 +155,6 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         await initializeDatabase();
         const loadedTasks = await getAllTasks();
         
-        // Filter out permanently deleted tasks (older than 7 days)
         const now = Date.now();
         const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
         const activeTasks = loadedTasks.filter((task) => {
@@ -167,13 +163,11 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
           return (now - task.deletedAt) < sevenDaysMs;
         });
         
-        // Run migration to apply new quadrant logic to existing tasks
         console.log("[TaskContext] Running migration for existing tasks");
         const migratedTasks = await migrateExistingTasks(activeTasks, async (id, updates) => {
           await dbUpdateTask(id, updates);
         });
         
-        // Reload tasks after migration
         const finalTasks = migratedTasks.length > 0 ? await getAllTasks() : activeTasks;
         setTasks(finalTasks);
 
@@ -205,19 +199,16 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
 
         setSettings(loadedSettings);
 
-        // Schedule notifications and cleanup in background (don't wait for them)
         console.log("[TaskContext] Scheduling notifications in background");
         rescheduleNotifications(loadedTasks, loadedSettings).catch(e => {
           console.error("[TaskContext] Background notification scheduling failed:", e);
         });
         
-        // Schedule task cleanup in background
         console.log("[TaskContext] Scheduling task cleanup in background");
         scheduleTaskCleanup().catch(e => {
           console.error("[TaskContext] Background task cleanup failed:", e);
         });
         
-        // Sync tasks to widget on app launch
         try {
           const { WidgetSync } = await import("@/lib/integrations/widget/widget-sync");
           await WidgetSync.syncTasksToWidget(finalTasks);
@@ -229,7 +220,6 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         console.error("Failed to initialize database:", error);
       } finally {
         setLoading(false);
-        // Splash screen will be hidden by SplashScreenWrapper component
       }
     };
 
@@ -237,11 +227,9 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const createTask = async (input: CreateTaskInput): Promise<Task> => {
-    // Validate importance and urgency are in range 1-7
     const importance = Math.max(1, Math.min(7, Math.round(input.importance)));
     const urgencyManual = Math.max(1, Math.min(7, Math.round(input.urgency)));
     
-    // Use new hybrid quadrant logic
     const now = new Date();
     const urgencyDeadline = calculateDeadlineUrgency(
       input.dueDate ? `${input.dueDate}T${input.dueTime || "00:00"}` : null,
@@ -264,7 +252,6 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       now
     );
     
-    const now_timestamp = new Date().toISOString();
     const taskData = createTaskWithScoring({
       title: input.title,
       description: input.description,
@@ -285,20 +272,9 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     const updatedTasks = await getAllTasks();
     setTasks(updatedTasks);
     
-    // Trigger vibration and sound notification
-    try {
-      const { useCustomization } = await import('@/lib/context/customization-context');
-      // Note: useCustomization is a hook, can't be used here directly
-      // Will be handled at component level instead
-    } catch (error) {
-      console.error('[TaskContext] Failed to trigger notification:', error);
-    }
-    
-    // Reschedule notifications with new task
     console.log("[TaskContext] Task created, rescheduling notifications");
     await rescheduleNotifications(updatedTasks, settings);
     
-    // Schedule reminder for new task
     try {
       const reminderSettings = await getReminderSettings();
       await scheduleTaskReminder(newTask, reminderSettings);
@@ -307,7 +283,6 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       console.error("[TaskContext] Failed to schedule reminder:", error);
     }
     
-    // Sync to calendar if task has a due date
     const calendarEvent = formatTaskForCalendar(newTask);
     if (calendarEvent) {
       try {
@@ -318,7 +293,6 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       }
     }
     
-    // Sync to widget after task creation
     try {
       const { WidgetSync } = await import("@/lib/integrations/widget/widget-sync");
       await WidgetSync.syncTasksToWidget(updatedTasks);
@@ -334,13 +308,11 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     await dbUpdateTask(id, updates);
     const updatedTasks = await getAllTasks();
     setTasks(updatedTasks);
-    // Reschedule if status or notification frequency changed
     if (updates.status || updates.notificationFrequency) {
       console.log("[TaskContext] Task updated, rescheduling notifications");
       await rescheduleNotifications(updatedTasks, settings);
     }
     
-    // Reschedule reminder if due date/time changed
     if (updates.dueDate || updates.dueTime) {
       const updatedTask = updatedTasks.find(t => t.id === id);
       if (updatedTask) {
@@ -354,7 +326,6 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       }
     }
     
-    // Sync to calendar if due date or time changed
     if (updates.dueDate || updates.dueTime) {
       const updatedTask = updatedTasks.find(t => t.id === id);
       if (updatedTask) {
@@ -370,7 +341,6 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    // Sync to widget after task update
     try {
       const { WidgetSync } = await import("@/lib/integrations/widget/widget-sync");
       await WidgetSync.syncTasksToWidget(updatedTasks);
@@ -379,7 +349,6 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       console.error("[TaskContext] Failed to sync to widget:", error);
     }
 
-    // Forward-sync to Kanban: update sticker text and column if task is on board
     const updatedTask = updatedTasks.find(t => t.id === id);
     if (updatedTask) {
       try {
@@ -391,7 +360,6 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   };
 
   const deleteTask = async (id: string): Promise<void> => {
-    // Soft delete: mark task as deleted with timestamp (7-day retention)
     const now = Date.now();
     await dbUpdateTask(id, { isDeleted: true, deletedAt: now });
     const updatedTasks = tasks.map((task) => 
@@ -401,7 +369,6 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     console.log("[TaskContext] Task moved to trash, will be permanently deleted in 7 days");
     await rescheduleNotifications(updatedTasks, settings);
     
-    // Cancel reminder
     try {
       await cancelTaskReminder(id);
       console.log("[TaskContext] Reminder cancelled for deleted task");
@@ -409,7 +376,6 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       console.error("[TaskContext] Failed to cancel reminder:", error);
     }
     
-    // Remove from calendar
     try {
       await deleteCalendarEventByTaskId(id);
       console.log("[TaskContext] Task removed from calendar");
@@ -417,7 +383,6 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       console.error("[TaskContext] Failed to remove task from calendar:", error);
     }
 
-    // Remove linked sticker from Kanban
     try {
       await removeTaskFromKanban(id);
       console.log("[TaskContext] Task sticker removed from kanban");
@@ -442,11 +407,9 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       await setSetting("startScreen", newSettings.startScreen);
     }
 
-    // Reschedule notifications with updated settings
     console.log("[TaskContext] Settings updated, rescheduling notifications");
     await rescheduleNotifications(tasks, updated);
 
-    // Handle motivational separately
     if (newSettings.motivational) {
       if (newSettings.motivational.enabled && newSettings.motivational.text) {
         await scheduleMotivationalNotification(
@@ -454,12 +417,9 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
           newSettings.motivational.frequency,
           newSettings.motivational.exactTime
         );
-      } else if (!newSettings.motivational.enabled) {
-        // Cancel motivational notifications (they'll be excluded in reschedule)
       }
     }
 
-    // If notifications disabled, cancel all
     if (newSettings.notificationsEnabled === false) {
       await cancelAllScheduledNotifications();
     }
@@ -475,7 +435,6 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   };
 
   const permanentlyDeleteTask = async (id: string): Promise<void> => {
-    // Permanently delete task from database
     await dbPermanentlyDeleteTask(id);
     const updatedTasks = tasks.filter((task) => task.id !== id);
     setTasks(updatedTasks);
@@ -483,7 +442,6 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   };
 
   const restoreTask = async (id: string): Promise<void> => {
-    // Restore task from trash
     await dbRestoreTask(id);
     const updatedTasks = tasks.map((task) => 
       task.id === id ? { ...task, isDeleted: false, deletedAt: undefined } : task
@@ -497,7 +455,6 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     await dbClearAllData();
     setTasks([]);
     await cancelAllScheduledNotifications();
-    // Also clear kanban stickers data
     await AsyncStorage.removeItem(KANBAN_STORAGE_KEY);
   };
 

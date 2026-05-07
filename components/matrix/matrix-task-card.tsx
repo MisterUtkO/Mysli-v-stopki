@@ -10,6 +10,34 @@ interface MatrixTaskCardProps {
   onPress: (task: Task) => void;
 }
 
+// Правка #7: хелперы для бейджей статусов
+const getStatusColor = (status: string): string => {
+  switch (status) {
+    case "completed":  return "#22c55e";
+    case "in_progress": return "#3b82f6";
+    case "on_hold":    return "#f59e0b";
+    default:           return "#6b7280"; // not_started
+  }
+};
+
+const getStatusIcon = (status: string): string => {
+  switch (status) {
+    case "completed":  return "●";
+    case "in_progress": return "◐";
+    case "on_hold":    return "⏸";
+    default:           return "○";
+  }
+};
+
+const getStatusLabel = (status: string, isRu: boolean): string => {
+  switch (status) {
+    case "completed":  return isRu ? "Готово" : "Done";
+    case "in_progress": return isRu ? "В работе" : "In Progress";
+    case "on_hold":    return isRu ? "Пауза" : "On Hold";
+    default:           return isRu ? "Не начато" : "Todo";
+  }
+};
+
 export function MatrixTaskCard({ task, isRu, onPress }: MatrixTaskCardProps) {
   const handlePress = () => {
     if (Platform.OS !== "web") {
@@ -18,60 +46,16 @@ export function MatrixTaskCard({ task, isRu, onPress }: MatrixTaskCardProps) {
     onPress(task);
   };
 
-  // Priority icon based on importance score (1-7)
   const getPriorityIcon = (importance: number) => {
-    if (importance >= 5) return "⚡"; // High priority
-    if (importance >= 3) return "⭐"; // Medium priority
-    return "○"; // Low priority
+    if (importance >= 5) return "⚡";
+    if (importance >= 3) return "⭐";
+    return "○";
   };
 
-  // Priority label
   const getPriorityLabel = (importance: number) => {
     if (importance >= 5) return isRu ? "Высокий" : "High";
     if (importance >= 3) return isRu ? "Средний" : "Medium";
     return isRu ? "Низкий" : "Low";
-  };
-
-  // Status color helper
-  const getStatusColor = (status: string): string => {
-    switch (status) {
-      case "completed":
-        return "#22C55E";
-      case "in_progress":
-        return "#F59E0B";
-      case "not_started":
-        return "#6B7280";
-      default:
-        return "#6B7280";
-    }
-  };
-
-  // Status icon helper
-  const getStatusIcon = (status: string): string => {
-    switch (status) {
-      case "completed":
-        return "✓";
-      case "in_progress":
-        return "⟳";
-      case "not_started":
-        return "○";
-      default:
-        return "○";
-    }
-  };
-
-  // Status label helper
-  const getStatusLabel = (status: string): string => {
-    switch (status) {
-      case "completed":
-        return isRu ? "Завершено" : "Done";
-      case "in_progress":
-        return isRu ? "В процессе" : "In Progress";
-      case "not_started":
-        return isRu ? "Не начато" : "Not Started";
-      default:
-        return "";
-    }
   };
 
   const priorityIcon = getPriorityIcon(task.importance);
@@ -99,70 +83,58 @@ export function MatrixTaskCard({ task, isRu, onPress }: MatrixTaskCardProps) {
             paddingVertical: 8,
             paddingHorizontal: 8,
             borderRadius: 6,
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 6,
+            gap: 4,
             position: "relative",
           }}
         >
           {/* Overdue indicator */}
           <OverdueIndicator isOverdue={isOverdue} />
-        {/* Priority Icon */}
-        <Text
-          style={{
-            fontSize: 14,
-            fontWeight: "700",
-            minWidth: 20,
-            textAlign: "center",
-          }}
-        >
-          {priorityIcon}
-        </Text>
 
-        {/* Task Title and Priority */}
-        <View style={{ flex: 1 }}>
-          <Text
-            numberOfLines={2}
-            style={{
-              fontSize: 13,
-              fontWeight: "600",
-              color: "#FFFFFF",
-              lineHeight: 16,
-            }}
-          >
-            {task.title}
-          </Text>
-          <Text
-            style={{
-              fontSize: 11,
-              color: "rgba(255, 255, 255, 0.7)",
-              marginTop: 2,
-            }}
-          >
-            {priorityLabel}
-          </Text>
-          <View
-            style={{
-              marginTop: 6,
-              paddingHorizontal: 8,
-              paddingVertical: 2,
-              borderRadius: 999,
-              backgroundColor: getStatusColor(task.status),
-              alignSelf: "flex-start",
-            }}
-          >
+          {/* Верхняя строка: иконка + название */}
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
             <Text
               style={{
-                fontSize: 9,
+                fontSize: 14,
                 fontWeight: "700",
-                color: "#FFFFFF",
+                minWidth: 20,
+                textAlign: "center",
               }}
             >
-              {getStatusIcon(task.status)} {getStatusLabel(task.status)}
+              {priorityIcon}
             </Text>
+
+            <View style={{ flex: 1 }}>
+              <Text
+                numberOfLines={2}
+                style={{
+                  fontSize: 13,
+                  fontWeight: "600",
+                  color: "#FFFFFF",
+                  lineHeight: 16,
+                }}
+              >
+                {task.title}
+              </Text>
+            </View>
+          </View>
+
+          {/* Нижняя строка: бейдж статуса (правка #7) */}
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginLeft: 26 }}>
+            <View
+              style={{
+                backgroundColor: getStatusColor(task.status),
+                borderRadius: 999,
+                paddingHorizontal: 7,
+                paddingVertical: 2,
+                alignSelf: "flex-start",
+              }}
+            >
+              <Text style={{ color: "#fff", fontSize: 9, fontWeight: "700" }}>
+                {getStatusIcon(task.status)} {getStatusLabel(task.status, isRu)}
+              </Text>
+            </View>
           </View>
         </View>
-      </View>
       </Pressable>
     </OverdueTaskWrapper>
   );
