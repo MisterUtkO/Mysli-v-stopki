@@ -114,6 +114,7 @@ export default function RootLayout() {
 
   const [insets, setInsets] = useState<EdgeInsets>(initialInsets);
   const [frame, setFrame] = useState<Rect>(initialFrame);
+  const [isQuickTaskOnly, setIsQuickTaskOnly] = useState(false);
 
   useEffect(() => {
     initManusRuntime();
@@ -126,7 +127,8 @@ export default function RootLayout() {
       
       // Check for quick-task deep link
       if (url.includes("quick-task")) {
-        console.log("[DeepLink] Detected quick-task request");
+        console.log("[DeepLink] Detected quick-task request - launching widget only");
+        setIsQuickTaskOnly(true);
         if (navigationRef.current) {
           navigationRef.current?.navigate("quick-task" as any);
         }
@@ -223,6 +225,22 @@ export default function RootLayout() {
       },
     };
   }, [initialInsets, initialFrame]);
+
+  // For widget-only mode, render minimal stack with just quick-task
+  if (isQuickTaskOnly) {
+    return (
+      <ThemeProvider>
+        <SafeAreaProvider initialMetrics={providerInitialMetrics}>
+          <GestureHandlerRootView style={{ flex: 1 }}>
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="quick-task" options={{ presentation: "modal", title: "Quick Task" }} />
+            </Stack>
+            <StatusBar style="auto" hidden={Platform.OS !== "web"} />
+          </GestureHandlerRootView>
+        </SafeAreaProvider>
+      </ThemeProvider>
+    );
+  }
 
   const content = (
     <GestureHandlerRootView style={{ flex: 1 }}>
