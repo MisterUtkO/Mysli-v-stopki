@@ -330,8 +330,8 @@ export default function HomeScreen() {
                 alignItems: "center",
                 justifyContent: "center",
                 gap: 4,
-                flex: 1,
-                height: 48,
+                width: "48%",
+                height: 56,
               },
             ]}
           >
@@ -390,28 +390,29 @@ export default function HomeScreen() {
                     alignItems: "center",
                     justifyContent: "center",
                     gap: 3,
-                    flex: 1,
-                    height: 48,
-                  },
-                ]}
-              >
-                <Text
-                  style={{
-                    fontSize: 12,
-                    color: selectedStatus === status ? "#FFFFFF" : color,
-                  }}
-                >
-                  {icon}
-                </Text>
-                <Text
-                  style={{
-                    fontSize: 11,
-                    fontWeight: "600",
-                    color: selectedStatus === status ? "#FFFFFF" : "#6B7280",
-                  }}
-                >
-                  {getStatusLabel(status)}
-                </Text>
+                width: "48%",
+                height: 56,
+              },
+            ]}
+          >
+            <Text
+              style={{
+                fontSize: 14,
+                color: selectedStatus === status ? "#FFFFFF" : color,
+              }}
+            >
+              {icon}
+            </Text>
+            <Text
+              style={{
+                fontSize: 10,
+                fontWeight: "600",
+                color: selectedStatus === status ? "#FFFFFF" : "#6B7280",
+                textAlign: "center",
+              }}
+            >
+              {getStatusLabel(status)}
+            </Text>
                 <View
                   style={{
                     paddingHorizontal: 5,
