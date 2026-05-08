@@ -129,6 +129,15 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.remove();
   }, [refreshTasks]);
 
+  // Периодическая синхронизация задач из виджета (polling каждые 5 секунд)
+  useEffect(() => {
+    const syncInterval = setInterval(() => {
+      refreshTasks().catch(e => console.error("[TaskContext] Polling sync failed:", e));
+    }, 5000);
+    
+    return () => clearInterval(syncInterval);
+  }, [refreshTasks]);
+
   const rescheduleNotifications = useCallback(async (currentTasks: Task[], currentSettings: Settings) => {
     try {
       console.log("[TaskContext] Rescheduling notifications...");
