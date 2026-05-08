@@ -104,7 +104,13 @@ export default function QuickTaskScreen() {
           {
             text: isRu ? "ОК" : "OK",
             onPress: () => {
-              router.dismiss();
+              // Close the quick task screen without launching main app
+              if (Platform.OS === "android") {
+                // On Android, use back action to close widget without launching app
+                router.back();
+              } else {
+                router.dismiss();
+              }
             },
           },
         ]
@@ -338,7 +344,14 @@ export default function QuickTaskScreen() {
 
         {/* Cancel Button */}
         <Pressable
-          onPress={() => router.dismiss()}
+          onPress={() => {
+            // Close the quick task screen without launching main app
+            if (Platform.OS === "android") {
+              router.back();
+            } else {
+              router.dismiss();
+            }
+          }}
           disabled={isSaving}
           style={({ pressed }) => ({
             backgroundColor: colors.surface,
