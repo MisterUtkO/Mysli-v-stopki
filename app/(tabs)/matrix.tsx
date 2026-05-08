@@ -191,12 +191,19 @@ export default function MatrixScreen() {
           data={quadrantTaskList}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <MatrixTaskCard
+            <SwipeableTaskCard
               task={item}
               isRu={isRu}
-              onPress={(task) => {
-                setSelectedTaskForDetail(task);
-                setDetailModalVisible(true);
+              isExpanded={false}
+              isMatrixView={true}
+              onToggleExpand={() => {}}
+              onStatusChange={async (taskId: string, status: any) => {
+                await updateTask(taskId, { status });
+                await refreshTasks();
+              }}
+              onDelete={async (taskId: string, taskTitle: string) => {
+                await deleteTask(taskId);
+                await refreshTasks();
               }}
             />
           )}

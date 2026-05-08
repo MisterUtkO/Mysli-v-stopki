@@ -36,6 +36,7 @@ import {
   deleteCalendarEventByTaskId,
 } from "@/lib/integrations/calendar/calendar-sync";
 import { syncTaskToKanban, removeTaskFromKanban, KANBAN_STORAGE_KEY } from "@/lib/integrations/kanban/kanban-sync";
+import { WidgetSync } from "@/lib/integrations/widget/widget-sync";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   scheduleTaskReminder,
@@ -111,6 +112,8 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         return (now - task.deletedAt) < sevenDaysMs;
       });
       setTasks(activeTasks);
+      // Sync widget with updated tasks
+      await WidgetSync.syncTasksToWidget(loadedTasks);
     } catch (error) {
       console.error("Failed to refresh tasks:", error);
     }

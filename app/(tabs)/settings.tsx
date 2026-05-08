@@ -117,38 +117,17 @@ export default function SettingsScreen() {
   const [triedThemes, setTriedThemes] = useState<Set<string>>(new Set([settings.theme ?? "light"]));
 
   const handleThemeChange = async (theme: "light" | "dark" | "amoled" | "pastel" | "notebook") => {
-    if (theme === "amoled" && !hasExplorerAchievement && !amoledUnlocked) {
-      const newCount = amoledTapCount + 1;
-      setAmoledTapCount(newCount);
-      
-      if (newCount >= 10) {
-        setColorScheme("amoled");
-        await updateSettings({ theme: "amoled" });
-        // Persist AMOLED unlock state permanently
-        await AsyncStorage.setItem("@amoled_unlocked", "true");
-        setAmoledUnlocked(true);
-        Alert.alert(
-          isRu ? "🖤 AMOLED разблокирована!" : "🖤 AMOLED Unlocked!",
-          isRu ? "Тема успешно разблокирована!" : "Theme successfully unlocked!"
-        );
-        setAmoledTapCount(0);
-      } else {
-        Alert.alert(
-          isRu ? "Разблокировка AMOLED" : "Unlock AMOLED",
-          isRu ? `Нажмите ещё ${10 - newCount} раз(а)` : `Tap ${10 - newCount} more time(s)`
-        );
-      }
-      return;
-    }
     setColorScheme(theme);
     await updateSettings({ theme });
-    // Track theme_explorer achievement
-    const newTried = new Set(triedThemes);
-    newTried.add(theme);
-    setTriedThemes(newTried);
-    // All 5 base themes tried
-    if (newTried.size >= 5) {
-      triggerCustomFlag("theme_explorer", tasks);
+    // Track theme_explorer achievement (only for non-amoled themes)
+    if (theme !== "amoled") {
+      const newTried = new Set(triedThemes);
+      newTried.add(theme);
+      setTriedThemes(newTried);
+      // All 5 base themes tried
+      if (newTried.size >= 5) {
+        triggerCustomFlag("theme_explorer", tasks);
+      }
     }
   };
 
