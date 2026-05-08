@@ -40,6 +40,7 @@ import { HeartbeatEmoji } from "@/components/animations/heartbeat-emoji";
 import * as FileSystem from "expo-file-system";
 import * as DocumentPicker from "expo-document-picker";
 import { validateBackupData } from "@/lib/services/backup/backup-validation";
+import { exportTasksToCSV } from "@/lib/services/export/csv-export";
 
 
 type NotifFrequency = "never" | "hourly" | "daily" | "weekly" | "always";
@@ -192,6 +193,32 @@ export default function SettingsScreen() {
       Alert.alert(
         isRu ? "Ошибка" : "Error",
         isRu ? `Не удалось экспортировать: ${errorMsg}` : `Failed to export: ${errorMsg}`
+      );
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleExportCSV = async () => {
+    setExporting(true);
+    try {
+      const success = await exportTasksToCSV(tasks, { includeDeleted: false });
+      if (success) {
+        Alert.alert(
+          isRu ? "Успешно" : "Success",
+          isRu ? "Файл CSV экспортирован и готов к загрузке" : "CSV file exported and ready to download"
+        );
+      } else {
+        Alert.alert(
+          isRu ? "Ошибка" : "Error",
+          isRu ? "Не удалось экспортировать CSV" : "Failed to export CSV"
+        );
+      }
+    } catch (error) {
+      console.error("CSV export error:", error);
+      Alert.alert(
+        isRu ? "Ошибка" : "Error",
+        isRu ? "Не удалось экспортировать CSV" : "Failed to export CSV"
       );
     } finally {
       setExporting(false);
@@ -910,7 +937,23 @@ export default function SettingsScreen() {
                 }]}
               >
                 <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16 }}>
-                  📤 {isRu ? "Экспортировать данные" : "Export Data"}
+                  📤 {isRu ? "Экспортировать данные (JSON)" : "Export Data (JSON)"}
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={handleExportCSV}
+                disabled={exporting}
+                style={({ pressed }) => [{
+                  backgroundColor: colors.primary,
+                  borderRadius: 12,
+                  paddingVertical: 12,
+                  alignItems: "center",
+                  opacity: pressed || exporting ? 0.7 : 1,
+                }]}
+              >
+                <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16 }}>
+                  📊 {isRu ? "Экспортировать в CSV" : "Export to CSV"}
                 </Text>
               </Pressable>
 

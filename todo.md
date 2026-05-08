@@ -1336,3 +1336,53 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] Created ANDROID_WIDGET_SETUP.md - Setup and integration guide
 - [x] Created WIDGET_TESTING.md - Comprehensive 13-point testing checklist
 - [x] Created WIDGET_IMPLEMENTATION_COMPLETE.md - Full implementation summary
+
+
+## Phase 30: CSV Export Feature ✅
+
+### CSV Export Service ✅
+- [x] Create lib/services/export/csv-export.ts utility
+- [x] Implement tasksToCSV() function with proper CSV formatting
+- [x] Implement escapeCSVField() for handling special characters (quotes, commas, newlines)
+- [x] Implement exportTasksToCSV() with platform-specific handling
+  - [x] Web: Download via Blob + createObjectURL
+  - [x] Native: Save to FileSystem + Sharing API
+- [x] Implement exportTasksToJSON() for alternative format
+- [x] Support filtering options: includeCompleted, includeDeleted
+
+### UI Integration ✅
+- [x] Add "Export Data (JSON)" button to Settings screen
+- [x] Add "Export to CSV" button to Settings screen
+- [x] Add handleExportCSV() function in settings.tsx
+- [x] Add success/error alerts for export operations
+- [x] Test export buttons on web platform
+
+### Data Integrity ✅
+- [x] CSV headers: Title, Description, Quadrant, Importance, Urgency, Status, Due Date, Due Time, Created Date, Emoji, Tags, Attachments Count
+- [x] Proper CSV escaping for special characters (quotes doubled, commas/newlines wrapped in quotes)
+- [x] Include all task fields in export
+- [x] Timestamp formatting (ISO 8601)
+- [x] Attachment count calculation
+
+### Testing ✅
+- [x] Create lib/services/export/__tests__/csv-export.test.ts
+- [x] Test CSV export with correct headers
+- [x] Test CSV field escaping (quotes, commas, newlines)
+- [x] Test filtering deleted tasks (includeDeleted: false)
+- [x] Test filtering completed tasks (includeCompleted: false)
+- [x] Test empty task list handling
+- [x] Test attachment count in CSV
+- [x] Test JSON export with metadata
+- [x] All 10 tests passing ✅
+
+### Manual Testing ✅
+- [x] Create test task with special characters (quotes, commas)
+- [x] Export to CSV and verify file creation
+- [x] Verify CSV headers and data integrity
+- [x] Test on web platform (file download)
+- [x] Verify proper CSV escaping in exported file
+
+### Files Created/Modified
+- [x] lib/services/export/csv-export.ts (new utility)
+- [x] lib/services/export/__tests__/csv-export.test.ts (new tests)
+- [x] app/(tabs)/settings.tsx (added CSV export button + handler)
