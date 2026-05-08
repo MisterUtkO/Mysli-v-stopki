@@ -331,7 +331,7 @@ export default function HomeScreen() {
                 justifyContent: "center",
                 gap: 4,
                 width: "48%",
-                height: 56,
+                height: 40,
               },
             ]}
           >
@@ -391,7 +391,7 @@ export default function HomeScreen() {
                     justifyContent: "center",
                     gap: 3,
                 width: "48%",
-                height: 56,
+                height: 40,
               },
             ]}
           >

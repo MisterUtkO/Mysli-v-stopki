@@ -94,7 +94,7 @@ export default function MatrixScreen() {
     };
 
     tasks.forEach((task) => {
-      if (task.status === "completed") return;
+      if (task.status === "completed" || task.deletedAt) return;
       const quadrantKey = task.quadrant as QuadrantKey;
       if (result[quadrantKey]) {
         result[quadrantKey].push(task);
@@ -191,19 +191,12 @@ export default function MatrixScreen() {
           data={quadrantTaskList}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <SwipeableTaskCard
+            <MatrixTaskCard
               task={item}
               isRu={isRu}
-              isExpanded={false}
-              isMatrixView={true}
-              onToggleExpand={() => {}}
-              onStatusChange={async (taskId: string, status: any) => {
-                await updateTask(taskId, { status });
-                await refreshTasks();
-              }}
-              onDelete={async (taskId: string, taskTitle: string) => {
-                await deleteTask(taskId);
-                await refreshTasks();
+              onPress={(task) => {
+                setSelectedTaskForDetail(task);
+                setDetailModalVisible(true);
               }}
             />
           )}

@@ -24,7 +24,7 @@ export class WidgetSync {
     try {
       // Filter active tasks (not deleted), sort by creation date
       const activeTasks = allTasks
-        .filter((t) => !t.isDeleted)
+        .filter((t) => !t.deletedAt)
         .sort((a, b) => b.createdAt - a.createdAt)
         .slice(0, WIDGET_CONFIG.MAX_RECENT_TASKS);
 
