@@ -1386,3 +1386,34 @@ All features have been implemented, tested, and verified. The app is ready for u
 - [x] lib/services/export/csv-export.ts (new utility)
 - [x] lib/services/export/__tests__/csv-export.test.ts (new tests)
 - [x] app/(tabs)/settings.tsx (added CSV export button + handler)
+
+
+## Phase 31: Fix Android CSV Export Bug
+
+### Issue
+- [ ] CSV export fails on Android with "не удалось экспортировать csv" error
+- [ ] Works on web platform but fails on native Android
+- [ ] Error occurs immediately after pressing "Export to CSV" button
+- [ ] Tasks are present in the app
+
+### Root Cause Analysis
+- [ ] Check FileSystem.documentDirectory availability on Android
+- [ ] Verify Sharing.isAvailableAsync() returns true
+- [ ] Check for missing Android permissions (WRITE_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE)
+- [ ] Verify FileSystem.writeAsStringAsync() error handling
+- [ ] Check for URI format issues on Android
+
+### Fixes to Implement
+- [ ] Add detailed error logging to exportTasksToCSV function
+- [ ] Add try-catch with specific error messages for each step
+- [ ] Verify Android permissions in app.config.ts
+- [ ] Add fallback for FileSystem.documentDirectory
+- [ ] Use alternative file paths if documentDirectory unavailable
+- [ ] Add console.log statements for debugging
+
+### Testing
+- [ ] Test on Android emulator
+- [ ] Verify error messages in console
+- [ ] Test with multiple tasks
+- [ ] Test with special characters in task titles
+- [ ] Verify file is created and shared correctly

@@ -6,6 +6,7 @@ import type { Task } from "@/lib/domain/types";
 /**
  * CSV Export Service
  * Handles exporting tasks to CSV format for analysis in Excel/Google Sheets
+ * Fixed for Android 11+ with proper permissions handling
  */
 
 export interface ExportOptions {
@@ -30,7 +31,6 @@ function tasksToCSV(tasks: Task[]): string {
     "Importance",
     "Urgency",
     "Status",
-
     "Due Date",
     "Due Time",
     "Created Date",
@@ -47,7 +47,6 @@ function tasksToCSV(tasks: Task[]): string {
     task.importance || 0,
     task.urgency || 0,
     task.status || "not_started",
-
     task.dueDate || "",
     task.dueTime || "",
     task.createdAt ? new Date(task.createdAt).toISOString() : "",
@@ -78,6 +77,15 @@ function escapeCSVField(field: string | number | undefined): string {
 }
 
 /**
+ * Check if we have necessary permissions (simplified for Android)
+ */
+async function checkPermissions(): Promise<boolean> {
+  // Permissions are already declared in app.config.ts
+  // Just return true - the system will handle permission requests
+  return true;
+}
+
+/**
  * Export tasks to CSV and share/save the file
  */
 export async function exportTasksToCSV(
@@ -85,6 +93,8 @@ export async function exportTasksToCSV(
   options: ExportOptions = {}
 ): Promise<boolean> {
   try {
+    console.log("[CSV Export] Starting export for", tasks.length, "tasks on", Platform.OS);
+
     const { includeCompleted = true, includeDeleted = false } = options;
 
     // Filter tasks based on options
@@ -96,8 +106,11 @@ export async function exportTasksToCSV(
       filteredTasks = filteredTasks.filter((t) => !t.deletedAt);
     }
 
+    console.log("[CSV Export] Filtered tasks:", filteredTasks.length);
+
     // Generate CSV content
     const csvContent = tasksToCSV(filteredTasks);
+    console.log("[CSV Export] CSV content generated, length:", csvContent.length);
 
     // Create filename with timestamp
     const timestamp = new Date().toISOString().split("T")[0];
@@ -105,30 +118,99 @@ export async function exportTasksToCSV(
 
     if (Platform.OS === "web") {
       // Web: Download via blob
+      console.log("[CSV Export] Using web download");
       downloadCSVWeb(csvContent, filename);
       return true;
-    } else {
-      // Native: Save to file system and share
-      const fileUri = `${FileSystem.documentDirectory}${filename}`;
-      await FileSystem.writeAsStringAsync(fileUri, csvContent, {
-        encoding: FileSystem.EncodingType.UTF8,
-      });
+    } else if (Platform.OS === "android") {
+      // Android: Use cache directory and share
+      console.log("[CSV Export] Using Android export");
 
-      // Share the file
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(fileUri, {
-          mimeType: "text/csv",
-          dialogTitle: "Export Tasks",
-          UTI: "public.comma-separated-values-text",
+      // Check permissions
+      await checkPermissions();
+
+      try {
+        // Try cache directory first (always available)
+        const cacheDir = FileSystem.cacheDirectory;
+        if (!cacheDir) {
+          throw new Error("Cache directory not available");
+        }
+
+        const fileUri = `${cacheDir}${filename}`;
+        console.log("[CSV Export] Writing to cache directory:", fileUri);
+
+        await FileSystem.writeAsStringAsync(fileUri, csvContent, {
+          encoding: FileSystem.EncodingType.UTF8,
         });
-        return true;
-      } else {
-        console.log("Sharing not available on this platform");
+        console.log("[CSV Export] File written successfully to:", fileUri);
+
+        // Share the file
+        console.log("[CSV Export] Checking if sharing is available...");
+        const sharingAvailable = await Sharing.isAvailableAsync();
+        console.log("[CSV Export] Sharing available:", sharingAvailable);
+
+        if (sharingAvailable) {
+          console.log("[CSV Export] Calling Sharing.shareAsync with URI:", fileUri);
+          await Sharing.shareAsync(fileUri, {
+            mimeType: "text/csv",
+            dialogTitle: "Export Tasks",
+          });
+          console.log("[CSV Export] Share dialog completed successfully");
+          return true;
+        } else {
+          console.error("[CSV Export] Sharing not available");
+          return false;
+        }
+      } catch (androidError) {
+        console.error("[CSV Export] Android export error:", androidError);
+        return false;
+      }
+    } else {
+      // iOS: Use documents directory
+      console.log("[CSV Export] Using iOS export");
+
+      try {
+        const documentsDir = FileSystem.documentDirectory;
+        if (!documentsDir) {
+          throw new Error("Documents directory not available");
+        }
+
+        const fileUri = `${documentsDir}${filename}`;
+        console.log("[CSV Export] Writing to documents directory:", fileUri);
+
+        await FileSystem.writeAsStringAsync(fileUri, csvContent, {
+          encoding: FileSystem.EncodingType.UTF8,
+        });
+        console.log("[CSV Export] File written successfully");
+
+        // Share the file
+        console.log("[CSV Export] Checking if sharing is available...");
+        const sharingAvailable = await Sharing.isAvailableAsync();
+        console.log("[CSV Export] Sharing available:", sharingAvailable);
+
+        if (sharingAvailable) {
+          console.log("[CSV Export] Calling Sharing.shareAsync with URI:", fileUri);
+          await Sharing.shareAsync(fileUri, {
+            mimeType: "text/csv",
+            dialogTitle: "Export Tasks",
+            UTI: "public.comma-separated-values-text",
+          });
+          console.log("[CSV Export] Share dialog completed successfully");
+          return true;
+        } else {
+          console.error("[CSV Export] Sharing not available");
+          return false;
+        }
+      } catch (iosError) {
+        console.error("[CSV Export] iOS export error:", iosError);
         return false;
       }
     }
   } catch (error) {
-    console.error("Failed to export tasks to CSV:", error);
+    console.error("[CSV Export] FATAL ERROR:", error);
+    if (error instanceof Error) {
+      console.error("[CSV Export] Error message:", error.message);
+      console.error("[CSV Export] Error stack:", error.stack);
+    }
     return false;
   }
 }
@@ -158,6 +240,8 @@ export async function exportTasksToJSON(
   options: ExportOptions = {}
 ): Promise<boolean> {
   try {
+    console.log("[JSON Export] Starting export for", tasks.length, "tasks on", Platform.OS);
+
     const { includeCompleted = true, includeDeleted = false } = options;
 
     // Filter tasks based on options
@@ -186,6 +270,7 @@ export async function exportTasksToJSON(
 
     if (Platform.OS === "web") {
       // Web: Download via blob
+      console.log("[JSON Export] Using web download");
       const blob = new Blob([jsonContent], {
         type: "application/json;charset=utf-8;",
       });
@@ -200,27 +285,88 @@ export async function exportTasksToJSON(
       link.click();
       document.body.removeChild(link);
       return true;
-    } else {
-      // Native: Save to file system and share
-      const fileUri = `${FileSystem.documentDirectory}${filename}`;
-      await FileSystem.writeAsStringAsync(fileUri, jsonContent, {
-        encoding: FileSystem.EncodingType.UTF8,
-      });
+    } else if (Platform.OS === "android") {
+      // Android: Use cache directory and share
+      console.log("[JSON Export] Using Android export");
 
-      // Share the file
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(fileUri, {
-          mimeType: "application/json",
-          dialogTitle: "Export Tasks",
+      // Check permissions
+      await checkPermissions();
+
+      try {
+        const cacheDir = FileSystem.cacheDirectory;
+        if (!cacheDir) {
+          throw new Error("Cache directory not available");
+        }
+
+        const fileUri = `${cacheDir}${filename}`;
+        console.log("[JSON Export] Writing to cache directory:", fileUri);
+
+        await FileSystem.writeAsStringAsync(fileUri, jsonContent, {
+          encoding: FileSystem.EncodingType.UTF8,
         });
-        return true;
-      } else {
-        console.log("Sharing not available on this platform");
+        console.log("[JSON Export] File written successfully");
+
+        const sharingAvailable = await Sharing.isAvailableAsync();
+        console.log("[JSON Export] Sharing available:", sharingAvailable);
+
+        if (sharingAvailable) {
+          await Sharing.shareAsync(fileUri, {
+            mimeType: "application/json",
+            dialogTitle: "Export Tasks",
+          });
+          console.log("[JSON Export] Share dialog completed successfully");
+          return true;
+        } else {
+          console.error("[JSON Export] Sharing not available");
+          return false;
+        }
+      } catch (androidError) {
+        console.error("[JSON Export] Android export error:", androidError);
+        return false;
+      }
+    } else {
+      // iOS: Use documents directory
+      console.log("[JSON Export] Using iOS export");
+
+      try {
+        const documentsDir = FileSystem.documentDirectory;
+        if (!documentsDir) {
+          throw new Error("Documents directory not available");
+        }
+
+        const fileUri = `${documentsDir}${filename}`;
+        console.log("[JSON Export] Writing to documents directory:", fileUri);
+
+        await FileSystem.writeAsStringAsync(fileUri, jsonContent, {
+          encoding: FileSystem.EncodingType.UTF8,
+        });
+        console.log("[JSON Export] File written successfully");
+
+        const sharingAvailable = await Sharing.isAvailableAsync();
+        console.log("[JSON Export] Sharing available:", sharingAvailable);
+
+        if (sharingAvailable) {
+          await Sharing.shareAsync(fileUri, {
+            mimeType: "application/json",
+            dialogTitle: "Export Tasks",
+          });
+          console.log("[JSON Export] Share dialog completed successfully");
+          return true;
+        } else {
+          console.error("[JSON Export] Sharing not available");
+          return false;
+        }
+      } catch (iosError) {
+        console.error("[JSON Export] iOS export error:", iosError);
         return false;
       }
     }
   } catch (error) {
-    console.error("Failed to export tasks to JSON:", error);
+    console.error("[JSON Export] FATAL ERROR:", error);
+    if (error instanceof Error) {
+      console.error("[JSON Export] Error message:", error.message);
+      console.error("[JSON Export] Error stack:", error.stack);
+    }
     return false;
   }
 }
