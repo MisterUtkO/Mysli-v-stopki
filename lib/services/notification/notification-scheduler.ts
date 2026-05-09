@@ -241,7 +241,7 @@ export async function scheduleTaskNotifications(
             : `[${quadrantLabel}] ⚡${task.importance}/7 🔥${task.urgency}/7`,
           sound: true,
           data: { taskId: task.id, type: "task_reminder" },
-          ...(Platform.OS === "android" ? { channelId: "task-reminders", icon: "icon" } : {}),
+          ...(Platform.OS === "android" ? { channelId: "task-reminders", icon: "notification_icon" } : {}),
         },
         trigger,
       });
@@ -284,7 +284,7 @@ export async function scheduleMotivationalNotification(
           body: "",
           sound: true,
           data: { type: "motivational_reminder" },
-          ...(Platform.OS === "android" ? { channelId: "motivational", icon: "icon" } : {}),
+          ...(Platform.OS === "android" ? { channelId: "motivational", icon: "notification_icon" } : {}),
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.DAILY,
@@ -304,7 +304,7 @@ export async function scheduleMotivationalNotification(
           body: text,
           sound: true,
           data: { type: "motivational" },
-          ...(Platform.OS === "android" ? { channelId: "motivational", icon: "icon" } : {}),
+          ...(Platform.OS === "android" ? { channelId: "motivational", icon: "notification_icon" } : {}),
         },
         trigger,
       });
